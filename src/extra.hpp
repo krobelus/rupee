@@ -45,6 +45,9 @@ namespace Constants {
 	const int ParsingPhaseReadPremises = 4;
 	const int ParsingPhaseReadProof = 5;
 	const int ParsingDeallocate = 6;
+
+	const int ArgumentsFilePremise = 1;
+	const int ArgumentsFileProof = 2;
 }
 
 namespace Parameters {
@@ -52,7 +55,8 @@ namespace Parameters {
 	extern std::string pathPremise;
 	extern std::string pathProof;
 
-	void setInput(std::string path);
+	void setPremise(std::string path);
+	void setProof(std::string path);
 }
 
 namespace Tools {

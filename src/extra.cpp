@@ -15,10 +15,13 @@ bool Parameters::verbosePropagation = true;
 std::string Parameters::pathPremise;
 std::string Parameters::pathProof;
 
-void Parameters::setInput(std::string path) {
-    Parameters::pathPremise = path + ".cnf";
+void Parameters::setPremise(std::string path) {
+    Parameters::pathPremise = path;
     std::cout << "Premise: " << Parameters::pathPremise << std::endl;
-    Parameters::pathProof = path + ".drat";
+}
+
+void Parameters::setProof(std::string path) {
+    Parameters::pathProof = path;
     std::cout << "Proof: " << Parameters::pathProof << std::endl;
 }
 

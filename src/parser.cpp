@@ -115,14 +115,16 @@ void readClauses() {
 		if(input_.is_open()) {				///If the input file is not open, something went wrong and errors are issued.
 			while(input_.good()) {			/// For every line in the file after headers and such...
 				getline(input_, line_);
-				if(parseClause()) {			///... try to parse it as a clause
-					processClause();			/// If I am successful, I process it
-					Tools::decreaseCommentLevel();
-				} else {						/// Otherwise an error is issued
-					if(phase_ == Constants::ParsingPhasePreprocessPremises) {
-						std::cout << "ERROR: Couldn't parse premise file." << std::endl;
-					} else {
-						std::cout << "ERROR: Couldn't parse proof file." << std::endl;
+				if(!line_.empty()) {
+					if(parseClause()) {			///... try to parse it as a clause
+						processClause();			/// If I am successful, I process it
+						Tools::decreaseCommentLevel();
+					} else {						/// Otherwise an error is issued
+						if(phase_ == Constants::ParsingPhasePreprocessPremises) {
+							std::cout << "ERROR: Couldn't parse premise file." << std::endl;
+						} else {
+							std::cout << "ERROR: Couldn't parse proof file." << std::endl;
+						}
 					}
 				}
 			}

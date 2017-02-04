@@ -9,20 +9,31 @@
 
 using namespace std;
 
-int main() {
-	cout << "Starting execution." << endl;
-	Parameters::setInput("proofs/ph3");
-	Parser::parse();
-	Proof::print();
-	WatchList::printWatches();
-	WatchList::printQueue();
-	WatchList::printConflicts();
-	Database::print();
-
-	if(Solver::checkProof()) {
-		cout << "VERIFIED" << endl;
+int main(int argc,char* argv[]){
+	if(argc < 3) {
+		cout << "Usage:" << endl <<
+			"\trupee [DIMACS CNF file] [DRAT proof file]" << endl;
 	} else {
-		cout << "INCORRECT" << endl;
+		for(int argumentCount = 1; argumentCount < argc; ++argumentCount) {
+			string str(argv[argumentCount]);
+			if(argumentCount == Constants::ArgumentsFilePremise) {
+				Parameters::setPremise(str);
+			} else if(argumentCount == Constants::ArgumentsFileProof) {
+				Parameters::setProof(str);
+			}
+		}
+		Parser::parse();
+		Proof::print();
+		WatchList::printWatches();
+		WatchList::printQueue();
+		WatchList::printConflicts();
+		Database::print();
+
+		if(Solver::checkProof()) {
+			cout << "VERIFIED" << endl;
+		} else {
+			cout << "INCORRECT" << endl;
+		}
+		Solver::deallocate();
 	}
-	Solver::deallocate();
 }

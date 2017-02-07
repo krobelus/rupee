@@ -37,8 +37,8 @@ bool allocate() {
 }
 
 void deallocate() {
-	std::cout << "Deallocating hash table." << std::endl;
-	for(int i = 0; i < Constants::HashCycle; ++i) {
+	Blablabla::log("Deallocating hash table.");
+	for(int i = 0; i < Parameters::databaseSize; ++i) {
 		free(table[i]);
 	}
 	free(table);

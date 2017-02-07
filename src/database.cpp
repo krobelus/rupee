@@ -40,6 +40,13 @@ void deallocate() {
 	free(db);
 }
 
+void setNoPremises(int value) {
+	noPremises = value;
+}
+void setNoVariables(int value) {
+	noVars = value;
+}
+
 long addClause(int* cla, int size, int pivot, int flags) {
 	if(used + size + Constants::ExtraCellsDatabase >= max) {
 		reallocate();

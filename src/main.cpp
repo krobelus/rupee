@@ -69,11 +69,19 @@ bool initializeStorage() {
 
 
 bool parse() {
-	Blablabla::comment("Parsing CNF instance" + Parameters::pathPremise + " .");
+	Blablabla::comment("Parsing CNF instance " + Parameters::pathPremise + " .");
 	Blablabla::increase();
-	if(!Parser::openPremise()) { return false; }
+	if(!Parser::openFile(Constants::KindOriginal)) { return false; }
 	if(!Parser::readHeader()) { return false; }
+	if(!Parser::readClauses()) { return false; }
 	Blablabla::decrease();
+	Blablabla::comment("Parsing DRAT proof " + Parameters::pathProof + " .");
+	Blablabla::increase();
+	if(!Parser::openFile(Constants::KindDerived)) { return false; }
+	if(!Parser::readClauses()) { return false; }
+	Blablabla::decrease();
+	Parser::endParsing();
+	HashTable::deallocate();
 	return true;
 }
 

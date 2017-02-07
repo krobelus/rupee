@@ -15,13 +15,15 @@ namespace Parser {
 	const boost::regex numVarsRegex("(\\d+)(.*)");
 	const boost::regex literalRegex("(-?\\d+)(.*)?");
 
-	extern int* buffer_;
-	extern int buffersize_;
-	extern int length_;
-	extern int phase_;
-	extern int file_;
-	extern int deletion_;
-	extern int literal_;
+	extern int* buffer_;		//Parse buffer
+	extern int buffersize_;		//Maximum size of buffer_
+	extern int length_;			//Current size of buffer_
+	extern int file_;			//Premise or proof file being parsed
+	extern int kind_;			//Introduction or deletion instruction parsed
+	extern int literal_;		//Parsed literal
+	extern int pivot_;			//Pivot of parsed clause
+	extern int varliteral_;		//Absolute value of literal_
+	extern bool endclause_;		//Flag for having parsed literal 0.
 	extern long offset_;
 	extern unsigned int hashValue_;
 	extern std::string line_;

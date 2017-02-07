@@ -8,7 +8,7 @@ namespace Database {
 	extern int max;
 	extern int used;
 	extern int noVars;
-	extern int noClauses;
+	extern int noPremises;
 
 	extern int* clause_;
 	extern int* ptr_;
@@ -17,6 +17,9 @@ namespace Database {
 	void allocate();
 	void reallocate();
 	void deallocate();
+
+	void setNoPremises(int value);
+	void setNoVariables(int value);
 
 	long addClause(int* cla, int size, int pivot, int flags);
 

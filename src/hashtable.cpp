@@ -10,15 +10,29 @@ long** table;
 int* rowUsed;
 int* rowMax;
 
-void allocate() {
-	std::cout << "Allocating hash table." << std::endl;
-	table = (long**) malloc (Constants::HashCycle * sizeof (long*));
-	rowUsed = (int*) malloc (Constants::HashCycle * sizeof (int));
-	rowMax = (int*) malloc (Constants::HashCycle * sizeof (int));
-	for(int i = 0; i < Constants::HashCycle; ++i) {
-		table[i] = (long*) malloc (Constants::SmallAllocation * sizeof (long));
-		rowMax[i] = Constants::SmallAllocation;
+bool allocate() {
+	bool error = false;
+	Blablabla::log("Allocating hash table.");
+	table = (long**) malloc (Parameters::databaseSize * sizeof (long*));
+	rowUsed = (int*) malloc (Parameters::databaseSize * sizeof (int));
+	rowMax = (int*) malloc (Parameters::databaseSize * sizeof (int));
+	if(table == NULL || rowUsed == NULL || rowMax == NULL) {
+		error = true;
+	}
+	for(int i = 0; i < Parameters::databaseSize && !error; ++i) {
+		table[i] = (long*) malloc (Parameters::hashDepth * sizeof (long));
+		rowMax[i] = Parameters::hashDepth;
 		rowUsed[i] = 0;
+		if(table[i] == NULL) {
+			error = true;
+		}
+	}
+	if(error) {
+		Blablabla::log("Error at hash table allocation.");
+		Blablabla::comment("Memory management error.");
+		return false;
+	} else {
+		return true;
 	}
 }
 

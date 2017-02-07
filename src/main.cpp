@@ -1,4 +1,5 @@
 #include <iostream>
+#include <boost/lexical_cast.hpp>
 
 #include "parser.hpp"
 #include "database.hpp"
@@ -7,21 +8,82 @@
 #include "solver.hpp"
 #include "extra.hpp"
 
-using namespace std;
+// using namespace std;
 
-int main(int argc,char* argv[]){
-	if(argc < 3) {
-		cout << "Usage:" << endl <<
-			"\trupee [DIMACS CNF file] [DRAT proof file]" << endl;
-	} else {
-		for(int argumentCount = 1; argumentCount < argc; ++argumentCount) {
-			string str(argv[argumentCount]);
-			if(argumentCount == Constants::ArgumentsFilePremise) {
-				Parameters::setPremise(str);
-			} else if(argumentCount == Constants::ArgumentsFileProof) {
-				Parameters::setProof(str);
+namespace Frontend {
+
+bool readArguments(int argc, char* argv[]) {
+	std::string stringArgument;
+	int premiseArgument = Constants::ArgumentsFilePremise;
+	bool finishArguments = false;
+	for(int i = 1; i < argc && !finishArguments; ++i) {
+		stringArgument = std::string(argv[i]);
+		if(stringArgument[0] == '-') {
+			stringArgument = stringArgument.substr(1);
+			if(stringArgument == "help") {
+				premiseArgument = Constants::ArgumentsHelp;
+				finishArguments = true;
+			} else {
+				premiseArgument = Constants::ArgumentsError;
+				finishArguments = true;
+			}
+		} else {
+			if(premiseArgument == Constants::ArgumentsFilePremise) {
+				Parameters::setPremise(stringArgument);
+				premiseArgument = Constants::ArgumentsFileProof;
+			} else if (premiseArgument == Constants::ArgumentsFileProof) {
+				Parameters::setProof(stringArgument);
+				premiseArgument = Constants::ArgumentsRest;
+			} else {
+				premiseArgument = Constants::ArgumentsError;
+				finishArguments = true;
 			}
 		}
+	}
+	if(premiseArgument != Constants::ArgumentsRest && premiseArgument != Constants::ArgumentsHelp) {
+		premiseArgument = Constants::ArgumentsError;
+	}
+	if(premiseArgument == Constants::ArgumentsError) {
+		Blablabla::comment("Error: invalid input.");
+		Blablabla::comment("\tType rupee -help for more information.");
+		return false;
+	} else if(premiseArgument == Constants::ArgumentsHelp) {
+		Blablabla::comment("Usage:");
+		Blablabla::comment("\trupee [DIMACS CNF file] [DRAT proof file]");
+		return false;
+	} else {
+		return true;
+	}
+}
+
+bool initializeStorage() {
+	Blablabla::log("Allocating clause storages.");
+	Blablabla::increase();
+	if(!Parser::allocate()) { return false; }
+	if(!Database::allocate()) { return false; }
+	if(!Proof::allocate()) { return false; }
+	if(!HashTable::allocate()) { return false; }
+	Blablabla::decrease();
+	return true;
+}
+
+
+bool parse() {
+	Blablabla::comment("Parsing CNF instance" + Parameters::pathPremise + " .");
+	Blablabla::increase();
+	if(!Parser::openPremise()) { return false; }
+	if(!Parser::readHeader()) { return false; }
+	Blablabla::decrease();
+	return true;
+}
+
+
+int main(int argc,char* argv[]){
+	if(!readArguments(argc, argv)) { return 1; }
+	if(!initializeStorage()) { return 1; }
+	if(!parse()) { return 1; }
+
+
 		Parser::parse();
 		Proof::print();
 		WatchList::printWatches();
@@ -30,10 +92,17 @@ int main(int argc,char* argv[]){
 		Database::print();
 
 		if(Solver::checkProof()) {
-			cout << "VERIFIED" << endl;
+			std::cout << "VERIFIED" << std::endl;
 		} else {
-			cout << "INCORRECT" << endl;
+			std::cout << "INCORRECT" << std::endl;
 		}
 		Solver::deallocate();
 	}
+	return 0;
+}
+
+}
+
+int main(int argc, char* argv[]) {
+	return Frontend::main(argc, argv);
 }

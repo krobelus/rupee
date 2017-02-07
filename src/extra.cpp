@@ -11,19 +11,72 @@
 
 int Tools::commentLevel = 0;
 
-bool Parameters::verbosePropagation = true;
-std::string Parameters::pathPremise;
-std::string Parameters::pathProof;
 
-void Parameters::setPremise(std::string path) {
-    Parameters::pathPremise = path;
-    std::cout << "Premise: " << Parameters::pathPremise << std::endl;
+
+namespace Parameters {
+
+std::string pathPremise = "instance.cnf";
+std::string pathProof = "proof.drat";
+bool verbosity = true;
+int clauseBufferSize = 1000;
+int databaseSize = 1000000;
+int hashDepth = 10;
+
+void setPremise(std::string path) {
+    pathPremise = path;
+    Blablabla::log("Premise: " + path);
 }
 
-void Parameters::setProof(std::string path) {
-    Parameters::pathProof = path;
-    std::cout << "Proof: " << Parameters::pathProof << std::endl;
+void setProof(std::string path) {
+    pathProof = path;
+    Blablabla::log("Premise: " + path);
 }
+
+void setVerbosity(bool value) {
+    verbosity = value;
+}
+
+void setBufferSize(int value) {
+    bufferSize = value;
+}
+
+void setDatabaseSize(int value) {
+    databaseSize = value;
+}
+
+void setHashDepth(int value) {
+    hashDepth = value;
+}
+
+}
+
+
+
+
+namespace Blablabla {
+
+int level = 0;
+
+void increase() {
+    Blablabla::level++;
+}
+
+void decrease() {
+    Blablabla::level--;
+}
+
+void log(std::string str) {
+    if(Parameters::verbosity) {
+        for(int i = 0; i < level; ++i) {
+            std::cout << ":\t";
+        }
+        std::cout << ans << std::endl;
+    }
+}
+
+}
+
+
 
 int Tools::compare(const void *a, const void *b){
   return (*(int*)a - *(int*)b);

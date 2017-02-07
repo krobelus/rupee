@@ -31,6 +31,56 @@ unsigned int hashValue_;
 std::string line_;
 std::ifstream input_;
 boost::smatch result_;
+int maxVariable;
+
+bool allocate() {
+	Blablabla::log("Allocating parse buffer.");
+	maxVariable = 0;
+	buffersize_ = Parameters::bufferSize;
+	buffer_ = (int*) malloc(buffersize_ * sizeof(int));
+	if(buffer_ == NULL) {
+		Blablabla::log("Error at parse buffer allocation.");
+		Blablabla::comment("Memory management error.");
+		return false;
+	} else {
+		return true;
+	}
+}
+
+bool openPremise() {
+	input_.open(Parameters::pathPremise);
+	file_ = Constants::KindOriginal;
+	if(input.fail()) {
+		Blablabla::log("CNF instance was not found.");
+		Blablabla::comment("Input error.");
+		return false;
+	} else {
+		return true;
+	}
+}
+
+bool readHeader() {
+	while(input_.good()) {
+		getline(input_, line_);
+		if(boost::regex_search(line_, result_, headerRegex)) {
+
+
+
+
+
+			return true;
+		}
+	}
+	Blablabla::log("No header was found in CNF instance.");
+	Blablabla::comment("Input error.");
+	return false;
+}
+
+
+
+
+
+
 
 void parse() {
 	std::cout << "Parsing files." << std::endl;
@@ -40,39 +90,39 @@ void parse() {
 	deallocate();
 }
 
-void findMaximumVariable() {
-	Database::noVars = 0;
-	phase_ = Constants::ParsingPhasePreprocessPremises;
-	input_.open(Parameters::pathPremise);
-	while(phase_ < Constants::ParsingPhaseInitialize) {
-		if(input_.is_open()) {
-			if(phase_ == Constants::ParsingPhasePreprocessPremises) {
-				skipToHeader();
-			}
-			while(input_.good()) {
-				getline(input_, line_);
-				while(boost::regex_search(line_, result_, literalRegex)) {
-					if(Database::noVars < abs(boost::lexical_cast<int>(result_[1]))) {
-						Database::noVars = abs(boost::lexical_cast<int>(result_[1]));
-					}
-					line_ = result_[2];
-				}
-			}
-		} else {
-			if(phase_ == Constants::ParsingPhasePreprocessPremises) {
-				std::cout << "ERROR: Couldn't open premise file." << std::endl;
-			} else {
-				std::cout << "ERROR: Couldn't open proof file." << std::endl;
-			}
-		}
-		input_.close();
-		if(phase_ == Constants::ParsingPhasePreprocessPremises) {
-			input_.open(Parameters::pathProof);
-		}
-		phase_++;
-	}
-	std::cout << Database::noVars << " variables detected." << std::endl;
-}
+// void findMaximumVariable() {
+// 	Database::noVars = 0;
+// 	phase_ = Constants::ParsingPhasePreprocessPremises;
+// 	input_.open(Parameters::pathPremise);
+// 	while(phase_ < Constants::ParsingPhaseInitialize) {
+// 		if(input_.is_open()) {
+// 			if(phase_ == Constants::ParsingPhasePreprocessPremises) {
+// 				skipToHeader();
+// 			}
+// 			while(input_.good()) {
+// 				getline(input_, line_);
+// 				while(boost::regex_search(line_, result_, literalRegex)) {
+// 					if(Database::noVars < abs(boost::lexical_cast<int>(result_[1]))) {
+// 						Database::noVars = abs(boost::lexical_cast<int>(result_[1]));
+// 					}
+// 					line_ = result_[2];
+// 				}
+// 			}
+// 		} else {
+// 			if(phase_ == Constants::ParsingPhasePreprocessPremises) {
+// 				std::cout << "ERROR: Couldn't open premise file." << std::endl;
+// 			} else {
+// 				std::cout << "ERROR: Couldn't open proof file." << std::endl;
+// 			}
+// 		}
+// 		input_.close();
+// 		if(phase_ == Constants::ParsingPhasePreprocessPremises) {
+// 			input_.open(Parameters::pathProof);
+// 		}
+// 		phase_++;
+// 	}
+// 	std::cout << Database::noVars << " variables detected." << std::endl;
+// }
 
 void skipToHeader() {
 	while(input_.good()) {

@@ -15,11 +15,18 @@ int* clause_;
 int* ptr_;
 int it_;
 
-void allocate() {
-	std::cout << "Allocating clause database." << std::endl;
-	max = Constants::BigAllocation;
+bool allocate() {
+	Blablabla::log("Allocating clause database.");
+	max = Parameters::databaseSize;
 	db = (int*) malloc (max * sizeof(int));
 	used = 0;
+	if(db == NULL) {
+		Blablabla::log("Error at clause database allocation.");
+		Blablabla::comment("Memory management error.");
+		return false;
+	} else {
+		return true;
+	}
 }
 
 void reallocate() {

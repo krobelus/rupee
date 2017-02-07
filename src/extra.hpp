@@ -4,10 +4,6 @@
 #include <string>
 
 namespace Constants {
-	const int BigAllocation = 1000000;
-	const int SmallAllocation = 10;
-	const int HashCycle = 1000000;
-
 	const int ExtraCellsDatabase = 3;
 	const int FlagsCellDatabase = -2;
 	const int PivotCellDatabase = -1;
@@ -48,16 +44,33 @@ namespace Constants {
 
 	const int ArgumentsFilePremise = 1;
 	const int ArgumentsFileProof = 2;
+	const int ArgumentsRest = 3;
+	const int ArgumentsHelp = 4;
+	const int ArgumentsError = 5;
 }
 
 namespace Parameters {
-	extern bool verbosePropagation;
 	extern std::string pathPremise;
 	extern std::string pathProof;
+	extern int bufferSize;
+	extern int databaseSize;
+	extern bool verbosity;
+	extern int hashDepth;
 
 	void setPremise(std::string path);
 	void setProof(std::string path);
+	void setVerbosity(bool value);
 }
+
+namespace Blablabla {
+	extern int level;
+
+	void increase();
+	void decrease();
+	void comment();
+	void log();
+}
+
 
 namespace Tools {
 	extern int commentLevel;

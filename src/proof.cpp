@@ -11,10 +11,17 @@ int max;
 int used;
 
 void allocate() {
-	Tools::comment("Allocating proof list.");
-	Proof::max = Constants::BigAllocation;
-	proof = (long*) malloc (Proof::max * sizeof (long ));
+	Blablabla::log("Allocating proof list.");
+	max = Parameters::databaseSize;
+	proof = (long*) malloc (max * sizeof (long ));
 	used = 0;
+	if(proof == NULL) {
+		Blablabla::log("Error at proof list allocation.");
+		Blablabla::comment("Memory management error.");
+		return false;
+	} else {
+		return true;
+	}
 }
 
 void reallocate() {

@@ -46,6 +46,7 @@ EXECUTABLE = $(BINPATH)rupee
 
 $(EXECUTABLE) : directories $(OBJS)
 	$(LD) $(OBJS) $(LIBS) $(LDFLAGS) $(EXECUTABLE)
+	echo "\nBinary created in $(EXECUTABLE)"
 
 $(call MkO,assignment) : $(call MkC,assignment) $(call MkH,assignment) $(call MkH,database) $(call MkH,watchlist) $(call MkH,chain) $(call MkH,reprocess) $(call MkH,extra)
 	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,assignment) -o $(call MkO,assignment)

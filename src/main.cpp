@@ -59,7 +59,7 @@ bool readArguments(int argc, char* argv[]) {
 bool initializeStorage() {
 	Blablabla::log("Allocating clause storages.");
 	Blablabla::increase();
-	if(!Parser::allocate()) { return false; }
+	if(!Parser::allocate(Parser::Buffer)) { return false; }
 	if(!Database::allocate()) { return false; }
 	if(!Proof::allocate()) { return false; }
 	if(!HashTable::allocate()) { return false; }
@@ -71,16 +71,18 @@ bool initializeStorage() {
 bool parse() {
 	Blablabla::comment("Parsing CNF instance " + Parameters::pathPremise + " .");
 	Blablabla::increase();
-	if(!Parser::openFile(Constants::KindOriginal)) { return false; }
-	if(!Parser::readHeader()) { return false; }
-	if(!Parser::readClauses()) { return false; }
+	Parser::initialize(Parser::Info);
+	if(!Parser::openFile(Parser::Info, Constants::KindOriginal)) { return false; }
+	if(!Parser::readHeader(Parser::Info)) { return false; }
+	if(!Parser::readClauses(Parser::Info, Parser::Buffer)) { return false; }
 	Blablabla::decrease();
 	Blablabla::comment("Parsing DRAT proof " + Parameters::pathProof + " .");
 	Blablabla::increase();
 	if(!Parser::openFile(Constants::KindDerived)) { return false; }
 	if(!Parser::readClauses()) { return false; }
 	Blablabla::decrease();
-	Parser::endParsing();
+	Parser::finish(Parser::Info);
+	Parser::deallocate(Parser::Buffer);
 	HashTable::deallocate();
 	return true;
 }

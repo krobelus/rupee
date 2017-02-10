@@ -10,7 +10,7 @@
 #include <stdlib.h>
 
 struct parser {
-	int file;
+	bool file;
 	std::ifstream input;
 	int maxVariable;
 };
@@ -31,7 +31,7 @@ namespace Parser {
 	extern boost::smatch result;
 
 	void initialize(parser& p);
-	bool openFile(parser& p, int f);
+	bool openFile(parser& p, bool f);
 	bool readHeader(parser& p);
 	bool readClauses(parser& p, clause& c, hashtable& h, database& d, proof& r);
 	bool parseClause(parser& p, clause& c, std::string& s);

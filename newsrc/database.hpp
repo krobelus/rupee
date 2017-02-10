@@ -10,36 +10,17 @@ struct database {
 };
 
 namespace Database {
-	extern int* db;
-	extern int max;
-	extern int used;
+    extern int it;
 
-	extern int* clause_;
-	extern int* ptr_;
-	extern int it_;
-
-	void allocate();
-	void reallocate();
-	void deallocate();
-
-	void setNoPremises(int value);
-	void setNoVariables(int value);
-
-	long addClause(int* cla, int size, int pivot, int flags);
-
-	void setFlag(long offset, int flag, int value);
-	bool isFlag(long offset, int flag, int value);
-	bool mustVerify(int* clause);
-
-	long getOffset(int* position);
-	int* getPointer(long offset);
-
-	void activateClause(long offset);
-	void deactivateClause(long offset);
-
-	void print();
-	void printField();
-	void printClause(long offset);
+    bool allocate(database& d);
+    bool reallocate(database& d);
+    void deallocate(database& d);
+    long getOffset(database& d, int* ptr);
+    int* getPointer(database& d, long offset);
+    bool isFlag(int* ptr, int bit, bool value);
+    void setFlag(int* ptr, int bit, bool value);
+    bool addBufferClause(database& d, clause& c, int*& ptr, long& offset);
+    void log(database& d);
 }
 
 #endif

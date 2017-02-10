@@ -17,7 +17,7 @@ namespace Parser {
 extern int literal;
 extern int pivot;
 extern int varliteral;
-extern bool endclause;
+extern int* ptr;
 extern long offset;
 extern unsigned int hashValue;
 extern std::string line;
@@ -27,9 +27,9 @@ void initialize(parser& p) {
     p.maxVariable = 0;
 }
 
-bool openFile(parser& p, int f) {
+bool openFile(parser& p, bool f) {
     p.file = f;
-	if(f == Constants::KindOriginal) {
+	if(f == Constants::FilePremise) {
 		p.input.open(Parameters::pathPremise);
 	} else {
 		p.input.open(Parameters::pathProof);
@@ -77,9 +77,9 @@ bool readClauses(parser& p, clause& c, hashtable& h, database& d, proof& r) {
 bool parseClause(parser& p, clause& c, std::string& s) {
     Clause::resetBuffer(c);
 	if(boost::regex_search(s, result, deletionRegex)) {
-		c.kind = Constants::KindDeletion;
+		c.kind = Constants::InstructionDeletion;
 	} else {
-		c.kind = Constants::KindIntroduction;
+		c.kind = Constants::InstructionIntroduction;
 	}
 	while(boost::regex_search(s, result, literalRegex)) {
 		literal = boost::lexical_cast<int>(result[1]);
@@ -103,8 +103,12 @@ bool processClause(parser& p, clause& c, hashtable& h, database& d, proof& r){
     pivot = c.clausearray[0];
     Clause::sortClause(c);
     hashValue = HashTable::getHash(c);
-    if(c.kind == Constants::KindIntroduction) {
-        offset = Database::addClause(d, c, p.file | Constants::KindSkip | Constants::KindPermanent | Constants::KindActive);
+    if(c.kind == Constants::InstructionIntroduction) {
+        if(!Database::addClause(d, c, ptr, offset)) { return false; }
+        Database::setFlag(ptr, Constants::ActivityBit, Constants::ActiveFlag);
+        Database::setFlag(ptr, Constants::OriginalityBit, p.file);
+        Database::setFlag(ptr, Constants::VerificationBit, Constants::SkipFlag);
+        Database::setFlag(ptr, Constants::PseudounitBit, Constants::RedundantFlag);
         HashTable::addClause(h, hashValue, offset);
     } else {
         if((offset = HashTable::matchAndRemoveClause(h, c, hashValue) < 0) {

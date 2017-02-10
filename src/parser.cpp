@@ -103,10 +103,6 @@ void initialize(info& i) {
 	i.maxVariable = 0;
 }
 
-void finish(info& i) {
-	Database::noVariables = i.maxVariable;
-}
-
 bool openFile(info& i, int file) {
 	i.file = file;
 	if(file == Constants::KindOriginal) {

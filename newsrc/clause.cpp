@@ -99,6 +99,15 @@ namespace Clause {
         qsort(b.bufferarray, b.bufferused, sizeof(int), compare)
     }
 
+    bool equals(clause& c, int* ptr) {
+        for(it = 0; it < c.clauseused; ++it) {
+            if(ptr[it] != c.clauseused[it]) {       // This check within it < c.clauseused subsumes ptr[it] != 0,
+                return false;                       // and so it prevents segmentation fault.
+            }
+        }
+        return (ptr[it] == 0);                      // At this point we know c.clauseused[it] == 0 holds.
+    }
+
     int compare(const void *a, const void *b) {
         return (*(int*)a - *(int*)b);
     }

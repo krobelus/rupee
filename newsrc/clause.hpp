@@ -23,6 +23,7 @@ namespace Clause {
     void resetBuffer(clause& c);
     void resetClause(clause& c);
     void sortClause(clause& c);
+	bool equals(clause& c, int* ptr);
     int compare(const void *a, const void *b);
 }
 

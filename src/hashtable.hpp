@@ -12,6 +12,7 @@ namespace HashTable {
 	void deallocate();
 	void reallocateRow(int i);
 	unsigned int getHash(int* cla);
+	bool match(hashtable& h, database& d, clause& c, unsigned int hash, long& offset);
 	void removeClause(unsigned int hashValue, int position);
 	long matchAndRemoveClause(int* cla, int length, unsigned int hashValue);
 	void addClause(unsigned int hashValue, long offset);

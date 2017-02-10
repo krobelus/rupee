@@ -103,17 +103,28 @@ void log(database& d) {
 					str = str + "  ";
 				}
 			}
-			str = str + "  ";
+			str = str + "  [ ";
 		} else {
 			if(d.databasearray[i] != 0) {
 				str = str + std::to_string(d.databasearray[i]) + " ";
 			} else {
+				str = str + "]";
 				Blablabla::log(str);
 				inclause = false;
 			}
 		}
 		i++;
 	}
+}
+
+void offsetToString(database &d, long offset) {
+	std::string str = "[ ";
+	int* pointer = getPointer(d, offset);
+	while(*pointer != 0) {
+		str = str + std::to_string(*pointer);
+	}
+	str = str + "]"
+	Blablabla::log(str);
 }
 
 }

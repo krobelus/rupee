@@ -13,6 +13,7 @@ struct parser {
 	bool file;
 	std::ifstream input;
 	int maxVariable;
+	int noPremises;
 };
 
 namespace Parser {

@@ -14,17 +14,17 @@
 
 namespace Parser {
 
-extern int literal;
-extern int pivot;
-extern int varliteral;
-extern int* ptr;
-extern long offset;
-extern unsigned int hashValue;
-extern std::string line;
-extern boost::smatch result;
+int literal;
+int pivot;
+int varliteral;
+long offset;
+unsigned int hash;
+std::string line;
+boost::smatch result;
 
 void initialize(parser& p) {
     p.maxVariable = 0;
+    p.noPremises = 0;
 }
 
 bool openFile(parser& p, bool f) {
@@ -76,7 +76,7 @@ bool readClauses(parser& p, clause& c, hashtable& h, database& d, proof& r) {
 
 bool parseClause(parser& p, clause& c, std::string& s) {
     Clause::resetBuffer(c);
-	if(boost::regex_search(s, result, deletionRegex)) {
+	if(p.file == Constants::FileProof && boost::regex_search(s, result, deletionRegex)) {
 		c.kind = Constants::InstructionDeletion;
 	} else {
 		c.kind = Constants::InstructionIntroduction;
@@ -102,25 +102,24 @@ bool parseClause(parser& p, clause& c, std::string& s) {
 bool processClause(parser& p, clause& c, hashtable& h, database& d, proof& r){
     pivot = c.clausearray[0];
     Clause::sortClause(c);
-    hashValue = HashTable::getHash(c);
-    if(c.kind == Constants::InstructionIntroduction) {
-        if(!Database::addClause(d, c, ptr, offset)) { return false; }
-        Database::setFlag(ptr, Constants::ActivityBit, Constants::ActiveFlag);
-        Database::setFlag(ptr, Constants::OriginalityBit, p.file);
-        Database::setFlag(ptr, Constants::VerificationBit, Constants::SkipFlag);
-        Database::setFlag(ptr, Constants::PseudounitBit, Constants::RedundantFlag);
-        HashTable::addClause(h, hashValue, offset);
+    hash = HashTable::getHash(c);
+    if(HashTable::match(h, d, c, hash, offset)) {
+        Proof::storeInstruction(r, offset, pivot, c.kind);
     } else {
-        if((offset = HashTable::matchAndRemoveClause(h, c, hashValue) < 0) {
+        if(c.kind == Constants::InstructionIntroduction) {
+            if(!Database::addClause(d, c, offset)) { return false; }
+            if(!HashTable::insertOffset(h, hash, offset)) { return false;}
+        } else {
             Blablabla::log("Attempted to remove a missing clause.");
-            Blablabla::comment("Ignoring incorrect deletion instruction.")
+            Blablabla::comment("Ignoring incorrect deletion instruction.");
         }
-        Database::deactivateClause(d, offset);
-        Database::temporalClause(d, offset);
     }
     if(p.file == Constants::KindDerived) {
         Proof::storeInstruction(r, offset, pivot, c.kind);
+    } else {
+        ++(p.noPremises);
     }
+    return true;
 }
 
 }

@@ -45,6 +45,9 @@ namespace Parameters {
 	void setPremise(std::string path);
 	void setProof(std::string path);
 	void setVerbosity(bool value);
+	void setBufferSize(int value);
+	void setDatabaseSize(int value);
+	void setHashDepth(int value);
 }
 
 namespace Blablabla {
@@ -52,27 +55,27 @@ namespace Blablabla {
 
 	void increase();
 	void decrease();
-	void comment();
-	void log();
-}
-
-
-namespace Tools {
-	extern int commentLevel;
-
-	int compare (const void *a, const void *b);
-	void sortClause(int* cla, int length);
-	int leap(int x);
-
 	void comment(std::string str);
-	void increaseCommentLevel();
-	void decreaseCommentLevel();
-	std::string offsetToString(long offset);
-	std::string pointerToString(int* ptr);
-	std::string processingStackToString();
-	void resolutionChain();
-	void reprocessingStack();
-	void watchList(int literal);
+	void log(std::string str);
 }
+
+//
+// namespace Tools {
+// 	extern int commentLevel;
+//
+// 	int compare (const void *a, const void *b);
+// 	void sortClause(int* cla, int length);
+// 	int leap(int x);
+//
+// 	void comment(std::string str);
+// 	void increaseCommentLevel();
+// 	void decreaseCommentLevel();
+// 	std::string offsetToString(long offset);
+// 	std::string pointerToString(int* ptr);
+// 	std::string processingStackToString();
+// 	void resolutionChain();
+// 	void reprocessingStack();
+// 	void watchList(int literal);
+// }
 
 #endif

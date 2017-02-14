@@ -8,6 +8,7 @@
 namespace Database {
 
 int it;
+int* pointer;
 
 bool allocate(database& d) {
 	Blablabla::log("Allocating clause database.");
@@ -61,16 +62,16 @@ void setFlag(int* ptr, int bit, bool value) {
 	}
 }
 
-bool addBufferClause(database& d, clause& c, int*& ptr, long& offset) {
+bool addBufferClause(database& d, clause& c, long& offset) {
 	if(d.databaseused + c.clauseused + Constants::ExtraCellsDatabase >= d.databasemax) {
 		if(!reallocate(d)) { return false; }
 	}
-	ptr = d.databasearray + d.databaseused + Constants::ExtraCellsDatabase;
+	pointer = d.databasearray + d.databaseused + Constants::ExtraCellsDatabase;
 	for(it = 0; it <= c.clauseused; ++it) {
-		ptr[it] = c.clausearray[it];
+		pointer[it] = c.clausearray[it];
 	}
-	d.databaseused += c.clauseused + Constants::ExtraCellsDatabase;
-	offset = getOffset(d, ptr);
+	d.databaseused += c.clauseused + Constants::ExtraCellsDatabase + 1;
+	offset = getOffset(d, pointer);
 	return true;
 }
 
@@ -97,7 +98,7 @@ void log(database& d) {
 			inclause = true;
 			str = "";
 			for(int j = 0; j <= 4; j++ ) {
-				if (((d.databaseused[i] >> j) % 2) != 0) {
+				if (((d.databasearray[i] >> j) % 2) != 0) {
 					str = str + symbols[j] + " ";
 				} else {
 					str = str + "  ";
@@ -115,16 +116,28 @@ void log(database& d) {
 		}
 		i++;
 	}
+	str = "";
+	for(i = 0; i < d.databaseused; ++i) {
+		str = str + std::to_string(d.databasearray[i]);
+		if(i % 30 == 29) {
+			Blablabla::log(str);
+			str = "";
+		} else {
+			str = str + " ";
+		}
+	}
+	Blablabla::log(str);
+	Blablabla::decrease();
 }
 
-void offsetToString(database &d, long offset) {
+std::string offsetToString(database& d, long offset) {
 	std::string str = "[ ";
 	int* pointer = getPointer(d, offset);
 	while(*pointer != 0) {
-		str = str + std::to_string(*pointer);
+		str = str + std::to_string(*(pointer++)) + " ";
 	}
-	str = str + "]"
-	Blablabla::log(str);
+	str = str + "]";
+	return str;
 }
 
 }

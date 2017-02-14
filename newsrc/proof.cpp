@@ -1,6 +1,8 @@
 #include <iostream>
 #include <string>
 
+#include "extra.hpp"
+#include "database.hpp"
 #include "proof.hpp"
 
 namespace Proof {
@@ -55,34 +57,25 @@ bool getInstruction(proof& r, int i, long& offset, int& pivot, bool& kind) {
 	pivot = r.proofpivots[i];
 	kind = pivot % 2;
 	pivot >>= 1;
+	return true;
 }
 
 void log(proof& r, database& d) {
 	int i;
 	long offset;
-	int* pointer;
 	int pivot;
 	bool kind;
 	std::string str;
 	Blablabla::log("Proof:");
 	Blablabla::increase();
-	for(i = 0; i < r.proofused; i++) {
+	for(i = 0; i < r.proofused; ++i) {
 		getInstruction(r, i, offset, pivot, kind);
 		if(kind == Constants::InstructionIntroduction) {
-			str = "+++ [ ";
+			str = "+++ ";
 		} else {
-			str = "--- [ ";
+			str = "--- ";
 		}
-		pointer = Database::getPointer(d, offset);
-		while(*pointer != 0) {
-			str = str + std::to_string(*pointer);
-			if(kind == Constants::InstructionIntroduction && *pointer == pivot) {
-				str = str + "*";
-			}
-			str = str + " ";
-		}
-		str = str + "]";
-		Blablabla::log(str);
+		Blablabla::log(str + Database::offsetToString(d, offset));
 	}
 	Blablabla::decrease();
 }

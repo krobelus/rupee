@@ -47,7 +47,7 @@ bool readHeader(parser& p) {
     while(p.input.good()) {
 		getline(p.input, line);
 		if(boost::regex_search(line, result, headerRegex)) {
-			Blablabla::log("Header found.")
+			Blablabla::log("Header found.");
 			return true;
 		}
 	}
@@ -102,19 +102,19 @@ bool parseClause(parser& p, clause& c, std::string& s) {
 bool processClause(parser& p, clause& c, hashtable& h, database& d, proof& r){
     pivot = c.clausearray[0];
     Clause::sortClause(c);
-    hash = HashTable::getHash(c);
-    if(HashTable::match(h, d, c, hash, offset)) {
-        Proof::storeInstruction(r, offset, pivot, c.kind);
-    } else {
+    hash = HashTable::getHash(c.clausearray);
+    Blablabla::log("Parsed clause: " + Clause::printClause(c));
+    if(!HashTable::match(h, d, c, hash, offset)) {
         if(c.kind == Constants::InstructionIntroduction) {
-            if(!Database::addClause(d, c, offset)) { return false; }
+            if(!Database::addBufferClause(d, c, offset)) { return false; }
             if(!HashTable::insertOffset(h, hash, offset)) { return false;}
         } else {
             Blablabla::log("Attempted to remove a missing clause.");
             Blablabla::comment("Ignoring incorrect deletion instruction.");
+            return true;
         }
     }
-    if(p.file == Constants::KindDerived) {
+    if(p.file == Constants::FileProof) {
         Proof::storeInstruction(r, offset, pivot, c.kind);
     } else {
         ++(p.noPremises);

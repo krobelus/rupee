@@ -4,9 +4,21 @@
 #include "parser.hpp"
 #include "database.hpp"
 #include "proof.hpp"
+#include "clause.hpp"
+#include "hashtable.hpp"
+#include "trail.hpp"
 #include "extra.hpp"
 
 // using namespace std;
+
+namespace Objects {
+	clause Clause;
+	parser Parser;
+	database Database;
+	hashtable HashTable;
+	proof Proof;
+	trail Trail;
+}
 
 namespace Frontend {
 
@@ -55,62 +67,72 @@ bool readArguments(int argc, char* argv[]) {
 }
 
 bool initializeStorage() {
-	Blablabla::log("Allocating clause storages.");
+	Blablabla::log("Initializing basic data structures.");
 	Blablabla::increase();
-	if(!Parser::allocate(Parser::Buffer)) { return false; }
-	if(!Database::allocate()) { return false; }
-	if(!Proof::allocate()) { return false; }
-	if(!HashTable::allocate()) { return false; }
+	if(!Clause::allocateBuffer(Objects::Clause)) { return false; }
+	if(!HashTable::allocate(Objects::HashTable)) { return false; }
+	if(!Database::allocate(Objects::Database)) { return false; }
+	if(!Proof::allocate(Objects::Proof)) { return false; }
 	Blablabla::decrease();
 	return true;
 }
-
 
 bool parse() {
 	Blablabla::comment("Parsing CNF instance " + Parameters::pathPremise + " .");
 	Blablabla::increase();
-	Parser::initialize(Parser::Info);
-	if(!Parser::openFile(Parser::Info, Constants::KindOriginal)) { return false; }
-	if(!Parser::readHeader(Parser::Info)) { return false; }
-	if(!Parser::readClauses(Parser::Info, Parser::Buffer)) { return false; }
+	Parser::initialize(Objects::Parser);
+	if(!Parser::openFile(Objects::Parser, Constants::FilePremise)) { return false; }
+	if(!Parser::readHeader(Objects::Parser)) { return false; }
+	if(!Parser::readClauses(Objects::Parser, Objects::Clause, Objects::HashTable, Objects::Database, Objects::Proof)) { return false; }
 	Blablabla::decrease();
 	Blablabla::comment("Parsing DRAT proof " + Parameters::pathProof + " .");
 	Blablabla::increase();
-	if(!Parser::openFile(Constants::KindDerived)) { return false; }
-	if(!Parser::readClauses()) { return false; }
+	if(!Parser::openFile(Objects::Parser, Constants::FileProof)) { return false; }
+	if(!Parser::readClauses(Objects::Parser, Objects::Clause, Objects::HashTable, Objects::Database, Objects::Proof)) { return false; }
 	Blablabla::decrease();
-	Parser::finish(Parser::Info);
-	Parser::deallocate(Parser::Buffer);
-	HashTable::deallocate();
+	Blablabla::comment("Freeing parsing data structures.");
+	Blablabla::increase();
+	Clause::resetBuffer(Objects::Clause);
+	HashTable::deallocate(Objects::HashTable);
+	Blablabla::decrease();
+	Database::log(Objects::Database);
+	Proof::log(Objects::Proof, Objects::Database);
 	return true;
 }
 
-
-int main(int argc,char* argv[]){
-	if(!readArguments(argc, argv)) { return 1; }
-	if(!initializeStorage()) { return 1; }
-	if(!parse()) { return 1; }
-
-
-		Parser::parse();
-		Proof::print();
-		WatchList::printWatches();
-		WatchList::printQueue();
-		WatchList::printConflicts();
-		Database::print();
-
-		if(Solver::checkProof()) {
-			std::cout << "VERIFIED" << std::endl;
-		} else {
-			std::cout << "INCORRECT" << std::endl;
-		}
-		Solver::deallocate();
-	}
-	return 0;
+bool initializeAuxiliary() {
+	if(!Trail::allocate(Objects::Parser, Objects::Trail)) { return true; }
 }
+
+
+// int main(int argc,char* argv[]){
+// 	if(!readArguments(argc, argv)) { return 1; }
+// 	if(!initializeStorage()) { return 1; }
+// 	if(!parse()) { return 1; }
+//
+//
+// 		Parser::parse();
+// 		Proof::print();
+// 		WatchList::printWatches();
+// 		WatchList::printQueue();
+// 		WatchList::printConflicts();
+// 		Database::print();
+//
+// 		if(Solver::checkProof()) {
+// 			std::cout << "VERIFIED" << std::endl;
+// 		} else {
+// 			std::cout << "INCORRECT" << std::endl;
+// 		}
+// 		Solver::deallocate();
+// 	}
+// 	return 0;
+// }
 
 }
 
 int main(int argc, char* argv[]) {
-	return Frontend::main(argc, argv);
+	if(!Frontend::readArguments(argc, argv)) { return 1; }
+	if(!Frontend::initializeStorage()) { return 1; }
+	if(!Frontend::parse()) { return 1; }
+	return 0;
 }

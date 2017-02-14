@@ -24,11 +24,11 @@ namespace HashTable {
     	if(h.rowarray == NULL || h.rowused == NULL || h.rowmax == NULL) {
     		error = true;
     	}
-    	for(int i = 0; i < Parameters::databaseSize && !error; ++i) {
-    		h.rowarray[i] = (long*) malloc (Parameters::hashDepth * sizeof (long));
-    		h.rowused[i] = Parameters::hashDepth;
-    		h.rowmax[i] = 0;
-    		if(h.rowarray[i] == NULL) {
+    	for(it = 0; it < Parameters::databaseSize && !error; ++it) {
+    		h.rowarray[it] = (long*) malloc (Parameters::hashDepth * sizeof (long));
+    		h.rowmax[it] = Parameters::hashDepth;
+    		h.rowused[it] = 0;
+    		if(h.rowarray[it] == NULL) {
     			error = true;
     		}
     	}
@@ -43,9 +43,9 @@ namespace HashTable {
 
     bool reallocateRow(hashtable& h, int row) {
         Blablabla::log("Reallocating hash table.");
-        h.rowmax[i] = (h.rowmax[i] * 3) >> 1;
-        h.rowarray[i] = (long*) realloc(h.rowarray[i], h.rowmax[i] * sizeof(long));
-        if(h.rowarray[i] == NULL) {
+        h.rowmax[row] = (h.rowmax[row] * 3) >> 1;
+        h.rowarray[row] = (long*) realloc(h.rowarray[row], h.rowmax[row] * sizeof(long));
+        if(h.rowarray[row] == NULL) {
             Blablabla::log("Error at hash table reallocation.");
             Blablabla::comment("Memory management error.");
             return false;
@@ -56,8 +56,8 @@ namespace HashTable {
 
 	void deallocate(hashtable& h) {
         Blablabla::log("Deallocating hash table.");
-    	for(int i = 0; i < Parameters::databaseSize; ++i) {
-    		free(h.rowarray[i]);
+    	for(it = 0; it < Parameters::databaseSize; ++it) {
+    		free(h.rowarray[it]);
     	}
     	free(h.rowarray);
     	free(h.rowused);
@@ -72,9 +72,9 @@ namespace HashTable {
             prod *= *ptr;
             sum += *ptr;
             xoor ^= *ptr;
-            ptr++;
+            ++ptr;
         }
-        return (((1023 * sum + prod) ^ (31 * xoor))) % Constants::databaseSize;
+        return (((1023 * sum + prod) ^ (31 * xoor))) % Parameters::databaseSize;
     }
 
     bool match(hashtable& h, database& d, clause& c, unsigned int hash, long& offset) {
@@ -82,7 +82,7 @@ namespace HashTable {
         length = h.rowused[hash];
         for(it = 0; it < length; ++it) {
             ptr = Database::getPointer(d, list[it]);
-            if(!Database::isFlag(ptr, Constants::ActivityFlagDatabase, c.kind)) {
+            if(!Database::isFlag(ptr, Constants::ActivityBit, !c.kind)) {
                 if(Clause::equals(c, ptr)) {
                     offset = list[it];
                     return true;

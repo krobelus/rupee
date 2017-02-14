@@ -3,6 +3,8 @@
 
 #include <stdlib.h>
 
+#include "clause.hpp"
+
 struct database {
     int* databasearray;
     int databasemax;
@@ -19,8 +21,9 @@ namespace Database {
     int* getPointer(database& d, long offset);
     bool isFlag(int* ptr, int bit, bool value);
     void setFlag(int* ptr, int bit, bool value);
-    bool addBufferClause(database& d, clause& c, int*& ptr, long& offset);
+    bool addBufferClause(database& d, clause& c, long& offset);
     void log(database& d);
+    std::string offsetToString(database& d, long offset);
 }
 
 #endif

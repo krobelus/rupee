@@ -7,7 +7,12 @@
 #include <string>
 #include <boost/regex.hpp>
 #include <boost/lexical_cast.hpp>
-#include <stdlib.h>
+
+#include "extra.hpp"
+#include "database.hpp"
+#include "proof.hpp"
+#include "hashtable.hpp"
+#include "clause.hpp"
 
 struct parser {
 	bool file;

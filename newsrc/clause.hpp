@@ -1,12 +1,15 @@
 #ifndef __CLAUSE_H_INCLUDED__
 #define __CLAUSE_H_INCLUDED__
 
+#include <stdlib.h>
+#include <string>
+
 struct clause {
 	int* clausearray;
 	int clausemax;
 	int clauseused;
     bool* clauselits;
-	int kind;
+	bool kind;
 };
 
 namespace Clause {
@@ -19,12 +22,13 @@ namespace Clause {
     void deallocateLiterals(clause &c);
     bool addLiteral(clause& c, int literal);
     bool addFullLiteral(clause& c, int literal);
-    void closeBuffer(clause& c);
+    bool closeBuffer(clause& c);
     void resetBuffer(clause& c);
     void resetClause(clause& c);
     void sortClause(clause& c);
 	bool equals(clause& c, int* ptr);
     int compare(const void *a, const void *b);
+	std::string printClause(clause& c);
 }
 
 #endif

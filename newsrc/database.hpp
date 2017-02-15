@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include "clause.hpp"
+#include "proof.hpp"
 
 struct database {
     int* databasearray;
@@ -21,7 +22,9 @@ namespace Database {
     int* getPointer(database& d, long offset);
     bool isFlag(int* ptr, int bit, bool value);
     void setFlag(int* ptr, int bit, bool value);
+    int classifyClause(int* ptr);
     bool addBufferClause(database& d, clause& c, long& offset);
+    void setPremiseFlags(database& d, int* ptr);
     void log(database& d);
     std::string offsetToString(database& d, long offset);
 }

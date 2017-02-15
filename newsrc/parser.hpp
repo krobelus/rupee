@@ -8,7 +8,6 @@
 #include <boost/regex.hpp>
 #include <boost/lexical_cast.hpp>
 
-#include "extra.hpp"
 #include "database.hpp"
 #include "proof.hpp"
 #include "hashtable.hpp"
@@ -18,7 +17,6 @@ struct parser {
 	bool file;
 	std::ifstream input;
 	int maxVariable;
-	int noPremises;
 };
 
 namespace Parser {

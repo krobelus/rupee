@@ -14,7 +14,8 @@ OBJS = $(call MkO,clause) \
 		$(call MkO,parser) \
 		$(call MkO,proof) \
 		$(call MkO,rupee) \
-		$(call MkO,trail)
+		$(call MkO,trail) \
+		$(call MkO,watchlist)
 
 ###  g++ -std=c++11 assignment.cpp chain.cpp $(call MkC,extra) $(call MkC,hashtable) $(call MkC,parser) $(call MkC,proof) $(call MkC,watchlist) $(call MkC,database) micetrim.cpp -lboost_regex -o micetrim
 
@@ -44,34 +45,31 @@ $(EXECUTABLE) : directories $(OBJS)
 	$(LD) $(OBJS) $(LIBS) $(LDFLAGS) $(EXECUTABLE)
 	echo "\nBinary created in $(EXECUTABLE)"
 
-# $(call MkO,assignment) : $(call MkC,assignment) $(call MkH,assignment) $(call MkH,database) $(call MkH,watchlist) $(call MkH,chain) $(call MkH,reprocess) $(call MkH,extra)
-# 	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,assignment) -o $(call MkO,assignment)
-#
-# $(call MkO,chain) : $(call MkC,chain) $(call MkH,chain) $(call MkH,assignment) $(call MkH,database) $(call MkH,watchlist) $(call MkH,extra)
-# 	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,chain) -o $(call MkO,chain)
-
 $(call MkO,clause) : $(call MkC,clause) $(call MkH,clause) $(call MkH,extra)
 	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,clause) -o $(call MkO,clause)
 
-$(call MkO,database) : $(call MkC,database) $(call MkH,database) $(call MkH,extra) $(call MkH,clause)
+$(call MkO,database) : $(call MkC,database) $(call MkH,database) $(call MkH,extra) $(call MkH,clause) $(call MkH,proof)
 	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,database) -o $(call MkO,database)
 
-$(call MkO,extra) : $(call MkC,extra) $(call MkH,extra)
+$(call MkO,parser) : $(call MkC,parser) $(call MkH,parser) $(call MkH,hashtable) $(call MkH,extra) $(call MkH,database) $(call MkH,clause) $(call MkH,proof)
+	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,parser) -o $(call MkO,parser)
+
+$(call MkO,extra) : $(call MkC,extra) $(call MkH,extra) $(call MkH,parser)
 	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,extra) -o $(call MkO,extra)
 
 $(call MkO,hashtable) : $(call MkC,hashtable) $(call MkH,hashtable) $(call MkH,extra) $(call MkH,database) $(call MkH,clause)
 	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,hashtable) -o $(call MkO,hashtable)
 
-$(call MkO,parser) : $(call MkC,parser) $(call MkH,parser) $(call MkH,hashtable) $(call MkH,extra) $(call MkH,database) $(call MkH,clause) $(call MkH,proof)
-	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,parser) -o $(call MkO,parser)
-
 $(call MkO,proof) : $(call MkC,proof) $(call MkH,proof) $(call MkH,extra) $(call MkH,database)
 	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,proof) -o $(call MkO,proof)
 
-$(call MkO,trail) : $(call MkC,trail) $(call MkH,trail) $(call MkH,parser)
+$(call MkO,trail) : $(call MkC,trail) $(call MkH,trail) $(call MkH,parser) $(call MkH,extra)
 	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,trail) -o $(call MkO,trail)
 
-$(call MkO,rupee) : $(call MkC,rupee) $(call MkH,parser) $(call MkH,database) $(call MkH,proof) $(call MkH,clause) $(call MkH,hashtable) $(call MkH,extra) $(call MkH,trail)
+$(call MkO,watchlist) : $(call MkC,watchlist) $(call MkH,watchlist) $(call MkH,parser) $(call MkH,extra)
+	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,watchlist) -o $(call MkO,watchlist)
+
+$(call MkO,rupee) : $(call MkC,rupee) $(call MkH,parser) $(call MkH,database) $(call MkH,proof) $(call MkH,clause) $(call MkH,hashtable) $(call MkH,extra) $(call MkH,trail) $(call MkH,watchlist)
 	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,rupee) -o $(call MkO,rupee)
 
 clean :

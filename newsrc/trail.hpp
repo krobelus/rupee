@@ -3,8 +3,6 @@
 
 #include <stdlib.h>
 
-#include "parser.hpp"
-
 struct stack {
     int* array;
     int* current;
@@ -31,8 +29,8 @@ struct trail {
 };
 
 namespace Trail {
-    bool allocate(parser& p, trail& t);
-    void deallocate(parser& p, trail& t);
+    bool allocate(trail& t);
+    void deallocate(trail& t);
 }
 
 //

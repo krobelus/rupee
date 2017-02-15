@@ -13,6 +13,7 @@ bool allocate(proof& r) {
 	r.proofused = 0;
 	r.proofarray = (long*) malloc (r.proofmax * sizeof(long));
 	r.proofpivots = (int*) malloc (r.proofmax * sizeof(int));
+	r.noPremises = 0;
 	if(r.proofarray == NULL || r.proofpivots == NULL) {
 		Blablabla::log("Error at proof list allocation.");
 		Blablabla::comment("Memory management error.");
@@ -42,6 +43,11 @@ void deallocate(proof& r) {
 	free(r.proofpivots);
 }
 
+bool storePremise(proof& r, long offset) {
+	++(r.noPremises);
+	return storeInstruction(r, offset, 0, false);
+}
+
 bool storeInstruction(proof& r, long offset, int pivot, bool kind) {
 	if(r.proofused >= r.proofmax) {
 		if(!reallocate(r)) { return false; }
@@ -51,12 +57,40 @@ bool storeInstruction(proof& r, long offset, int pivot, bool kind) {
 	return true;
 }
 
-bool getInstruction(proof& r, int i, long& offset, int& pivot, bool& kind) {
-	if(i < 0 || i >= r.proofused) { return false; }
-	offset = r.proofarray[i];
-	pivot = r.proofpivots[i];
-	kind = pivot % 2;
-	pivot >>= 1;
+void firstPremise(proof& r, proofiterator& i) {
+	i.position = 0;
+}
+
+void firstInstruction(proof& r, proofiterator& i) {
+	i.position = r.noPremises;
+}
+
+void nextLine(proof& r, proofiterator& i) {
+	++(i.position);
+}
+
+void prevLine(proof& r, proofiterator& i) {
+	--(i.position);
+}
+
+void lastInstruction(proof& r, proofiterator& i) {
+	i.position = r.proofused - 1;
+}
+
+bool getPremise(proof& r, database& d, proofiterator& i) {
+	if(i.position < 0 || i.position >= r.noPremises) { return false; }
+	i.offset = r.proofarray[i.position];
+	i.pointer = getPointer(d, i.offset);
+	return true;
+}
+
+bool getInstruction(proof& r, database& d, proofiterator& i) {
+	if(i.position < r.noPremises || i.position >= r.proofused) { return false; }
+	i.offset = r.proofarray[i.position];
+	i.pointer = getPointer(d, i.offset);
+	i.pivot = r.proofpivots[i.position];
+	i.kind = i.pivot % 2;
+	i.pivot >>= 1;
 	return true;
 }
 

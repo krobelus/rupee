@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 
+#include "parser.hpp"
 #include "extra.hpp"
 
 namespace Parameters {
@@ -12,6 +13,7 @@ int bufferSize = 1000;
 int databaseSize = 1000000;
 bool verbosity = true;
 int hashDepth = 10;
+int noVariables;
 
 void setPremise(std::string path) {
     pathPremise = path;
@@ -41,6 +43,13 @@ void setHashDepth(int value) {
     Blablabla::log("Hash table depth size: " + std::to_string(value));
     hashDepth = value;
 }
+
+void importNoVariables(parser& p) {
+    noVariables = p.maxVariable;
+    Blablabla::log("Number of variables: " + std::to_string(noVariables));
+}
+
+
 
 }
 

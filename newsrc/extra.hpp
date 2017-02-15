@@ -3,6 +3,8 @@
 
 #include <string>
 
+#include "parser.hpp"
+
 namespace Constants {
 	const int ExtraCellsDatabase = 1;
 	const int FlagsCellDatabase = -1;
@@ -32,6 +34,10 @@ namespace Constants {
 	const int ArgumentsRest = 3;
 	const int ArgumentsHelp = 4;
 	const int ArgumentsError = 5;
+
+	const int ClauseSizeConflict = 0;
+	const int ClauseSizeUnit = 1;
+	const int ClauseSizeLong = 2;
 }
 
 namespace Parameters {
@@ -41,6 +47,7 @@ namespace Parameters {
 	extern int databaseSize;
 	extern bool verbosity;
 	extern int hashDepth;
+	extern int noVariables;
 
 	void setPremise(std::string path);
 	void setProof(std::string path);
@@ -48,6 +55,7 @@ namespace Parameters {
 	void setBufferSize(int value);
 	void setDatabaseSize(int value);
 	void setHashDepth(int value);
+	void importNoVariables(parser& p);
 }
 
 namespace Blablabla {

@@ -8,8 +8,7 @@
 #include "hashtable.hpp"
 #include "trail.hpp"
 #include "extra.hpp"
-
-// using namespace std;
+#include "watchlist.hpp"
 
 namespace Objects {
 	clause Clause;
@@ -18,6 +17,8 @@ namespace Objects {
 	hashtable HashTable;
 	proof Proof;
 	trail Trail;
+	watchlist WatchList;
+	proofiterator ProofIterator;
 }
 
 namespace Frontend {
@@ -94,6 +95,7 @@ bool parse() {
 	Blablabla::increase();
 	Clause::resetBuffer(Objects::Clause);
 	HashTable::deallocate(Objects::HashTable);
+	Parameters::importNoVariables(Objects::Parser);
 	Blablabla::decrease();
 	Database::log(Objects::Database);
 	Proof::log(Objects::Proof, Objects::Database);
@@ -101,9 +103,24 @@ bool parse() {
 }
 
 bool initializeAuxiliary() {
-	if(!Trail::allocate(Objects::Parser, Objects::Trail)) { return true; }
+	if(!Trail::allocate(Objects::Trail)) { return false; }
+	if(!WatchList::allocate(Objects::WatchList)) { return false; }
+	return true;
 }
 
+bool preprocessPremisses() {
+	Proof::firstPremise(Objects::Proof, Objects::ProofIterator);
+	while(Proof::getPremise(Objects::Proof, Objects::Database, Objects::ProofIterator)) {
+		Database::setPremiseFlags(Objects::ProofIterator.pointer);
+		if(!WatchList::setInitialWatches(Objects::WatchList, Objects::ProofIterator) { return false; }
+	}
+	return true;
+}
+
+bool preprocessProof() {
+	Proof::startInstructions(Objects::Proof, Objects::ProofIterator);
+
+}
 
 // int main(int argc,char* argv[]){
 // 	if(!readArguments(argc, argv)) { return 1; }
@@ -134,5 +151,6 @@ int main(int argc, char* argv[]) {
 	if(!Frontend::readArguments(argc, argv)) { return 1; }
 	if(!Frontend::initializeStorage()) { return 1; }
 	if(!Frontend::parse()) { return 1; }
+	if(!Frontend::initializeAuxiliary()) { return 1; }
 	return 0;
 }

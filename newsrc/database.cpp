@@ -3,6 +3,7 @@
 
 #include "extra.hpp"
 #include "clause.hpp"
+#include "proof.hpp"
 #include "database.hpp"
 
 namespace Database {
@@ -62,6 +63,16 @@ void setFlag(int* ptr, int bit, bool value) {
 	}
 }
 
+int classifyClause(int* ptr) {
+	if(*ptr == 0) {
+		return Constants::ClauseSizeConflict;
+	} else if(*(++ptr) == 0) {
+		return Constants::ClauseSizeUnit;
+	} else {
+		return Constants::ClauseSizeLong;
+	}
+}
+
 bool addBufferClause(database& d, clause& c, long& offset) {
 	if(d.databaseused + c.clauseused + Constants::ExtraCellsDatabase >= d.databasemax) {
 		if(!reallocate(d)) { return false; }
@@ -73,6 +84,14 @@ bool addBufferClause(database& d, clause& c, long& offset) {
 	d.databaseused += c.clauseused + Constants::ExtraCellsDatabase + 1;
 	offset = getOffset(d, pointer);
 	return true;
+}
+
+void setPremiseFlags(int* ptr) {
+	setFlag(ptr, Constants::ActivityBit, Constants::ActiveFlag);
+	setFlag(ptr, Constants::OriginalityBit, Constants::OriginalFlag);
+	setFlag(ptr, Constants::VerificationBit, Constants::SkipFlag);
+	setFlag(ptr, Constants::PersistencyBit, Constants::PersistentFlag);
+	setFlag(ptr, Constants::PseudounitBit, Constants::RedundantFlag);
 }
 
 void log(database& d) {

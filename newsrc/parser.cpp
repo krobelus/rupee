@@ -24,7 +24,6 @@ boost::smatch result;
 
 void initialize(parser& p) {
     p.maxVariable = 0;
-    p.noPremises = 0;
 }
 
 bool openFile(parser& p, bool f) {
@@ -115,9 +114,9 @@ bool processClause(parser& p, clause& c, hashtable& h, database& d, proof& r){
         }
     }
     if(p.file == Constants::FileProof) {
-        Proof::storeInstruction(r, offset, pivot, c.kind);
+        if(!Proof::storeInstruction(r, offset, pivot, c.kind)) { return false; }
     } else {
-        ++(p.noPremises);
+        if(!Proof::storePremise(r, offset)) { return false; }
     }
     return true;
 }

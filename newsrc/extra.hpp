@@ -13,6 +13,7 @@ namespace Constants {
 	const int OriginalityBit = 2;
 	const int PersistencyBit = 3;
     const int PseudounitBit = 4;
+	const int RawnessBit = 5;
     const bool ActiveFlag = true;
     const bool InactiveFlag = false;
     const bool OriginalFlag = true;
@@ -23,6 +24,8 @@ namespace Constants {
     const bool TemporalFlag = false;
     const bool ReasonFlag = true;
     const bool RedundantFlag = false;
+	const bool RawFlag = true;
+	const bool ProcessedFlag = false;
 
     const bool FilePremise = OriginalFlag;
     const bool FileProof = DerivedFlag;

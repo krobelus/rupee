@@ -83,15 +83,31 @@ bool addBufferClause(database& d, clause& c, long& offset) {
 	}
 	d.databaseused += c.clauseused + Constants::ExtraCellsDatabase + 1;
 	offset = getOffset(d, pointer);
+	Database::setFlag(pointer, Constants::RawnessBit, Constants::RawFlag);
 	return true;
 }
 
 void setPremiseFlags(int* ptr) {
-	setFlag(ptr, Constants::ActivityBit, Constants::ActiveFlag);
-	setFlag(ptr, Constants::OriginalityBit, Constants::OriginalFlag);
-	setFlag(ptr, Constants::VerificationBit, Constants::SkipFlag);
-	setFlag(ptr, Constants::PersistencyBit, Constants::PersistentFlag);
-	setFlag(ptr, Constants::PseudounitBit, Constants::RedundantFlag);
+	Database::setFlag(ptr, Constants::ActivityBit, Constants::ActiveFlag);
+	Database::setFlag(ptr, Constants::OriginalityBit, Constants::OriginalFlag);
+	Database::setFlag(ptr, Constants::VerificationBit, Constants::SkipFlag);
+	Database::setFlag(ptr, Constants::PersistencyBit, Constants::PersistentFlag);
+	Database::setFlag(ptr, Constants::PseudounitBit, Constants::RedundantFlag);
+	Database::setFlag(pointer, Constants::RawnessBit, Constants::ProcessedFlag);
+}
+
+void setIntroductionFlags(int* ptr) {
+	Database::setFlag(ptr, Constants::ActivityBit, Constants::ActiveFlag);
+	Database::setFlag(ptr, Constants::OriginalityBit, Constants::DerivedFlag);
+	Database::setFlag(ptr, Constants::VerificationBit, Constants::SkipFlag);
+	Database::setFlag(ptr, Constants::PersistencyBit, Constants::PersistentFlag);
+	Database::setFlag(ptr, Constants::PseudounitBit, Constants::RedundantFlag);
+	Database::setFlag(pointer, Constants::RawnessBit, Constants::ProcessedFlag);
+}
+
+void setDeletionFlags(int* ptr) {
+	Database::setFlag(ptr, Constants::ActivityBit, Constants::InactiveFlag);
+	Database::setFlag(ptr, Constants::PersistencyBit, Constants::TemporalFlag);
 }
 
 void log(database& d) {

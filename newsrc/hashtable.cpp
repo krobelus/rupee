@@ -83,7 +83,7 @@ namespace HashTable {
         length = h.rowused[hash];
         for(it = 0; it < length; ++it) {
             ptr = Database::getPointer(d, list[it]);
-            if(!Database::isFlag(ptr, Constants::ActivityBit, !c.kind)) {
+            if(!Database::isFlag(ptr, Constants::RawActivityBit, !c.kind)) {
                 if(Clause::equals(c, ptr)) {
                     offset = list[it];
                     return true;

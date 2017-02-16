@@ -17,9 +17,10 @@ namespace Database {
     void setFlag(int* ptr, int bit, bool value);
     int classifyClause(int* ptr);
     bool addBufferClause(database& d, clause& c, long& offset);
-    void setPremiseFlags(int* ptr);
-    void setIntroductionFlags(int* ptr);
-    void setDeletionFlags(int* ptr);
+    void setPremiseFlags(database& d, long offset);
+    void setNewIntroductionFlags(database& d, long offset);
+    void setOldIntroductionFlags(database& d, long offset);
+    void setDeletionFlags(database& d, long offset);
     void log(database& d);
     std::string offsetToString(database& d, long offset);
 }

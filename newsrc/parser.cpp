@@ -108,10 +108,21 @@ bool processClause(parser& p, clause& c, hashtable& h, database& d, proof& r){
         if(c.kind == Constants::InstructionIntroduction) {
             if(!Database::addBufferClause(d, c, offset)) { return false; }
             if(!HashTable::insertOffset(h, hash, offset)) { return false;}
+            if(p.file == Constants::FileProof) {
+                Database::setNewIntroductionFlags(d, offset);
+            } else {
+                Database::setPremiseFlags(d, offset);
+            }
         } else {
             Blablabla::log("Attempted to remove a missing clause.");
             Blablabla::comment("Ignoring incorrect deletion instruction.");
             return true;
+        }
+    } else {
+        if(c.kind == Constants::InstructionIntroduction) {
+            Database::setOldIntroductionFlags(d, offset);
+        } else {
+            Database::setDeletionFlags(d, offset);
         }
     }
     if(p.file == Constants::FileProof) {

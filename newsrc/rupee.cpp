@@ -111,7 +111,7 @@ bool preprocessProof() {
 	Proof::firstInstruction(Objects::Proof, Objects::ProofIterator);
 	while(Proof::getPremise(Objects::Proof, Objects::Database, Objects::ProofIterator)) {
 		if(Objects::ProofIterator.kind == Constants::InstructionIntroduction) {
-			Database::setIntroductionFlags(Objects::ProofIterator.pointer);
+
 			if(!WatchList::insertWatches(Objects::WatchList, Objects::ProofIterator)) { return false; }
 		} else {
 			Database::setDeletionFlags(Objects::ProofIterator.pointer);

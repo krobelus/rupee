@@ -1,6 +1,7 @@
 #include <iostream>
 #include <boost/lexical_cast.hpp>
 
+#include "structs.hpp"
 #include "parser.hpp"
 #include "database.hpp"
 #include "proof.hpp"
@@ -9,17 +10,6 @@
 #include "trail.hpp"
 #include "extra.hpp"
 #include "watchlist.hpp"
-
-namespace Objects {
-	clause Clause;
-	parser Parser;
-	database Database;
-	hashtable HashTable;
-	proof Proof;
-	trail Trail;
-	watchlist WatchList;
-	proofiterator ProofIterator;
-}
 
 namespace Frontend {
 
@@ -112,14 +102,23 @@ bool preprocessPremisses() {
 	Proof::firstPremise(Objects::Proof, Objects::ProofIterator);
 	while(Proof::getPremise(Objects::Proof, Objects::Database, Objects::ProofIterator)) {
 		Database::setPremiseFlags(Objects::ProofIterator.pointer);
-		if(!WatchList::setInitialWatches(Objects::WatchList, Objects::ProofIterator) { return false; }
+		if(!WatchList::insertWatches(Objects::WatchList, Objects::ProofIterator)) { return false; }
 	}
 	return true;
 }
 
 bool preprocessProof() {
-	Proof::startInstructions(Objects::Proof, Objects::ProofIterator);
-
+	Proof::firstInstruction(Objects::Proof, Objects::ProofIterator);
+	while(Proof::getPremise(Objects::Proof, Objects::Database, Objects::ProofIterator)) {
+		if(Objects::ProofIterator.kind == Constants::InstructionIntroduction) {
+			Database::setIntroductionFlags(Objects::ProofIterator.pointer);
+			if(!WatchList::insertWatches(Objects::WatchList, Objects::ProofIterator)) { return false; }
+		} else {
+			Database::setDeletionFlags(Objects::ProofIterator.pointer);
+			if(!WatchList::removeWatches(Objects::WatchList, Objects::ProofIterator)) { return false; }
+		}
+	}
+	return true;
 }
 
 // int main(int argc,char* argv[]){

@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 
+#include "structs.hpp"
 #include "extra.hpp"
 #include "clause.hpp"
 #include "proof.hpp"
@@ -100,7 +101,9 @@ void setIntroductionFlags(int* ptr) {
 	Database::setFlag(ptr, Constants::ActivityBit, Constants::ActiveFlag);
 	Database::setFlag(ptr, Constants::OriginalityBit, Constants::DerivedFlag);
 	Database::setFlag(ptr, Constants::VerificationBit, Constants::SkipFlag);
-	Database::setFlag(ptr, Constants::PersistencyBit, Constants::PersistentFlag);
+	if(Database::isFlag(ptr, Constants::RawnessBit, Constants::RawFlag)) {
+		Database::setFlag(ptr, Constants::PersistencyBit, Constants::PersistentFlag);
+	}
 	Database::setFlag(ptr, Constants::PseudounitBit, Constants::RedundantFlag);
 	Database::setFlag(pointer, Constants::RawnessBit, Constants::ProcessedFlag);
 }

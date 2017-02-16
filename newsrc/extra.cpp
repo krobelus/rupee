@@ -2,7 +2,7 @@
 #include <iostream>
 #include <string>
 
-#include "parser.hpp"
+#include "structs.hpp"
 #include "extra.hpp"
 
 namespace Parameters {

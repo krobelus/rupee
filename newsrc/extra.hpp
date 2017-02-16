@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "parser.hpp"
+#include "structs.hpp"
 
 namespace Constants {
 	const int ExtraCellsDatabase = 1;

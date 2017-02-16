@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 
+#include "structs.hpp"
 #include "extra.hpp"
 #include "database.hpp"
 #include "proof.hpp"
@@ -80,14 +81,14 @@ void lastInstruction(proof& r, proofiterator& i) {
 bool getPremise(proof& r, database& d, proofiterator& i) {
 	if(i.position < 0 || i.position >= r.noPremises) { return false; }
 	i.offset = r.proofarray[i.position];
-	i.pointer = getPointer(d, i.offset);
+	i.pointer = Database::getPointer(d, i.offset);
 	return true;
 }
 
 bool getInstruction(proof& r, database& d, proofiterator& i) {
 	if(i.position < r.noPremises || i.position >= r.proofused) { return false; }
 	i.offset = r.proofarray[i.position];
-	i.pointer = getPointer(d, i.offset);
+	i.pointer = Database::getPointer(d, i.offset);
 	i.pivot = r.proofpivots[i.position];
 	i.kind = i.pivot % 2;
 	i.pivot >>= 1;
@@ -95,21 +96,17 @@ bool getInstruction(proof& r, database& d, proofiterator& i) {
 }
 
 void log(proof& r, database& d) {
-	int i;
-	long offset;
-	int pivot;
-	bool kind;
+	proofiterator i;
 	std::string str;
 	Blablabla::log("Proof:");
 	Blablabla::increase();
-	for(i = 0; i < r.proofused; ++i) {
-		getInstruction(r, i, offset, pivot, kind);
-		if(kind == Constants::InstructionIntroduction) {
+	for(firstInstruction(r,i); getInstruction(r,d,i); nextLine(r,i)) {
+		if(i.kind == Constants::InstructionIntroduction) {
 			str = "+++ ";
 		} else {
 			str = "--- ";
 		}
-		Blablabla::log(str + Database::offsetToString(d, offset));
+		Blablabla::log(str + Database::offsetToString(d, i.offset));
 	}
 	Blablabla::decrease();
 }

@@ -5,22 +5,6 @@
 
 #include "database.hpp"
 
-struct proof {
-    long* proofarray;
-    int* proofpivots;
-    int proofmax;
-    int proofused;
-    int noPremises;
-};
-
-struct proofiterator {
-    int position;
-    long offset;
-    int* pointer;
-    int pivot;
-    bool kind;
-};
-
 namespace Proof {
     bool allocate(proof& r);
     bool reallocate(proof& r);

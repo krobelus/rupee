@@ -8,16 +8,7 @@
 #include <boost/regex.hpp>
 #include <boost/lexical_cast.hpp>
 
-#include "database.hpp"
-#include "proof.hpp"
-#include "hashtable.hpp"
-#include "clause.hpp"
-
-struct parser {
-	bool file;
-	std::ifstream input;
-	int maxVariable;
-};
+#include "structs.hpp"
 
 namespace Parser {
 	const boost::regex deletionRegex("^d (.*)");

@@ -1,12 +1,15 @@
 #include <stdlib.h>
 
+#include "structs.hpp"
 #include "extra.hpp"
+#include "database.hpp"
 #include "watchlist.hpp"
 
 namespace WatchList {
 
 bool error;
 int it;
+int removeit;
 
 bool allocate(clauselist& cl) {
     cl.array = (long*) malloc(Parameters::hashDepth * sizeof(long));
@@ -67,7 +70,7 @@ void deallocate(watchlist& wl) {
     free(wl.conflictlist.array);
 }
 
-bool setInitialWatches(watchlist& wl, proofiterator& i) {
+bool insertWatches(watchlist& wl, proofiterator& i) {
     switch(Database::classifyClause(i.pointer)) {
     case Constants::ClauseSizeConflict :
         if(!WatchList::insertClause(wl.conflictlist, i.offset)) { return false; }
@@ -83,12 +86,38 @@ bool setInitialWatches(watchlist& wl, proofiterator& i) {
     return true;
 }
 
+bool removeWatches(watchlist& wl, proofiterator& i) {
+    switch(Database::classifyClause(i.pointer)) {
+    case Constants::ClauseSizeConflict :
+        if(!WatchList::removeClause(wl.conflictlist, i.offset)) { return false; }
+        break;
+    case Constants::ClauseSizeUnit :
+        if(!WatchList::removeClause(wl.unitlist[*(i.pointer)], i.offset)) { return false; }
+        break;
+    case Constants::ClauseSizeLong :
+        if(!WatchList::removeClause(wl.longlist[i.pointer[0]], i.offset)) { return false; }
+        if(!WatchList::removeClause(wl.longlist[i.pointer[1]], i.offset)) { return false; }
+        break;
+    }
+    return true;
+}
+
 bool insertClause(clauselist &cl, long offset) {
     if(cl.used >= cl.max) {
         if(!WatchList::reallocate(cl)) { return false; }
     }
     cl.array[cl.used++] = offset;
     return true;
+}
+
+bool removeClause(clauselist &cl, long offset) {
+    for(removeit = 0; removeit < cl.used; ++removeit) {
+        if(cl.array[removeit] == offset) {
+            cl.array[removeit] = cl.array[--cl.used];
+            return true;
+        }
+    }
+    return false;
 }
 
 }

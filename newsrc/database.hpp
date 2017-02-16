@@ -3,14 +3,7 @@
 
 #include <stdlib.h>
 
-#include "clause.hpp"
-#include "proof.hpp"
-
-struct database {
-    int* databasearray;
-    int databasemax;
-    int databaseused;
-};
+#include "structs.hpp"
 
 namespace Database {
     extern int it;
@@ -24,7 +17,9 @@ namespace Database {
     void setFlag(int* ptr, int bit, bool value);
     int classifyClause(int* ptr);
     bool addBufferClause(database& d, clause& c, long& offset);
-    void setPremiseFlags(database& d, int* ptr);
+    void setPremiseFlags(int* ptr);
+    void setIntroductionFlags(int* ptr);
+    void setDeletionFlags(int* ptr);
     void log(database& d);
     std::string offsetToString(database& d, long offset);
 }

@@ -3,30 +3,7 @@
 
 #include <stdlib.h>
 
-struct stack {
-    int* array;
-    int* current;
-    int* used;
-    bool conflict;
-};
-
-struct savestack {
-    int* current;
-    int* used;
-    bool conflict;
-};
-
-struct assignment {
-    bool* satisfied;
-    int** trailpositions;
-    long* reasons;
-};
-
-struct trail {
-    stack Stack;
-    savestack SaveStack;
-    assignment Assignment;
-};
+#include "structs.hpp"
 
 namespace Trail {
     bool allocate(trail& t);

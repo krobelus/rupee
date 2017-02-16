@@ -1,5 +1,6 @@
 #include <stdlib.h>
 
+#include "structs.hpp"
 #include "extra.hpp"
 #include "database.hpp"
 #include "clause.hpp"

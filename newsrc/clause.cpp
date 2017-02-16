@@ -2,6 +2,7 @@
 #include <string>
 
 #include "extra.hpp"
+#include "structs.hpp"
 #include "clause.hpp"
 
 namespace Clause {

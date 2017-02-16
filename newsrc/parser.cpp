@@ -5,6 +5,7 @@
 #include <boost/regex.hpp>
 #include <boost/lexical_cast.hpp>
 
+#include "structs.hpp"
 #include "extra.hpp"
 #include "database.hpp"
 #include "proof.hpp"

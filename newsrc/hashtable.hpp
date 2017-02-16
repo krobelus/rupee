@@ -3,15 +3,7 @@
 
 #include <stdlib.h>
 
-#include "hashtable.hpp"
-#include "database.hpp"
-#include "clause.hpp"
-
-struct hashtable {
-    long** rowarray;
-    int* rowused;
-    int* rowmax;
-};
+#include "structs.hpp"
 
 namespace HashTable {
 	bool allocate(hashtable& h);

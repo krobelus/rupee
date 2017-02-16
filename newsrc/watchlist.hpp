@@ -3,17 +3,7 @@
 
 #include <stdlib.h>
 
-struct clauselist{
-    long* array;
-    int used;
-    int max;
-};
-
-struct watchlist{
-    struct clauselist* longlist;
-    struct clauselist* unitlist;
-    struct clauselist conflictlist;
-};
+#include "structs.hpp"
 
 namespace WatchList {
     bool allocate(clauselist& cl);
@@ -21,8 +11,10 @@ namespace WatchList {
     bool reallocate(clauselist& cl);
     void deallocate(watchlist& wl);
 
-    bool setInitialWatches(watchlist& wl, proofiterator& i);
+    bool insertWatches(watchlist& wl, proofiterator& i);
+    bool removeWatches(watchlist& wl, proofiterator& i);
     bool insertClause(clauselist &cl, long offset);
+    bool removeClause(clauselist &cl, long offset);
 }
 
 #endif

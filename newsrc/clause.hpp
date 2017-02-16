@@ -4,13 +4,7 @@
 #include <stdlib.h>
 #include <string>
 
-struct clause {
-	int* clausearray;
-	int clausemax;
-	int clauseused;
-    bool* clauselits;
-	bool kind;
-};
+#include "structs.hpp"
 
 namespace Clause {
     extern int it;

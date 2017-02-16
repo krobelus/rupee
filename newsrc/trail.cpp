@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string>
 
+#include "structs.hpp"
 #include "parser.hpp"
 #include "extra.hpp"
 #include "trail.hpp"

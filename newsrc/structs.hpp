@@ -34,6 +34,7 @@ struct database {
     int* databasearray;
     int databasemax;
     int databaseused;
+    int* end;
 };
 
 struct hashtable {

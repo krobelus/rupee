@@ -17,6 +17,7 @@ bool allocate(database& d) {
 	d.databasemax = Parameters::databaseSize;
 	d.databasearray = (int*) malloc (d.databasemax * sizeof(int));
 	d.databaseused = 0;
+	d.current = d.databasearray + d.databaseused;
 	if(d.databasearray == NULL) {
 		Blablabla::log("Error at clause database allocation.");
 		Blablabla::comment("Memory management error.");
@@ -28,8 +29,9 @@ bool allocate(database& d) {
 
 bool reallocate(database& d) {
     Blablabla::log("Reallocating clause database.");
-    d.databasemax = (d.databasemax * 3) >> 1;
+    d.databasemax *= 2;
     d.databasearray = (int*) realloc (d.databasearray, d.databasemax * sizeof(int));
+	d.current = d.databasearray + d.databaseused;
 	if(d.databasearray == NULL) {
 		Blablabla::log("Error at clause database reallocation.");
 		Blablabla::comment("Memory management error.");
@@ -88,8 +90,6 @@ bool addBufferClause(database& d, clause& c, long& offset) {
 	return true;
 }
 
-
-
 void setPremiseFlags(database& d, long offset) {
 	pointer = Database::getPointer(d, offset);
 	Database::setFlag(pointer, Constants::ActivityBit, Constants::ActiveFlag);
@@ -123,6 +123,28 @@ void setDeletionFlags(database& d, long offset) {
 	Database::setFlag(pointer, Constants::PersistencyBit, Constants::TemporalFlag);
 	Database::setFlag(pointer, Constants::PseudounitBit, Constants::RedundantFlag);
 	Database::setFlag(pointer, Constants::RawActivity, Constants::InactiveFlag);
+}
+
+void setClauseActive(database& d, int* ptr) {
+	Database::setFlag(pointer, Constants::ActivityBit, Constants::ActiveFlag);
+}
+
+void setClauseInactive(database& d, int* ptr) {
+	Database::setFlag(pointer, Constants::ActivityBit, Constants::InactiveFlag);
+}
+
+void firstClause(database& d, int*& ptr) {
+	if(d.used != 0) {
+		ptr = d.clausearray + Constants::ExtraCellsDatabase;
+		return true;
+	} else {
+		return false;
+	}
+}
+
+bool nextClause(database& d, int*& ptr) {
+	while(*ptr != 0) { ++ptr; }
+	ptr += Constants::FlagsCellDatabase;
 }
 
 void log(database& d) {

@@ -21,6 +21,9 @@ namespace Database {
     void setNewIntroductionFlags(database& d, long offset);
     void setOldIntroductionFlags(database& d, long offset);
     void setDeletionFlags(database& d, long offset);
+    void setClauseActive(database& d, int* ptr);
+    void setClauseInactive(database& d, int* ptr);
+    void resetActivity(database& d);
     void log(database& d);
     std::string offsetToString(database& d, long offset);
 }

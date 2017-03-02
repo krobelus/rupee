@@ -58,42 +58,42 @@ bool storeInstruction(proof& r, long offset, int pivot, bool kind) {
 	return true;
 }
 
-void firstPremise(proof& r, proofiterator& i) {
-	i.position = 0;
-}
-
-void firstInstruction(proof& r, proofiterator& i) {
-	i.position = r.noPremises;
-}
-
-void nextLine(proof& r, proofiterator& i) {
-	++(i.position);
-}
-
-void prevLine(proof& r, proofiterator& i) {
-	--(i.position);
-}
-
-void lastInstruction(proof& r, proofiterator& i) {
-	i.position = r.proofused - 1;
-}
-
-bool getPremise(proof& r, database& d, proofiterator& i) {
-	if(i.position < 0 || i.position >= r.noPremises) { return false; }
-	i.offset = r.proofarray[i.position];
-	i.pointer = Database::getPointer(d, i.offset);
-	return true;
-}
-
-bool getInstruction(proof& r, database& d, proofiterator& i) {
-	if(i.position < r.noPremises || i.position >= r.proofused) { return false; }
-	i.offset = r.proofarray[i.position];
-	i.pointer = Database::getPointer(d, i.offset);
-	i.pivot = r.proofpivots[i.position];
-	i.kind = i.pivot % 2;
-	i.pivot >>= 1;
-	return true;
-}
+// void firstPremise(proof& r, proofiterator& i) {
+// 	i.position = 0;
+// }
+//
+// void firstInstruction(proof& r, proofiterator& i) {
+// 	i.position = r.noPremises;
+// }
+//
+// void nextLine(proof& r, proofiterator& i) {
+// 	++(i.position);
+// }
+//
+// void prevLine(proof& r, proofiterator& i) {
+// 	--(i.position);
+// }
+//
+// void lastInstruction(proof& r, proofiterator& i) {
+// 	i.position = r.proofused - 1;
+// }
+//
+// bool getPremise(proof& r, database& d, proofiterator& i) {
+// 	if(i.position < 0 || i.position >= r.noPremises) { return false; }
+// 	i.offset = r.proofarray[i.position];
+// 	i.pointer = Database::getPointer(d, i.offset);
+// 	return true;
+// }
+//
+// bool getInstruction(proof& r, database& d, proofiterator& i) {
+// 	if(i.position < r.noPremises || i.position >= r.proofused) { return false; }
+// 	i.offset = r.proofarray[i.position];
+// 	i.pointer = Database::getPointer(d, i.offset);
+// 	i.pivot = r.proofpivots[i.position];
+// 	i.kind = i.pivot % 2;
+// 	i.pivot >>= 1;
+// 	return true;
+// }
 
 void log(proof& r, database& d) {
 	proofiterator i;

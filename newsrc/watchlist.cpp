@@ -70,7 +70,12 @@ void deallocate(watchlist& wl) {
     free(wl.conflictlist.array);
 }
 
-bool insertWatches(watchlist& wl, proofiterator& i) {
+
+
+
+
+
+bool insertWatches(watchlist& wl, long offset, int* pointer) {
     switch(Database::classifyClause(i.pointer)) {
     case Constants::ClauseSizeConflict :
         if(!WatchList::insertClause(wl.conflictlist, i.offset)) { return false; }
@@ -86,7 +91,7 @@ bool insertWatches(watchlist& wl, proofiterator& i) {
     return true;
 }
 
-bool removeWatches(watchlist& wl, proofiterator& i) {
+bool removeWatches(watchlist& wl, long offset, int* pointer) {
     switch(Database::classifyClause(i.pointer)) {
     case Constants::ClauseSizeConflict :
         if(!WatchList::removeClause(wl.conflictlist, i.offset)) { return false; }

@@ -23,7 +23,7 @@ namespace Database {
     void setDeletionFlags(database& d, long offset);
     void setClauseActive(database& d, int* ptr);
     void setClauseInactive(database& d, int* ptr);
-    void resetActivity(database& d);
+    void setAllInactive(database& d);
     void log(database& d);
     std::string offsetToString(database& d, long offset);
 }

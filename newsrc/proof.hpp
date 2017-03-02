@@ -1,8 +1,6 @@
 #ifndef __PROOF_H_INCLUDED__
 #define __PROOF_H_INCLUDED__
 
-#include <stdlib.h>
-
 #include "database.hpp"
 
 namespace Proof {

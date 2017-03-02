@@ -14,14 +14,6 @@ struct proof {
     int noPremises;
 };
 
-struct proofiterator {
-    int position;
-    long offset;
-    int* pointer;
-    int pivot;
-    bool kind;
-};
-
 struct clause {
 	int* clausearray;
 	int clausemax;
@@ -34,7 +26,6 @@ struct database {
     int* databasearray;
     int databasemax;
     int databaseused;
-    int* end;
 };
 
 struct hashtable {
@@ -84,6 +75,16 @@ struct watchlist{
     struct clauselist* longlist;
     struct clauselist* unitlist;
     struct clauselist conflictlist;
+};
+
+struct proofreader {
+    int position;
+    long offset;
+    int* pointer;
+    int pivot;
+    bool kind;
+    struct trail propagation;
+    struct watchlist watches;
 };
 
 namespace Objects {

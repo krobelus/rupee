@@ -11,6 +11,7 @@ namespace Database {
 
 int it;
 int* pointer;
+bool inclause;
 
 bool allocate(database& d) {
 	Blablabla::log("Allocating clause database.");
@@ -133,18 +134,19 @@ void setClauseInactive(database& d, int* ptr) {
 	Database::setFlag(pointer, Constants::ActivityBit, Constants::InactiveFlag);
 }
 
-void firstClause(database& d, int*& ptr) {
-	if(d.used != 0) {
-		ptr = d.clausearray + Constants::ExtraCellsDatabase;
-		return true;
-	} else {
-		return false;
+void setAllInactive(database& d) {
+	it = Constants::ExtraCellsDatabase;
+	while(it < d.databaseused) {
+		if(Constants::InactiveFlag) {
+			d.databasearray[it + Constants::FlagsCellDatabase] |= (1 << Constants::ActivityBit);
+		} else {
+			d.databasearray[it + Constants::FlagsCellDatabase] &= ~(1 << Constants::ActivityBit);
+		}
+		while(d.databasearray[it] != 0) {
+			++it;
+		}
+		it += Constants::ExtraCellsDatabase;
 	}
-}
-
-bool nextClause(database& d, int*& ptr) {
-	while(*ptr != 0) { ++ptr; }
-	ptr += Constants::FlagsCellDatabase;
 }
 
 void log(database& d) {

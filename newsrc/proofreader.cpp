@@ -46,6 +46,13 @@ bool advanceForward(proofreader& i, proof& r, database& d) {
         return false;
     } else {
         getInference(i, r, d);
+        if(!WatchList::insertClause(i.watches, i.offset, i.pointer)) { return false; }
         return true;
     }
+}
+
+void activateClause(proofreader& i, database& d) {
+    
+}
+
 }

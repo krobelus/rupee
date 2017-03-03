@@ -70,7 +70,9 @@ void deallocate(watchlist& wl) {
     free(wl.conflictlist.array);
 }
 
+bool insertWatches(watchlist& wl, trail& t, long offset, int* pointer) {
 
+}
 
 
 

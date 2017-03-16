@@ -11,30 +11,29 @@ bool error;
 int it;
 int removeit;
 
-bool allocate(clauselist& cl) {
-    cl.array = (long*) malloc(Parameters::hashDepth * sizeof(long));
-    cl.used = 0;
-    cl.max = Parameters::hashDepth;
-    return cl.array != NULL;
+bool allocate(long*& clarray, int& clused, int& clmax) {
+    clarray = (long*) malloc(Parameters::hashDepth * sizeof(long));
+    clused = 0;
+    clmax = Parameters::hashDepth;
+    return clarray != NULL;
 }
 
 bool allocate(watchlist& wl) {
     error = false;
     Blablabla::log("Allocating watchlist.");
-    wl.longlist = (struct clauselist*) malloc((2 * Parameters::noVariables + 1) * sizeof(struct clauselist));
-    wl.unitlist = (struct clauselist*) malloc((2 * Parameters::noVariables + 1) * sizeof(struct clauselist));
-    if(wl.longlist == NULL || wl.unitlist == NULL) {
+    wl.array = (long**) malloc((2 * Parameters::noVariables + 1) * sizeof(long*));
+    wl.used = (int*) malloc((2 * Parameters::noVariables + 1) * sizeof(long*));
+    wl.max = (int*) malloc((2 * Parameters::noVariables + 1) * sizeof(long*));
+    if(wl.array == NULL || wl.used == NULL || wl.max == NULL) {
         error = true;
     } else {
-        wl.longlist += Parameters::noVariables;
-        wl.unitlist += Parameters::noVariables;
+        wl.array += Parameters::noVariables;
+        wl.used += Parameters::noVariables;
+        wl.max += Parameters::noVariables;
         for(it = -Parameters::noVariables; !error && it <= Parameters::noVariables; ++it) {
-            if(!allocate(wl.longlist[it]) || !allocate(wl.unitlist[it])) {
+            if(!allocate(wl.array[it], wl.used[it], wl.max[it])) {
                 error = true;
             }
-        }
-        if(!error && !allocate(wl.conflictlist)) {
-            error = true;
         }
     }
     if(error) {
@@ -46,11 +45,11 @@ bool allocate(watchlist& wl) {
     }
 }
 
-bool reallocate(clauselist& cl) {
+bool reallocate(long*& clarray, int& clused, int& clmax) {
     Blablabla::log("Reallocating watchlist.");
-    cl.max = (cl.max * 3) << 1;
-    cl.array = (long*) realloc(cl.array, cl.max * sizeof(long));
-    if(cl.array == NULL) {
+    clmax = (clmax * 3) << 1;
+    clarray = (long*) realloc(clarray, clmax * sizeof(long));
+    if(clarray == NULL) {
         Blablabla::log("Error at watchlist allocation.");
         Blablabla::comment("Memory management error.");
         return false;
@@ -62,12 +61,14 @@ bool reallocate(clauselist& cl) {
 void deallocate(watchlist& wl) {
     Blablabla::log("Deallocating watchlist.");
     for(it = -Parameters::noVariables; it <= Parameters::noVariables; ++it) {
-        free(wl.longlist[it].array);
-        free(wl.unitlist[it].array);
+        free(wl.array[it]);
     }
-    free(wl.longlist);
-    free(wl.unitlist);
-    free(wl.conflictlist.array);
+    wl.array -= Parameters::noVariables;
+    wl.used -= Parameters::noVariables;
+    wl.max -= Parameters::noVariables;
+    free(wl.array);
+    free(wl.used);
+    free(wl.max);
 }
 
 bool insertWatches(watchlist& wl, trail& t, long offset, int* pointer) {

@@ -40,51 +40,29 @@ struct parser {
 	int maxVariable;
 };
 
-struct stack {
-    int* array;
-    int* current;
+struct model {
+    int* start;
+    int* forced;
+    int* head;
     int* used;
-    bool conflict;
+    int* satisfied;
+    int* positions;
 };
 
-struct savestack {
-    int* current;
+struct watchlist {
+    long** array;
     int* used;
-    bool conflict;
-};
+    int* max;
+}
 
-struct assignment {
-    bool* satisfied;
-    int** trailpositions;
-    long* reasons;
-};
-
-struct trail {
-    stack Stack;
-    savestack SaveStack;
-    assignment Assignment;
-};
-
-struct clauselist{
-    long* array;
-    int used;
-    int max;
-};
-
-struct watchlist{
-    struct clauselist* longlist;
-    struct clauselist* unitlist;
-    struct clauselist conflictlist;
-};
-
-struct proofreader {
+struct checker {
     int position;
     long offset;
     int* pointer;
     int pivot;
     bool kind;
-    struct trail propagation;
-    struct watchlist watches;
+    struct model stack;
+    struct watchlist watch;
 };
 
 namespace Objects {
@@ -93,9 +71,12 @@ namespace Objects {
 	extern database Database;
 	extern hashtable HashTable;
 	extern proof Proof;
-	extern trail Trail;
-	extern watchlist WatchList;
-	extern proofiterator ProofIterator;
+    extern model Model;
+    extern watchlist WatchList;
+    extern checker Checker;
+	// extern trail Trail;
+	// extern watchlist WatchList;
+	// extern proofiterator ProofIterator;
 }
 
 

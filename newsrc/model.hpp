@@ -1,13 +1,13 @@
-#ifndef __TRAIL_H_INCLUDED__
-#define __TRAIL_H_INCLUDED__
+#ifndef __MODEL_H_INCLUDED__
+#define __MODEL_H_INCLUDED__
 
 #include <stdlib.h>
 
 #include "structs.hpp"
 
-namespace Trail {
-    bool allocate(trail& t);
-    void deallocate(trail& t);
+namespace Model {
+    bool allocate(model& t);
+    void deallocate(model& t);
 }
 
 //

@@ -6,9 +6,9 @@
 #include "structs.hpp"
 
 namespace WatchList {
-    bool allocate(clauselist& cl);
+    bool allocate(long*& clarray, int& clused, int& clmax);
     bool allocate(watchlist& wl);
-    bool reallocate(clauselist& cl);
+    bool reallocate(long*& clarray, int& clused, int& clmax);
     void deallocate(watchlist& wl);
 
     bool insertWatches(watchlist& wl, proofiterator& i);

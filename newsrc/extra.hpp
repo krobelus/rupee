@@ -13,7 +13,8 @@ namespace Constants {
 	const int OriginalityBit = 2;
 	const int PersistencyBit = 3;
     const int PseudounitBit = 4;
-	const int RawActivity = 5;
+	const int ConflictBit = 5;
+	const int RawActivity = 6;
     const bool ActiveFlag = true;
     const bool InactiveFlag = false;
     const bool OriginalFlag = true;
@@ -24,6 +25,8 @@ namespace Constants {
     const bool TemporalFlag = false;
     const bool ReasonFlag = true;
     const bool RedundantFlag = false;
+	const bool ConflictFlag = true;
+	const bool SatisfiableFlag = true;
 
     const bool FilePremise = OriginalFlag;
     const bool FileProof = DerivedFlag;
@@ -36,9 +39,14 @@ namespace Constants {
 	const int ArgumentsHelp = 4;
 	const int ArgumentsError = 5;
 
-	const int ClauseSizeConflict = 0;
-	const int ClauseSizeUnit = 1;
-	const int ClauseSizeLong = 2;
+	const int ReservedLiteral = 1;
+	const int ConflictWatchlist = 0;
+	const int AssumedLiteral = 0;
+	const int EndOfClause = 0;
+	const int EndOfWatchList = 0;
+	const int NoTrigger = 0;
+	const bool SoftPropagation = true;
+	const bool HardPropagation = false;
 }
 
 namespace Parameters {
@@ -49,6 +57,7 @@ namespace Parameters {
 	extern bool verbosity;
 	extern int hashDepth;
 	extern int noVariables;
+	extern bool failFast;
 
 	void setPremise(std::string path);
 	void setProof(std::string path);
@@ -66,6 +75,7 @@ namespace Blablabla {
 	void decrease();
 	void comment(std::string str);
 	void log(std::string str);
+	void logModel(model& m);
 }
 
 //

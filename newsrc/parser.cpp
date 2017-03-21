@@ -99,7 +99,7 @@ bool parseClause(parser& p, clause& c, std::string& s) {
 }
 
 
-bool processClause(parser& p, clause& c, hashtable& h, database& d, proof& r){
+bool processClause(parser& p, clause& c, hashtable& h, database& d, proof& r) {
     pivot = c.clausearray[0];
     Clause::sortClause(c);
     hash = HashTable::getHash(c.clausearray);

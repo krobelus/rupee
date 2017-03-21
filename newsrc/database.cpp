@@ -67,14 +67,8 @@ void setFlag(int* ptr, int bit, bool value) {
 	}
 }
 
-int classifyClause(int* ptr) {
-	if(*ptr == 0) {
-		return Constants::ClauseSizeConflict;
-	} else if(*(++ptr) == 0) {
-		return Constants::ClauseSizeUnit;
-	} else {
-		return Constants::ClauseSizeLong;
-	}
+bool isEmpty(int* ptr) {
+	return *ptr == 0;
 }
 
 bool addBufferClause(database& d, clause& c, long& offset) {
@@ -93,11 +87,12 @@ bool addBufferClause(database& d, clause& c, long& offset) {
 
 void setPremiseFlags(database& d, long offset) {
 	pointer = Database::getPointer(d, offset);
-	Database::setFlag(pointer, Constants::ActivityBit, Constants::ActiveFlag);
+	Database::setFlag(pointer, Constants::ActivityBit, Constants::InactiveFlag);
 	Database::setFlag(pointer, Constants::VerificationBit, Constants::SkipFlag);
 	Database::setFlag(pointer, Constants::OriginalityBit, Constants::OriginalFlag);
 	Database::setFlag(pointer, Constants::PersistencyBit, Constants::PersistentFlag);
 	Database::setFlag(pointer, Constants::PseudounitBit, Constants::RedundantFlag);
+	Database::setFlag(pointer, Constants::ConflictBit, Constants::SatisfiableFlag);
 	Database::setFlag(pointer, Constants::RawActivity, Constants::ActiveFlag);
 }
 
@@ -108,21 +103,19 @@ void setNewIntroductionFlags(database& d, long offset) {
 	Database::setFlag(pointer, Constants::OriginalityBit, Constants::DerivedFlag);
 	Database::setFlag(pointer, Constants::PersistencyBit, Constants::PersistentFlag);
 	Database::setFlag(pointer, Constants::PseudounitBit, Constants::RedundantFlag);
+	Database::setFlag(pointer, Constants::ConflictBit, Constants::SatisfiableFlag);
 	Database::setFlag(pointer, Constants::RawActivity, Constants::ActiveFlag);
 }
 
 void setOldIntroductionFlags(database& d, long offset) {
 	pointer = Database::getPointer(d, offset);
-	Database::setFlag(pointer, Constants::VerificationBit, Constants::SkipFlag);
-	Database::setFlag(pointer, Constants::PseudounitBit, Constants::RedundantFlag);
+	Database::setFlag(pointer, Constants::OriginalityBit, Constants::DerivedFlag);
 	Database::setFlag(pointer, Constants::RawActivity, Constants::ActiveFlag);
 }
 
 void setDeletionFlags(database& d, long offset) {
 	pointer = Database::getPointer(d, offset);
-	Database::setFlag(pointer, Constants::VerificationBit, Constants::SkipFlag);
 	Database::setFlag(pointer, Constants::PersistencyBit, Constants::TemporalFlag);
-	Database::setFlag(pointer, Constants::PseudounitBit, Constants::RedundantFlag);
 	Database::setFlag(pointer, Constants::RawActivity, Constants::InactiveFlag);
 }
 
@@ -134,19 +127,13 @@ void setClauseInactive(database& d, int* ptr) {
 	Database::setFlag(pointer, Constants::ActivityBit, Constants::InactiveFlag);
 }
 
-void setAllInactive(database& d) {
-	it = Constants::ExtraCellsDatabase;
-	while(it < d.databaseused) {
-		if(Constants::InactiveFlag) {
-			d.databasearray[it + Constants::FlagsCellDatabase] |= (1 << Constants::ActivityBit);
-		} else {
-			d.databasearray[it + Constants::FlagsCellDatabase] &= ~(1 << Constants::ActivityBit);
+bool containsLiteral(database& d, int* ptr, int literal) {
+	while(*ptr != Constants::EndOfClause) {
+		if(*ptr == literal) {
+			return true;
 		}
-		while(d.databasearray[it] != 0) {
-			++it;
-		}
-		it += Constants::ExtraCellsDatabase;
 	}
+	return false;
 }
 
 void log(database& d) {

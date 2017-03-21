@@ -6,8 +6,17 @@
 #include "structs.hpp"
 
 namespace Model {
-    bool allocate(model& t);
-    void deallocate(model& t);
+    bool allocate(model& m);
+    void deallocate(model& m);
+
+    void assumeLiteral(model& m, int literal);
+    void propagateLiteral(model& m, int literal, long reason, int* pointer, database& d);
+    void hardPropagate(model& m);
+
+    bool isSatisfied(model& m, int literal);
+    bool isFalsified(model& m, int literal);
+    bool isUnassigned(model& m, int literal);
+    bool findNextNonFalsified(model& m, int*& ptr, int*& current, int& lit);
 }
 
 //

@@ -7,10 +7,11 @@
 #include <string>
 
 struct proof {
-    long* proofarray;
-    int* proofpivots;
-    int proofmax;
-    int proofused;
+    long* array;
+    int* pivots;
+    bool* kinds;
+    int max;
+    int used;
     int noPremises;
 };
 
@@ -46,13 +47,37 @@ struct model {
     int* head;
     int* used;
     int* satisfied;
-    int* positions;
+    int** positions;
+    long* reasons;
 };
 
 struct watchlist {
     long** array;
     int* used;
     int* max;
+};
+
+struct revision {
+    int* array;
+    int* used;
+    bool* lits;
+};
+
+struct latency {
+    long* array;
+    int used;
+    int max;
+    int pivot;
+    int* resolvent;
+    int* original;
+    int* added;
+    bool* lits;
+};
+
+struct chain {
+    int* array;
+    int used;
+    bool* lits;
 }
 
 struct checker {
@@ -63,6 +88,9 @@ struct checker {
     bool kind;
     struct model stack;
     struct watchlist watch;
+    struct revision cone;
+    struct latency rat;
+    struct chain tvr;
 };
 
 namespace Objects {

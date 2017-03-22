@@ -1,148 +1,93 @@
-#include <iostream>
+#include <stdlib.h>
 
+#include "structs.hpp"
+#include "model.hpp"
 #include "database.hpp"
-#include "assignment.hpp"
-#include "watchlist.hpp"
-#include "extra.hpp"
 #include "chain.hpp"
 
 namespace Chain {
 
-long* reasons;
-long* chain;
-long* chainUsed;
-bool* shifts;
-int shiftSize;
-int* shiftQueue;
-int* shiftUsed;
-int* discardedQueue;
-int* discardedUsed;
-int* stackIterator_;
-int* clause_;
-int pivot_;
-int literal_;
-long offset_;
-long* chainIterator_;
-int* ptrA_;
-int* ptrB_;
+int it;
+int lit;
+int* clause;
+int* chit;
+long offset;
+int literal;
+model* mm;
+int* c1;
+int* c2;
 
-void initialize() {
-	std::cout << "Allocating conflict graph." << std::endl;
-	reasons = (long*) malloc((2 * Database::noVars + 1) * sizeof(long));
-	reasons += Database::noVars;
-	shifts = (bool*) malloc((2 * Database::noVars + 1) * sizeof(bool));
-	shifts += Database::noVars;
-	chain = (long*) malloc((Database::noVars + 2) * sizeof(long));
-	chainUsed = chain;
-	shiftQueue = (int*) malloc((Database::noVars + 2) * sizeof(int));
-	shiftUsed = shiftQueue;
-	discardedQueue = (int*) malloc((Database::noVars + 2) * sizeof(int));
-	discardedUsed = discardedQueue;
-	for(literal_ = -Database::noVars; literal_ <= Database::noVars; ++literal_) {
-		reasons[literal_] = 0;
-		shifts[literal_] = false;
-	}
+bool allocate(chain& ch) {
+    Blablabla::log("Allocating resolution chain.");
+    ch.array = (int*) malloc((2 * Parameters::noVariables + 1) * sizeof(int));
+    ch.lits = (bool*) malloc((2 * Parameters::noVariables + 1) * sizeof(bool));
+    ch.used = ch.array;
+    if(ch.array == NULL || ch.lits == NULL) {
+        Blablabla::log("Error at resolution chain allocation.");
+        Blablabla::comment("Memory management error.");
+        return false;
+    } else {
+        ch.lits += Parameters::noVariables;
+        for(it = -Parameters::noVariables; it <= Parameters::noVariables; ++it) {
+            ch.lits[it] = false;
+        }
+    }
+    return true;
 }
 
-void deallocate() {
-	std::cout << "Deallocating conflict graph." << std::endl;
-	reasons -= Database::noVars;
-	free(reasons);
-	shifts -= Database::noVars;
-	free(shifts);
-	free(chain);
-	free(shiftQueue);
-	free(discardedQueue);
+void deallocate(chain& ch) {
+    Blablabla::log("Deallocating resolution chain.");
+    ch.lits -= Parameters::noVariables;
+    free(ch.lits);
+    free(ch.array);
 }
 
-int* findReason(long offset) {
-	stackIterator_ = Assignment::stack;
-	while(stackIterator_ < Assignment::stackUsed) {
-		if(reasons[*stackIterator_] == offset) {
-			return stackIterator_;
-		} else {
-			++stackIterator_;
-		}
-	}
-	return 0;
+void initialize(chain& ch, model &m, long conflict) {
+    m.reasons[Constants::ConflictWatchlist] = conflict;
+    ch.lits[Constants::ConflictWatchlist] = true;
+    ch.array[ch.used++] = Constants::ConflictWatchlist;
 }
 
-void addResolution(int* &iterator) {
-	pivot_ = -*iterator;							//I am storing the complement of the pivot for efficiency reasons. Probably overoptimizing...
-	if((offset_ = reasons[-pivot_]) != 0) {			//If the pivot is not an assumption,
-		clause_ = Database::getPointer(offset_);	//then retrieve the reason clause.
-		while((literal_ = -*(clause_++)) != 0) {		//For every literal in that clause other than the pivot,
-			if(literal_ != pivot_ && !shifts[literal_]) {	//its negation is a precedent of the pivot. If I have not seen it yet,
-				shifts[literal_] = true;					//then I add it to the shift
-				*(shiftUsed++) = literal_;					//and remember that I have seen it.
-				++shiftSize;
-			}
-		}
-		++iterator;									//In that case, go for the next literal in the shift.
-	} else {										//If the pivot is an assumption,
-		*(discardedUsed++) = -pivot_;				//then I remove it from the chain.
-		*iterator = *(--shiftUsed);					//I still need to store it in the discarded queue so that I can clean the shifts quickly.
-		--shiftSize;
-	}
+void addClause(chain& ch, int* ptr, int trigger) {
+    while((lit = -*(ptr++)) != Constants::EndOfClause) {
+        if(!ch.lits[lit] && lit != -trigger) {
+            ch.lits[lit] = true;
+            ch.array[ch.used++] = lit;
+        }
+    }
 }
 
-void cleanShift() {
-	stackIterator_ = shiftUsed;
-	while((--stackIterator_) >= shiftQueue) {
-		shifts[*stackIterator_] = false;
-	}
-	stackIterator_ = discardedUsed;
-	while((--stackIterator_) >= discardedQueue) {
-		shifts[*stackIterator_] = false;
-	}
+bool getReason(chain& ch, model& m, int trigger, long& reason) {
+    return ((reason = m.reasons[trigger]) == Constants::AssumedLiteral);
 }
 
-int compareShifts(const void* a, const void* b){
-	ptrA_ = Assignment::stackPointers[*(int*) a];
-	ptrB_ = Assignment::stackPointers[*(int*) b];
-	if(ptrA_ < ptrB_) {
-		return 1;
-	} else if (ptrA_ > ptrB_) {
-		return -1;
-	} else {
-		return 0;
-	}
+void getChain(chain& ch, model& m, database& d, long conflict) {
+    initialize(ch, conflict);
+    chit = ch.array;
+    while(chit < ch.used) {
+        pivot = *(++chit);
+        if(getReason(ch, m, literal, offset)) {
+            addClause(ch, Database::getPointer(d, offset), literal);
+        }
+    }
+    mm = *m;
+    qsort(ch.array, ch.used, sizeof(int), compare);
 }
 
-void generateChain() {
-	Tools::comment("Generating resolution chain.");
-	for(int i = -Database::noVars; i <= Database::noVars; ++i) {
-		if(shifts[i]) {
-			Tools::comment("still " + std::to_string(i));
-		}
-	}
-	shiftUsed = shiftQueue;
-	discardedUsed = discardedQueue;
-	chainUsed = chain;
-	if(reasons[0] == 0) {
-		reasons[0] = *(WatchList::conflictList);
-	}
-	Assignment::stackPointers[0] = Assignment::stackUsed;	//This is a hack to avoid a very annoying check when reordering the resolution chain.
-	*(shiftUsed++) = 0;
-	shiftSize = 1;
-	stackIterator_ = shiftQueue;
-	while(stackIterator_ < shiftUsed) {
-		addResolution(stackIterator_);
-	}
-	qsort(shiftQueue, shiftSize, sizeof(int), compareShifts);
-	stackIterator_ = shiftQueue;
-	while(stackIterator_ < shiftUsed) {
-		*(chainUsed++) = reasons[*stackIterator_++];
-	}
-	cleanShift();					//Clean the shift switches.
-	Tools::resolutionChain();
+int compare(const void *a, const void *b) {
+    c1 = mm.positions[*(int*) a];
+    c2 = mm.positions[*(int*) b];
+    return (int)(c2 < c1) - (int)(c1 < c2);
 }
 
-void markChain() {
-	chainIterator_ = chain;
-	while(chainIterator_ < chainUsed) {
-		Database::setFlag(*(chainIterator_++), Constants::VerificationFlagDatabase, Constants::KindVerify);
-	}
+void markChain(chain& ch, database& d) {
+    chit = ch.array;
+    while(chit < ch.used) {
+        getReason(ch, m, *chit, offset);
+        Database::setFlag(Database::getPointer(d, offset), Constants::VerificationBit, Constants::ScheduledFlag);
+        ch.lits[*(chit++)] = false;
+    }
 }
+
 
 }

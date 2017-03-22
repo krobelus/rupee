@@ -1,35 +1,20 @@
 #ifndef __CHAIN_H_INCLUDED__
 #define __CHAIN_H_INCLUDED__
 
+#include "chain.hpp"
+#include "structs.hpp"
+
 namespace Chain {
-	extern long* reasons;
-	extern long* chain;
-	extern long* chainUsed;
-	extern bool* shifts;
-	extern int shiftSize;
-	extern int* shiftQueue;
-	extern int* shiftUsed;
-	extern int* discardedQueue;
-	extern int* discardedUsed;
 
-	extern int* stackIterator_;
-	extern int* clause_;
-	extern int pivot_;
-	extern int literal_;
-	extern long offset_;
-	extern long* chainIterator_;
-	extern int* ptrA_;
-	extern int* ptrB_;
+bool allocate(chain& ch);
+void deallocate(chain& ch);
+void initialize(chain& ch, model &m, long conflict);
+void addClause(chain& ch, int* ptr, int trigger);
+bool getReason(chain& ch, model& m, int trigger, long& reason);
+void getChain(chain& ch, model& m, database& d, long conflict);
+int compare(const void *a, const void *b);
+void markChain(chain& ch, database& d);
 
-	void initialize();
-	void deallocate();
-
-	int* findReason(long offset);
-
-	void cleanShift();
-	void addResolution(int pivot);
-	void generateChain();
-	void markChain();
 }
 
 #endif

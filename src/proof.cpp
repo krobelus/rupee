@@ -1,21 +1,21 @@
 #include <iostream>
+#include <string>
 
+#include "structs.hpp"
 #include "extra.hpp"
-#include "database.hpp"
 #include "proof.hpp"
 
 namespace Proof {
 
-long* proof;
-int max;
-int used;
-
-void allocate() {
+bool allocate(proof& r) {
 	Blablabla::log("Allocating proof list.");
-	max = Parameters::databaseSize;
-	proof = (long*) malloc (max * sizeof (long ));
-	used = 0;
-	if(proof == NULL) {
+	r.max = Parameters::databaseSize;
+	r.used = 0;
+	r.array = (long*) malloc (r.max * sizeof(long));
+	r.pivots = (int*) malloc (r.max * sizeof(int));
+	r.kinds = (bool*) malloc(r.max * sizeof(bool))
+	r.noPremises = 0;
+	if(r.array == NULL || r.pivots == NULL || r.kinds == NULL) {
 		Blablabla::log("Error at proof list allocation.");
 		Blablabla::comment("Memory management error.");
 		return false;
@@ -24,38 +24,40 @@ void allocate() {
 	}
 }
 
-void reallocate() {
-	Tools::comment("Reallocating proof list.");
-	Proof::max = Tools::leap(Proof::max);
-	proof = (long*) realloc (proof, Proof::max * sizeof(long));
-}
-
-void deallocate() {
-	std::cout << "Deallocating proof list." << std::endl;
-	free(proof);
-}
-
-void storeInstruction(long offset, int kind) {
-	if(used == Proof::max) {
-		Proof::reallocate();
+bool reallocate(proof& r) {
+	Blablabla::log("Reallocating proof list.");
+	r.max *= 4;
+	r.array = (long*) realloc (r.array, r.max * sizeof(long));
+	r.pivots = (int*) realloc (r.pivots, r.max * sizeof(int));
+	r.kinds = (bool*) realloc (r.kinds, r.max * sizeof(bool));
+	if(r.array == NULL || r.pivots == NULL || r.kinds == NULL) {
+		Blablabla::log("Error at proof list reallocation.");
+		Blablabla::comment("Memory management error.");
+		return false;
+	} else {
+		return true;
 	}
-	proof[used++] = (offset << Constants::ExtraBitsProof) + kind;
 }
 
-void getInstruction(long* instruction, long &offset, int &kind) {
-	offset = *instruction;
-	kind = offset % 2;
-	offset >>= 1;
+void deallocate(proof& r) {
+	Blablabla::log("Deallocating proof list.");
+	free(r.array);
+	free(r.pivots);
 }
 
-void print() {
-	std::cout << "PROOF:" << std::endl;
-	for(int i = 0; i < used; ++i) {
-		if(proof[i] % 2 == Constants::KindDeletion) { std::cout << "--- "; } else { std::cout << "+++ "; }
-		Database::printClause(proof[i] >> Constants::ExtraBitsProof);
-		std::cout << std::endl;
+bool storePremise(proof& r, long offset) {
+	++(r.noPremises);
+	return storeInstruction(r, offset, 0, false);
+}
+
+bool storeInstruction(proof& r, long offset, int pivot, bool kind) {
+	if(r.used >= r.max) {
+		if(!reallocate(r)) { return false; }
 	}
-	std::cout << std::endl;
+	r.array[r.used] = offset;
+	r.pivots[r.used] = pivot;
+	r.kinds[r.used++] = kind;
+	return true;
 }
 
 }

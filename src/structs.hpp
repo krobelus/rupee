@@ -20,6 +20,7 @@ struct clause {
 	int clausemax;
 	int clauseused;
     bool* clauselits;
+    int allocatedlits;
 	bool kind;
 };
 
@@ -76,9 +77,9 @@ struct latency {
 
 struct chain {
     int* array;
-    int used;
+    int* used;
     bool* lits;
-}
+};
 
 struct checker {
     int position;
@@ -102,9 +103,6 @@ namespace Objects {
     extern model Model;
     extern watchlist WatchList;
     extern checker Checker;
-	// extern trail Trail;
-	// extern watchlist WatchList;
-	// extern proofiterator ProofIterator;
 }
 
 

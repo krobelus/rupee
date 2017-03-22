@@ -1,6 +1,8 @@
 #include <stdlib.h>
 
 #include "structs.hpp"
+#include "database.hpp"
+#include "watchlist.hpp"
 #include "latency.hpp"
 
 namespace Latency {
@@ -45,7 +47,7 @@ bool reallocate(latency& x) {
     }
 }
 
-bool deallocate(latency& x) {
+void deallocate(latency& x) {
     Blablabla::log("Deallocating latency structures.");
     x.lits -= Parameters::noVariables;
     free(x.array);

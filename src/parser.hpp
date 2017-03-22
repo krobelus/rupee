@@ -7,7 +7,8 @@
 #include <string>
 #include <boost/regex.hpp>
 #include <boost/lexical_cast.hpp>
-#include <stdlib.h>
+
+#include "structs.hpp"
 
 namespace Parser {
 	const boost::regex deletionRegex("^d (.*)");
@@ -15,33 +16,22 @@ namespace Parser {
 	const boost::regex numVarsRegex("(\\d+)(.*)");
 	const boost::regex literalRegex("(-?\\d+)(.*)?");
 
-	extern int* buffer_;		//Parse buffer
-	extern int buffersize_;		//Maximum size of buffer_
-	extern int length_;			//Current size of buffer_
-	extern int file_;			//Premise or proof file being parsed
-	extern int kind_;			//Introduction or deletion instruction parsed
-	extern int literal_;		//Parsed literal
-	extern int pivot_;			//Pivot of parsed clause
-	extern int varliteral_;		//Absolute value of literal_
-	extern bool endclause_;		//Flag for having parsed literal 0.
-	extern long offset_;
-	extern unsigned int hashValue_;
-	extern std::string line_;
-	extern std::ifstream input_;
-	extern boost::smatch result_;
+	// extern int literal;
+	// extern int pivot;
+	// extern int varliteral;
+	// extern bool endclause;
+	// extern long offset;
+	// extern unsigned int hashValue;
+	// extern std::string line;
+	// extern boost::smatch result;
 
-	void skipToHeader();
-	void findMaximumVariable();
-
-	void initialize();
-
-	void readClauses();
-	bool parseClause();
-	void processClause();
-
-	void deallocate();
-
-	void parse();
+	void initialize(parser& p);
+	bool openFile(parser& p, bool f);
+	bool readHeader(parser& p);
+	bool readClauses(parser& p, clause& c, hashtable& h, database& d, proof& r);
+	bool parseClause(parser& p, clause& c, std::string& s);
+	bool processClause(parser& p, clause& c, hashtable& h, database& d, proof& r);
+	int stringToLiteral(int literal);
 }
 
 #endif

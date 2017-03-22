@@ -1,6 +1,9 @@
 #include <stdlib.h>
 
 #include "structs.hpp"
+#include "model.hpp"
+#include "database.hpp"
+#include "watchlist.hpp"
 #include "revision.hpp"
 
 namespace Revision {

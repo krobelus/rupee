@@ -1,21 +1,18 @@
-#include <iostream>
-#include <string>
+#include <stdlib.h>
 
 #include "structs.hpp"
 #include "extra.hpp"
 #include "database.hpp"
 #include "proof.hpp"
+#include "checker.hpp"
 
-namespace ProofReader {
+namespace Checker {
 
-// bool triggered;
-// int triglit;
 int* ptr;
 int literal;
-bool conflict;
 long* candidate;
 
-bool allocate(proofreader& c) {
+bool allocate(checker& c) {
     if(!WatchList::allocate(c.watch)) { return false; }
     if(!Model::allocate(c.stack)) { return false; }
     if(!Revision::allocate(c.cone)) { return false; }
@@ -24,9 +21,12 @@ bool allocate(proofreader& c) {
     return true;
 }
 
-void deallocate(proofreader& c) {
+void deallocate(checker& c) {
     WatchList::deallocate(c.watch);
-    Trail::deallocate(c.stack);
+    Model::deallocate(c.stack);
+    Revision::deallocate(c.cone);
+    Latency::deallocate(c.rat);
+    Chain::deallocate(c.tvr);
 }
 
 void getPremise(checker& c, proof& r, database& d) {
@@ -35,11 +35,10 @@ void getPremise(checker& c, proof& r, database& d) {
 }
 
 void getInstruction(checker& c, proof& r, database& d) {
-	c.offset = r.proofarray[c.position];
+	c.offset = r.array[c.position];
 	c.pointer = Database::getPointer(d, c.offset);
-	c.pivot = r.proofpivots[c.position];
-	c.kind = c.pivot % 2;
-	c.pivot >>= 1;
+	c.pivot = r.pivots[c.position];
+	c.kind = r.kinds[c.position];
 }
 
 bool initialize(checker& c, proof& r, database& d) {
@@ -52,6 +51,36 @@ bool initialize(checker& c, proof& r, database& d) {
         if(!introduceClause(c, d)) { return false; }
     }
     Blablabla::decrease();
+    return true;
+}
+
+bool preprocessProof(checker& c, proof& r, database& d, bool& conflict) {
+    Blablabla::log("Preprocessing proof.");
+    Blablabla::increase();
+    conflict = false;
+    for(c.position = r.noPremises; !conflict && c.position < r.used; ++c.position) {
+        getInstruction(c, r, d);
+        if(!preprocessInstruction(c, r, d, conflict)) { return false; }
+    }
+    Blablabla::decrease();
+    if(!conflict) {
+        Blablabla::log("No conflict was detected.")
+    }
+    return true;
+}
+
+bool verifyProof(checker& c, proof& r, database& d, bool& verified) {
+    Blablabla::log("Verifying proof.");
+    Blablabla::increase();
+    verified = true;
+    while(verified && c.position >= r.noPremises) {
+        getInstruction(c, r, d);
+        if(!verifyInstruction(checker& c, proof& r, database& d, bool& verified)) { return false; }
+    }
+    Blablabla::decrease();
+    if(!done) {
+        Blablabla::log("Proof verification failed.");
+    }
     return true;
 }
 
@@ -91,10 +120,14 @@ bool checkRup(checker &c, database& d, int* clause, bool& rup) {
     Blablabla::increase();
     if(rup = WatchList::isConflict(c.watch)) {
         Blablabla::log("Clause follows from current model by ex falso quodlibet.");
+        Chain::getChain(c.tvr, c.stack, d, c.watch[Constants::ConflictWatchlist][0]);
+        Chain::markChain(c.tvr, d);
     } else {
         for(ptr = clause; (literal = *ptr) != Constants::EndOfClause; ++ptr) {
             if(Model::isSatisfied(c.stack, literal)) {
                 Blablabla::log("Clause subsumed by current model.");
+                Chain::getChain(c.tvr, c.stack, d, c.stack.reasons[literal]);
+                Chain::markChain(c.tvr, d);
                 Model::reset(c.stack);
                 rup = true;
             } else if(!Model::isFalsified(c.stack, literal)) {
@@ -102,7 +135,12 @@ bool checkRup(checker &c, database& d, int* clause, bool& rup) {
             }
         }
         if(!rup) {
-            if(!Model::softPropagate(m, wl, d, rup)) { return false; }
+            if(Model::softPropagate(m, wl, d, rup)) {
+                Chain::getChain(c.tvr, c.stack, d, c.stack.reasons[Constants::ConflictWatchlist]);
+                Chain::markChain(c.tvr, d);
+            } else {
+                return false;
+            }
         }
     }
     if(rup) {
@@ -144,7 +182,6 @@ bool checkRat(checker &c, database& d, int* clause, int pivot, bool& rat) {
 bool preprocessInstruction(checker& c, proof& r, database& d, bool& stop) {
     Blablabla::log("Preprocessing instruction " + Blablabla::instructionToString(r, d, c.position) + ".");
     Blablabla::increase();
-    getInstruction(c, r, d);
     if(c.kind == Constants::InstructionDeletion) {
         if(!deleteClause(c, d)) { return false; }
     } else {
@@ -154,10 +191,10 @@ bool preprocessInstruction(checker& c, proof& r, database& d, bool& stop) {
             stop = true;
         }
     }
-    if(r.used - 1 >= c.position) {
-        stop = true;
-        Database::setFlag(c.pointer, Constants::VerificationBit, Constants::ScheduledFlag);
-    }
+    // if(r.used - 1 >= c.position) {
+    //     stop = true;
+    //     Database::setFlag(c.pointer, Constants::VerificationBit, Constants::ScheduledFlag);
+    // }
     Blablabla::decrease();
     return true;
 }

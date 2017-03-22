@@ -3,19 +3,16 @@
 
 #include <stdlib.h>
 
-namespace HashTable {
-	extern long** table;
-	extern int* rowUsed;
-	extern int* rowMax;
+#include "structs.hpp"
 
-	void allocate();
-	void deallocate();
-	void reallocateRow(int i);
-	unsigned int getHash(int* cla);
-	bool match(hashtable& h, database& d, clause& c, unsigned int hash, long& offset);
-	void removeClause(unsigned int hashValue, int position);
-	long matchAndRemoveClause(int* cla, int length, unsigned int hashValue);
-	void addClause(unsigned int hashValue, long offset);
+namespace HashTable {
+	bool allocate(hashtable& h);
+    bool reallocateRow(hashtable& h, int row);
+	void deallocate(hashtable& h);
+	unsigned int getHash(int* ptr);
+    bool match(hashtable& h, database& d, clause& c, unsigned int hash, long& offset);
+    bool insertOffset(hashtable& h, unsigned int hash, long offset);
+    bool removeOffset(hashtable& h, unsigned int hash, long offset) ;
 }
 
 #endif

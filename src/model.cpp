@@ -2,8 +2,9 @@
 #include <string>
 
 #include "structs.hpp"
-#include "parser.hpp"
 #include "extra.hpp"
+#include "watchlist.hpp"
+#include "database.hpp"
 #include "model.hpp"
 
 namespace Model {

@@ -8,5 +8,5 @@ namespace Objects {
 	proof Proof;
 	trail Trail;
 	watchlist WatchList;
-	proofiterator ProofIterator;
+	checker Checker;
 }

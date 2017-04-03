@@ -21,8 +21,8 @@ namespace WatchList {
     bool setWatches(watchlist& wl, model& m, int* ptr, long offset);
     bool processWatches(watchlist& wl, model& m, int* ptr, long offset, int literal, long*& watch, bool soft, bool& rup);
     bool reviseWatches(watchlist& wl, model& m, int* ptr, long offset, int literal, long*& watch, bool& skip);
-    bool reviseConflict(watchlist* wl, model& m, int* ptr, long offset, long*& watch);
-    bool processList(watchlist &wl, model& m, database& d, int literal, bool soft);
+    bool reviseConflict(watchlist& wl, model& m, int* ptr, long offset, long*& watch);
+    bool processList(watchlist &wl, model& m, database& d, int literal, bool soft, bool& rup);
 }
 
 #endif

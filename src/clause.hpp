@@ -12,7 +12,7 @@ namespace Clause {
     bool reallocateBuffer(clause& c);
     bool reallocateFlags(clause& c);
     void deallocate(clause& c);
-    bool addLiteral(clause& c, int literal);
+    bool addLiteral(clause& c, int literal, bool& inbounds, bool& tautology);
     bool closeBuffer(clause& c);
     void resetBuffer(clause& c);
     void sortClause(clause& c);

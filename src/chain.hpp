@@ -8,12 +8,11 @@ namespace Chain {
 
 bool allocate(chain& ch);
 void deallocate(chain& ch);
-void initialize(chain& ch, model &m, long conflict);
 void addClause(chain& ch, int* ptr, int trigger);
 bool getReason(chain& ch, model& m, int trigger, long& reason);
-void getChain(chain& ch, model& m, database& d, long conflict);
+void getChain(chain& ch, model& m, database& d);
 int compare(const void *a, const void *b);
-void markChain(chain& ch, database& d);
+void markChain(chain& ch, model& m, database& d);
 
 }
 

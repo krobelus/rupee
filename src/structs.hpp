@@ -43,14 +43,24 @@ struct parser {
 };
 
 struct model {
-    int* start;
-    int* forced;
-    int* head;
-    int* used;
-    int* satisfied;
-    int** positions;
-    long* reasons;
+    int* prev;
+    int* next;
+    long* reason;
+    bool* satisfied;
+    int head;
+    int forced;
+    int last;
 };
+
+// struct model {
+//     int* start;
+//     int* forced;
+//     int* head;
+//     int* used;
+//     bool* satisfied;
+//     int** positions;
+//     long* reasons;
+// };
 
 struct watchlist {
     long** array;
@@ -77,7 +87,7 @@ struct latency {
 
 struct chain {
     int* array;
-    int* used;
+    int used;
     bool* lits;
 };
 
@@ -100,9 +110,8 @@ namespace Objects {
 	extern database Database;
 	extern hashtable HashTable;
 	extern proof Proof;
-    extern model Model;
-    extern watchlist WatchList;
     extern checker Checker;
+    extern bool Result;
 }
 
 

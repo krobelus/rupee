@@ -91,24 +91,36 @@ bool parseClause(parser& p, clause& c, std::string& s, bool& taut) {
 		c.kind = Constants::InstructionIntroduction;
 	}
     done = false;
+    taut = false;
     Clause::resetBuffer(c);
     remainder = s;
+    // std::cout << "starting" << std::endl;
     while(!done) {
         if(!boost::regex_search(s, result, literalRegex)) {
+            // std::cout << "fail" << std::endl;
             return false;
         } else {
             literal = stringToLiteral(boost::lexical_cast<int>(result[1]));
             if(literal == 0) {
+                // std::cout << "end" << std::endl;
+                if(c.clauseused == 1) {
+                    // std::cout << "adding special" << std::endl;
+                    if(!Clause::addLiteral(c, -Constants::ReservedLiteral, inbounds, taut)) { return false; }
+                }
                 if(!Clause::closeBuffer(c)) { return false; }
                 done = true;
             } else if(!Clause::addLiteral(c, literal, inbounds, taut)) {
+                // std::cout << "fail" << std::endl;
                 return false;
             } else if(!inbounds) {
-                if(!Clause::rellocateFlags(c)) { return false; }
+                // std::cout << "out of bounds" << std::endl;
+                if(!Clause::reallocateFlags(c)) { return false; }
                 remainder = s;
             } else if(taut) {
+                // std::cout << "taut" << std::endl;
                 done = true;
             } else {
+                // std::cout << "good "<< literal << std::endl;
                 varliteral = abs(literal);
     			if(p.maxVariable < varliteral) {
     				p.maxVariable = varliteral;
@@ -125,7 +137,11 @@ bool processClause(parser& p, clause& c, hashtable& h, database& d, proof& r) {
     pivot = c.clausearray[0];
     Clause::sortClause(c);
     hash = HashTable::getHash(c.clausearray);
-    Blablabla::log("Parsed clause: " + Clause::printClause(c));
+    if(c.kind == Constants::InstructionIntroduction) {
+        Blablabla::log("Parsed instruction: +++" + Blablabla::clauseToString(c.clausearray));
+    } else {
+        Blablabla::log("Parsed instruction: ---" + Blablabla::clauseToString(c.clausearray));
+    }
     if(!HashTable::match(h, d, c, hash, offset)) {
         if(c.kind == Constants::InstructionIntroduction) {
             if(!Database::addBufferClause(d, c, offset)) { return false; }
@@ -160,6 +176,8 @@ int stringToLiteral(int literal) {
         return literal - 1;
     } else if(literal > 0) {
         return literal + 1;
+    } else {
+        return 0;
     }
 }
 

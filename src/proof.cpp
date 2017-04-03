@@ -13,7 +13,7 @@ bool allocate(proof& r) {
 	r.used = 0;
 	r.array = (long*) malloc (r.max * sizeof(long));
 	r.pivots = (int*) malloc (r.max * sizeof(int));
-	r.kinds = (bool*) malloc(r.max * sizeof(bool))
+	r.kinds = (bool*) malloc(r.max * sizeof(bool));
 	r.noPremises = 0;
 	if(r.array == NULL || r.pivots == NULL || r.kinds == NULL) {
 		Blablabla::log("Error at proof list allocation.");
@@ -47,7 +47,7 @@ void deallocate(proof& r) {
 
 bool storePremise(proof& r, long offset) {
 	++(r.noPremises);
-	return storeInstruction(r, offset, 0, false);
+	return storeInstruction(r, offset, 0, Constants::InstructionIntroduction);
 }
 
 bool storeInstruction(proof& r, long offset, int pivot, bool kind) {

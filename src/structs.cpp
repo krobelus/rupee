@@ -6,7 +6,6 @@ namespace Objects {
 	database Database;
 	hashtable HashTable;
 	proof Proof;
-	trail Trail;
-	watchlist WatchList;
 	checker Checker;
+	bool Result;
 }

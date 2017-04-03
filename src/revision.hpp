@@ -9,7 +9,7 @@ namespace Revision {
     bool allocate(revision& v);
     void deallocate(revision& v);
 
-    void addLiteral(int lit);
+    void addLiteral(revision& v, model& m, database& d, int lit);
     bool isInCone(revision& v, long offset, int lit, database& d);
     void getCone(revision& v, model& m, database& d, int* ptr);
     bool reviseList(revision& v, watchlist& wl, model& m, database& d);

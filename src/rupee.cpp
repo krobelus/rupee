@@ -7,60 +7,55 @@
 #include "proof.hpp"
 #include "clause.hpp"
 #include "hashtable.hpp"
-#include "trail.hpp"
 #include "extra.hpp"
-#include "watchlist.hpp"
+#include "checker.hpp"
 
 namespace Frontend {
 
 bool readArguments(int argc, char* argv[]) {
 	std::string stringArgument;
 	int premiseArgument = Constants::ArgumentsFilePremise;
-	bool finishArguments = false;
-	for(int i = 1; i < argc && !finishArguments; ++i) {
-		stringArgument = std::string(argv[i]);
+	for(int i = 1; i < argc; ++i) {
+		stringArgument = argv[i];
+		std::cout << stringArgument << std::endl;
 		if(stringArgument[0] == '-') {
 			stringArgument = stringArgument.substr(1);
 			if(stringArgument == "help") {
-				premiseArgument = Constants::ArgumentsHelp;
-				finishArguments = true;
+				Blablabla::comment("Usage:");
+				Blablabla::comment("\trupee [options] [DIMACS CNF file] [DRAT proof file]");
+				Blablabla::comment("Options:");
+				Blablabla::comment("\t-help\t\tPrints this help message.");
+				Blablabla::comment("\t-failfast\t\tChecks refutation ending in the earliest UP-contradiction.");
+				Blablabla::comment("\t-fullcheck\t\tChecks full proof. If backwards-checking is enabled, only dependencies of the last clause in the proof are checked.");
+				return false;
+			} else if(stringArgument == "failfast") {
+				Parameters::failFast = true;
+			} else if(stringArgument == "fullcheck") {
+				Parameters::failFast = false;
 			} else {
-				premiseArgument = Constants::ArgumentsError;
-				finishArguments = true;
+				Blablabla::comment("Error: invalid input.");
+				Blablabla::comment("\tType rupee -help for more information.");
+				return false;
 			}
+		} else if(premiseArgument == Constants::ArgumentsFilePremise) {
+			Parameters::setPremise(stringArgument);
+			premiseArgument = Constants::ArgumentsFileProof;
+		} else if(premiseArgument == Constants::ArgumentsFileProof) {
+			Parameters::setProof(stringArgument);
+			premiseArgument = Constants::ArgumentsRest;
 		} else {
-			if(premiseArgument == Constants::ArgumentsFilePremise) {
-				Parameters::setPremise(stringArgument);
-				premiseArgument = Constants::ArgumentsFileProof;
-			} else if (premiseArgument == Constants::ArgumentsFileProof) {
-				Parameters::setProof(stringArgument);
-				premiseArgument = Constants::ArgumentsRest;
-			} else {
-				premiseArgument = Constants::ArgumentsError;
-				finishArguments = true;
-			}
+			Blablabla::comment("Error: invalid input.");
+			Blablabla::comment("\tType rupee -help for more information.");
+			return false;
 		}
 	}
-	if(premiseArgument != Constants::ArgumentsRest && premiseArgument != Constants::ArgumentsHelp) {
-		premiseArgument = Constants::ArgumentsError;
-	}
-	if(premiseArgument == Constants::ArgumentsError) {
-		Blablabla::comment("Error: invalid input.");
-		Blablabla::comment("\tType rupee -help for more information.");
-		return false;
-	} else if(premiseArgument == Constants::ArgumentsHelp) {
-		Blablabla::comment("Usage:");
-		Blablabla::comment("\trupee [DIMACS CNF file] [DRAT proof file]");
-		return false;
-	} else {
-		return true;
-	}
+	return true;
 }
 
 bool initializeStorage() {
 	Blablabla::log("Initializing basic data structures.");
 	Blablabla::increase();
-	if(!Clause::allocateBuffer(Objects::Clause)) { return false; }
+	if(!Clause::allocate(Objects::Clause)) { return false; }
 	if(!HashTable::allocate(Objects::HashTable)) { return false; }
 	if(!Database::allocate(Objects::Database)) { return false; }
 	if(!Proof::allocate(Objects::Proof)) { return false; }
@@ -81,68 +76,45 @@ bool parse() {
 	if(!Parser::openFile(Objects::Parser, Constants::FileProof)) { return false; }
 	if(!Parser::readClauses(Objects::Parser, Objects::Clause, Objects::HashTable, Objects::Database, Objects::Proof)) { return false; }
 	Blablabla::decrease();
-	Blablabla::comment("Freeing parsing data structures.");
+	Blablabla::comment("Deallocating parsing data structures.");
 	Blablabla::increase();
-	Clause::resetBuffer(Objects::Clause);
+	Clause::deallocate(Objects::Clause);
 	HashTable::deallocate(Objects::HashTable);
 	Parameters::importNoVariables(Objects::Parser);
 	Blablabla::decrease();
-	Database::log(Objects::Database);
-	Proof::log(Objects::Proof, Objects::Database);
+	Blablabla::logDatabase(Objects::Database);
+	Blablabla::logProof(Objects::Proof, Objects::Database);
 	return true;
 }
 
-bool initializeAuxiliary() {
-	if(!Trail::allocate(Objects::Trail)) { return false; }
-	if(!WatchList::allocate(Objects::WatchList)) { return false; }
-	return true;
-}
-
-bool preprocessPremisses() {
-	Proof::firstPremise(Objects::Proof, Objects::ProofIterator);
-	while(Proof::getPremise(Objects::Proof, Objects::Database, Objects::ProofIterator)) {
-		Database::setPremiseFlags(Objects::ProofIterator.pointer);
-		if(!WatchList::insertWatches(Objects::WatchList, Objects::ProofIterator)) { return false; }
-	}
-	return true;
-}
-
-bool preprocessProof() {
-	Proof::firstInstruction(Objects::Proof, Objects::ProofIterator);
-	while(Proof::getPremise(Objects::Proof, Objects::Database, Objects::ProofIterator)) {
-		if(Objects::ProofIterator.kind == Constants::InstructionIntroduction) {
-			
-			if(!WatchList::insertWatches(Objects::WatchList, Objects::ProofIterator)) { return false; }
+bool check() {
+	Blablabla::log("Initializing checking data structures.");
+	Blablabla::increase();
+	if(!Checker::allocate(Objects::Checker)) { return false; }
+	Blablabla::decrease();
+	if(!Checker::initialize(Objects::Checker, Objects::Proof, Objects::Database)) { return false; }
+	if(!Checker::preprocessProof(Objects::Checker, Objects::Proof, Objects::Database, Objects::Result)) { return false; }
+	if(Objects::Result) {
+		if(!Checker::verifyProof(Objects::Checker, Objects::Proof, Objects::Database, Objects::Result)) { return false; }
+		if(Objects::Result) {
+			Blablabla::comment("RESULT   correct subrefutation found");
 		} else {
-			Database::setDeletionFlags(Objects::ProofIterator.pointer);
-			if(!WatchList::removeWatches(Objects::WatchList, Objects::ProofIterator)) { return false; }
+			Blablabla::comment("RESULT   correct subrefutation was not found");
 		}
+	} else {
+		Blablabla::comment("RESULT   not a refutation");
 	}
 	return true;
 }
 
-// int main(int argc,char* argv[]){
-// 	if(!readArguments(argc, argv)) { return 1; }
-// 	if(!initializeStorage()) { return 1; }
-// 	if(!parse()) { return 1; }
-//
-//
-// 		Parser::parse();
-// 		Proof::print();
-// 		WatchList::printWatches();
-// 		WatchList::printQueue();
-// 		WatchList::printConflicts();
-// 		Database::print();
-//
-// 		if(Solver::checkProof()) {
-// 			std::cout << "VERIFIED" << std::endl;
-// 		} else {
-// 			std::cout << "INCORRECT" << std::endl;
-// 		}
-// 		Solver::deallocate();
-// 	}
-// 	return 0;
-// }
+void deallocate() {
+	Blablabla::log("Deallocating data structures.");
+	Blablabla::increase();
+	Database::deallocate(Objects::Database);
+	Proof::deallocate(Objects::Proof);
+	Checker::deallocate(Objects::Checker);
+	Blablabla::decrease();
+}
 
 }
 
@@ -150,6 +122,6 @@ int main(int argc, char* argv[]) {
 	if(!Frontend::readArguments(argc, argv)) { return 1; }
 	if(!Frontend::initializeStorage()) { return 1; }
 	if(!Frontend::parse()) { return 1; }
-	if(!Frontend::initializeAuxiliary()) { return 1; }
-	return 0;
+	if(!Frontend::check()) { return 1; }
+	Frontend::deallocate();
 }

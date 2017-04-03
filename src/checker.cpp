@@ -4,6 +4,11 @@
 #include "extra.hpp"
 #include "database.hpp"
 #include "proof.hpp"
+#include "watchlist.hpp"
+#include "model.hpp"
+#include "revision.hpp"
+#include "latency.hpp"
+#include "chain.hpp"
 #include "checker.hpp"
 
 namespace Checker {
@@ -29,9 +34,30 @@ void deallocate(checker& c) {
     Chain::deallocate(c.tvr);
 }
 
-void getPremise(checker& c, proof& r, database& d) {
-	c.offset = r.proofarray[c.position];
-	c.pointer = Database::getPointer(d, c.offset);
+bool endOfPremises(checker &c, proof &r) {
+    return !(c.position < r.noPremises);
+}
+
+bool endOfProof(checker &c, proof &r) {
+    return !(c. position < r.used);
+}
+
+bool startOfPremises(checker &c, proof &r) {
+    return c.position <= 0;
+}
+
+bool startOfProof(checker &c, proof &r) {
+    return c.position <= r.noPremises;
+}
+
+void next(checker &c, proof &r, database& d, int& signal) {
+    ++c.position;
+    getInstruction(c, r, d);
+    if(c.kind == Constants::InstructionDeletion) {
+        if(!deleteClause(c, d)) { return false; }
+    } else {
+        if(!introduceClause(c, d, Constants::DirectionForward)) { return false; }
+    }
 }
 
 void getInstruction(checker& c, proof& r, database& d) {
@@ -41,15 +67,32 @@ void getInstruction(checker& c, proof& r, database& d) {
 	c.kind = r.kinds[c.position];
 }
 
+bool introduceClause(checker& c, database& d, bool direction) {
+    Database::setClauseActive(d, c.pointer);
+    Blablabla::log("Introducing clause " + Blablabla::clauseToString(c.pointer) + ".");
+
+    if(direction == Constants::DirectionForward) {
+
+    } else {
+
+    }
+
+}
+
+
 bool initialize(checker& c, proof& r, database& d) {
-    Blablabla::log("Processing premise clauses.");
+    Blablabla::log("Preprocessing premise clauses.");
     Blablabla::increase();
     Model::assumeLiteral(c.stack, Constants::ReservedLiteral);
     if(!Model::hardPropagate(c.stack, c.watch, d)) { return false; }
     for(c.position = 0; c.position < r.noPremises; ++c.position) {
         getPremise(c, r, d);
+        Blablabla::log("Introducing clause " + Blablabla::clauseToString(c.pointer));
+        Blablabla::increase();
         if(!introduceClause(c, d)) { return false; }
+        Blablabla::decrease();
     }
+    Blablabla::log("End of premises.");
     Blablabla::decrease();
     return true;
 }
@@ -58,14 +101,17 @@ bool preprocessProof(checker& c, proof& r, database& d, bool& conflict) {
     Blablabla::log("Preprocessing proof.");
     Blablabla::increase();
     conflict = false;
-    for(c.position = r.noPremises; !conflict && c.position < r.used; ++c.position) {
+    for(c.position = r.noPremises; c.position < r.used; ++c.position) {
         getInstruction(c, r, d);
         if(!preprocessInstruction(c, r, d, conflict)) { return false; }
+        if(conflict) {
+            Blablabla::decrease();
+            Blablabla::log("Conflict detected. Scheduled for verification.");
+            return true;
+        }
     }
     Blablabla::decrease();
-    if(!conflict) {
-        Blablabla::log("No conflict was detected.")
-    }
+    Blablabla::log("No conflict was detected.");
     return true;
 }
 
@@ -75,11 +121,14 @@ bool verifyProof(checker& c, proof& r, database& d, bool& verified) {
     verified = true;
     while(verified && c.position >= r.noPremises) {
         getInstruction(c, r, d);
-        if(!verifyInstruction(checker& c, proof& r, database& d, bool& verified)) { return false; }
+        if(!verifyInstruction(c, r, d, verified)) { return false; }
+        --c.position;
     }
     Blablabla::decrease();
-    if(!done) {
+    if(!verified) {
         Blablabla::log("Proof verification failed.");
+    } else  {
+        Blablabla::log("Proof verification succeeded.");
     }
     return true;
 }
@@ -87,12 +136,15 @@ bool verifyProof(checker& c, proof& r, database& d, bool& verified) {
 bool introduceClause(checker &c, database& d) {
     Database::setClauseActive(d, c.pointer);
     Blablabla::log("Introducing clause " + Blablabla::clauseToString(c.pointer) + ".");
+    Blablabla::increase();
     if(Database::isEmpty(c.pointer)) {
-        return WatchList::addConflict(c.watch, c.pointer, c.offset);
+        if(!WatchList::addConflict(c.watch, c.pointer, c.offset)) { return false; }
     } else {
         if(!WatchList::setWatches(c.watch, c.stack, c.pointer, c.offset)) { return false; }
-        return Model::hardPropagate(c.stack, c.watch, d);
+        if(!Model::hardPropagate(c.stack, c.watch, d)) { return false; }
     }
+    Blablabla::decrease();
+    return true;
 }
 
 bool deleteClause(checker &c, database& d) {
@@ -101,53 +153,50 @@ bool deleteClause(checker &c, database& d) {
     Blablabla::increase();
     WatchList::findAndRemoveWatch(c.watch, c.pointer[0], c.offset);
     WatchList::findAndRemoveWatch(c.watch, c.pointer[1], c.offset);
-    if(Database::getFlag(c.pointer, Constants::ConflictBit, Constants::ConflictFlag)) {
+    if(Database::isFlag(c.pointer, Constants::ConflictBit, Constants::ConflictFlag)) {
         Database::setFlag(c.pointer, Constants::ConflictBit, Constants::SatisfiableFlag);
         WatchList::findAndRemoveWatch(c.watch, Constants::ConflictWatchlist, c.offset);
     }
-    if(Database::getFlag(c.pointer, Constants::PseudounitBit, Constants::ReasonFlag)) {
+    if(Database::isFlag(c.pointer, Constants::PseudounitBit, Constants::ReasonFlag)) {
         Blablabla::log("Clause was a reason clause.");
         Revision::getCone(c.cone, c.stack, d, c.pointer);
-        Revision::reviseList(c.cone, c.watch, c.stack, d);
+        if(!Revision::reviseList(c.cone, c.watch, c.stack, d)) { return false; }
     } else {
         Blablabla::log("Clause was not a reason clause.");
     }
     Blablabla::decrease();
+    return true;
 }
 
 bool checkRup(checker &c, database& d, int* clause, bool& rup) {
     Blablabla::log("Checking RUP for clause " + Blablabla::clauseToString(clause) + ".");
     Blablabla::increase();
-    if(rup = WatchList::isConflict(c.watch)) {
+    if((rup = WatchList::isConflict(c.watch))) {
         Blablabla::log("Clause follows from current model by ex falso quodlibet.");
-        Chain::getChain(c.tvr, c.stack, d, c.watch[Constants::ConflictWatchlist][0]);
-        Chain::markChain(c.tvr, d);
+        Model::assignSoftConflict(c.stack, c.watch.array[Constants::ConflictWatchlist][0]);
     } else {
         for(ptr = clause; (literal = *ptr) != Constants::EndOfClause; ++ptr) {
             if(Model::isSatisfied(c.stack, literal)) {
                 Blablabla::log("Clause subsumed by current model.");
-                Chain::getChain(c.tvr, c.stack, d, c.stack.reasons[literal]);
-                Chain::markChain(c.tvr, d);
-                Model::reset(c.stack);
+                Model::assignSoftConflict(c.stack, c.stack.reasons[literal]);
                 rup = true;
             } else if(!Model::isFalsified(c.stack, literal)) {
-                Model::assumeLiteral(m, -literal);
+                Model::assumeLiteral(c.stack, -literal);
             }
         }
         if(!rup) {
-            if(Model::softPropagate(m, wl, d, rup)) {
-                Chain::getChain(c.tvr, c.stack, d, c.stack.reasons[Constants::ConflictWatchlist]);
-                Chain::markChain(c.tvr, d);
-            } else {
-                return false;
-            }
+            if(!Model::softPropagate(c.stack, c.watch, d, rup)) { return false; }
         }
     }
     if(rup) {
         Blablabla::log("RUP check succeeded.");
+        Chain::getChain(c.tvr, c.stack, d);
+        Blablabla::logChain(c.tvr, d, c.stack);
+        Chain::markChain(c.tvr, c.stack, d);
     } else {
         Blablabla::log("RUP check failed.");
     }
+    Model::reset(c.stack, d);
     Blablabla::decrease();
     return true;
 }
@@ -156,14 +205,14 @@ bool checkRat(checker &c, database& d, int* clause, int pivot, bool& rat) {
     rat = true;
     Blablabla::log("Checking RAT for clause " + Blablabla::clauseToString(clause) + " with pivot " + Blablabla::litToString(pivot) + ".");
     Blablabla::increase();
-    if(Latency::loadClause(c.rat, clause, pivot)) { return false; }
+    Latency::loadClause(c.rat, clause, pivot);
     Latency::findResolvableClauses(c.rat, c.watch, d);
     Blablabla::logResolutionCandidates(c.rat, d);
     candidate = c.rat.array;
     while(rat && *candidate != Constants::EndOfWatchList) {
-        Blablabla::log("Resolution candidate " + Blablabla::clauseToString(*candidate) ".");
+        Blablabla::log("Resolution candidate " + Blablabla::clauseToString(Database::getPointer(d, *candidate)) + ".");
         Blablabla::increase();
-        if(Latency::computeResolvent(c.rat, Database::getPointer(*candidate))) {
+        if(Latency::computeResolvent(c.rat, Database::getPointer(d, *candidate))) {
             if(!checkRup(c, d, c.rat.resolvent, rat)) { return false; }
         } else {
             Blablabla::log("Resolvent is tautological.");
@@ -180,7 +229,7 @@ bool checkRat(checker &c, database& d, int* clause, int pivot, bool& rat) {
 }
 
 bool preprocessInstruction(checker& c, proof& r, database& d, bool& stop) {
-    Blablabla::log("Preprocessing instruction " + Blablabla::instructionToString(r, d, c.position) + ".");
+    Blablabla::log("Preprocessing instruction    " + Blablabla::instructionToString(r, d, c.position));
     Blablabla::increase();
     if(c.kind == Constants::InstructionDeletion) {
         if(!deleteClause(c, d)) { return false; }
@@ -200,12 +249,12 @@ bool preprocessInstruction(checker& c, proof& r, database& d, bool& stop) {
 }
 
 bool verifyInstruction(checker& c, proof& r, database& d, bool& verified) {
-    Blablabla::log("Verifying instruction " + Blablabla::instructionToString(r, d, c.position) + ".");
+    Blablabla::log("Verifying instruction    " + Blablabla::instructionToString(r, d, c.position));
     Blablabla::increase();
     getInstruction(c, r, d);
-    if(Database::isFlag(c.pointer, Constants::VerificationBit, Constants::ScheduledFlag) {
-        if(c.kind == Constants::InstructionIntroduction) {
-            if(!deleteClause(c, d)) { return false; }
+    if(c.kind == Constants::InstructionIntroduction) {
+        if(!deleteClause(c, d)) { return false; }
+        if(Database::isFlag(c.pointer, Constants::VerificationBit, Constants::ScheduledFlag)) {
             if(!checkRup(c, d, c.pointer, verified)) { return false; }
             if(!verified) {
                 if(!checkRat(c, d, c.pointer, c.pivot, verified)) { return false; }
@@ -215,12 +264,10 @@ bool verifyInstruction(checker& c, proof& r, database& d, bool& verified) {
             } else {
                 Blablabla::log("Instruction verification failed.");
             }
-        } else {
-            if(!introduceClause(c, d)) { return false; }
-            Blablabla::log("Nothing to check in deletion instructions.");
         }
     } else {
-        Blablabla::log("Instruction not scheduled for verification.");
+        if(!introduceClause(c, d)) { return false; }
+        Blablabla::log("Nothing to check in deletion instructions.");
     }
     Blablabla::decrease();
     return true;

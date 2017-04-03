@@ -18,7 +18,6 @@ bool allocate(database& d) {
 	d.databasemax = Parameters::databaseSize;
 	d.databasearray = (int*) malloc (d.databasemax * sizeof(int));
 	d.databaseused = 0;
-	d.current = d.databasearray + d.databaseused;
 	if(d.databasearray == NULL) {
 		Blablabla::log("Error at clause database allocation.");
 		Blablabla::comment("Memory management error.");
@@ -32,7 +31,6 @@ bool reallocate(database& d) {
     Blablabla::log("Reallocating clause database.");
     d.databasemax *= 2;
     d.databasearray = (int*) realloc (d.databasearray, d.databasemax * sizeof(int));
-	d.current = d.databasearray + d.databaseused;
 	if(d.databasearray == NULL) {
 		Blablabla::log("Error at clause database reallocation.");
 		Blablabla::comment("Memory management error.");
@@ -81,7 +79,6 @@ bool addBufferClause(database& d, clause& c, long& offset) {
 	}
 	d.databaseused += c.clauseused + Constants::ExtraCellsDatabase + 1;
 	offset = getOffset(d, pointer);
-	Database::setFlag(pointer, Constants::RawnessBit, Constants::RawFlag);
 	return true;
 }
 
@@ -93,7 +90,7 @@ void setPremiseFlags(database& d, long offset) {
 	Database::setFlag(pointer, Constants::PersistencyBit, Constants::PersistentFlag);
 	Database::setFlag(pointer, Constants::PseudounitBit, Constants::RedundantFlag);
 	Database::setFlag(pointer, Constants::ConflictBit, Constants::SatisfiableFlag);
-	Database::setFlag(pointer, Constants::RawActivity, Constants::ActiveFlag);
+	Database::setFlag(pointer, Constants::RawActivityBit, Constants::ActiveFlag);
 }
 
 void setNewIntroductionFlags(database& d, long offset) {
@@ -104,19 +101,19 @@ void setNewIntroductionFlags(database& d, long offset) {
 	Database::setFlag(pointer, Constants::PersistencyBit, Constants::PersistentFlag);
 	Database::setFlag(pointer, Constants::PseudounitBit, Constants::RedundantFlag);
 	Database::setFlag(pointer, Constants::ConflictBit, Constants::SatisfiableFlag);
-	Database::setFlag(pointer, Constants::RawActivity, Constants::ActiveFlag);
+	Database::setFlag(pointer, Constants::RawActivityBit, Constants::ActiveFlag);
 }
 
 void setOldIntroductionFlags(database& d, long offset) {
 	pointer = Database::getPointer(d, offset);
 	Database::setFlag(pointer, Constants::OriginalityBit, Constants::DerivedFlag);
-	Database::setFlag(pointer, Constants::RawActivity, Constants::ActiveFlag);
+	Database::setFlag(pointer, Constants::RawActivityBit, Constants::ActiveFlag);
 }
 
 void setDeletionFlags(database& d, long offset) {
 	pointer = Database::getPointer(d, offset);
 	Database::setFlag(pointer, Constants::PersistencyBit, Constants::TemporalFlag);
-	Database::setFlag(pointer, Constants::RawActivity, Constants::InactiveFlag);
+	Database::setFlag(pointer, Constants::RawActivityBit, Constants::InactiveFlag);
 }
 
 void setClauseActive(database& d, int* ptr) {

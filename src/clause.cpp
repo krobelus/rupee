@@ -72,7 +72,7 @@ namespace Clause {
         if(c.clauseused >= c.clausemax) {
     		if(!reallocateBuffer(c)) { return false; }
     	}
-        if((inbounds = abs(literal) <= c.allocatedlits) && !(tautology = !(c.clauselits[-literal]))) {
+        if((inbounds = abs(literal) <= c.allocatedlits) && !(tautology = c.clauselits[-literal])) {
             if(!c.clauselits[literal]) {
                 c.clauselits[literal] = true;
                 c.clausearray[c.clauseused++] = literal;
@@ -95,7 +95,7 @@ namespace Clause {
     void resetBuffer(clause& c) {
         pit = c.clausearray;
         while(*pit != Constants::EndOfClause)  {
-            c.clauselits[*pit] = false;
+            c.clauselits[*(pit++)] = false;
         }
         c.clauseused = 0;
     }

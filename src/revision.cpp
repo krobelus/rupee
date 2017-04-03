@@ -1,6 +1,7 @@
 #include <stdlib.h>
 
 #include "structs.hpp"
+#include "extra.hpp"
 #include "model.hpp"
 #include "database.hpp"
 #include "watchlist.hpp"
@@ -10,7 +11,7 @@ namespace Revision {
 
 int* stackleft;
 int* stackright;
-int* reason;
+long reason;
 int it;
 int literal;
 int* clause;
@@ -38,12 +39,14 @@ bool allocate(revision& v) {
     }
 }
 
-bool deallocate(revision& v) {
+void deallocate(revision& v) {
     Blablabla::log("Deallocating revision queue.");
+    v.lits -= Parameters::noVariables;
     free(v.array);
+    free(v.lits);
 }
 
-void addLiteral(int lit) {
+void addLiteral(revision& v, model& m, database& d, int lit) {
     v.lits[literal] = true;
     *(v.used++) = lit;
 }
@@ -61,25 +64,24 @@ bool isInCone(revision& v, long offset, int lit, database& d) {
 
 void getCone(revision& v, model& m, database& d, int* ptr) {
     Blablabla::logReasons(m, d);
-    while(!Model::isSatisfied(*ptr)) {
+    while(!Model::isSatisfied(m, *ptr)) {
         ++ptr;
     }
     literal = *ptr;
-    addLiteral(literal);
-    stackright = m.positions[literal];
-    stackleft = stackright++;
-    while(stackright < m.used) {
-        literal = *stackright;
-        reason = m.reasons[literal];
-        if(Revision::isInCone(v, reason, literal, d)) {
-            addLiteral(literal);
-            m.satisfied[literal] = false;
+    prev[Constants::EndOfModel] = m.last;
+    addLiteral(v, m, d, literal);
+    literal = m.next[literal];
+    while(literal != Constants::EndOfModel) {
+        if(Revision::isInCone(v, m.reason[literal], literal, d)) {
+            addLiteral(v, m, d, literal);
+            literal = m.next[literal];
+            Model::dropLiteral(m, d, literal);
         } else {
-            *stackleft = *stackright;
-            m.positions[literal] = stackleft++;
+            literal = m.next[literal];
         }
     }
-    m.forced = m.head = m.used = stackLeft;
+    m.forced = m.last = prev[Constants::EndOfModel];
+    m.head = Constants::EndOfModel;
     Blablabla::log("Revision list:");
     Blablabla::logRevision(v);
     Blablabla::log("Current model:");
@@ -90,25 +92,32 @@ bool reviseList(revision& v, watchlist& wl, model& m, database& d) {
     coneit = v.array;
     while(coneit < v.used) {
         skip = false;
-        literal = *(++coneit);
+        literal = *(coneit++);
         Blablabla::log("Revising literal " + Blablabla::litToString(literal) + ".");
         Blablabla::increase();
-        Blablabla::logWatchList(wl, literal);
+        Blablabla::logWatchList(wl, literal, d);
         watchit = wl.array[literal];
         while((cloffset = *watchit) != Constants::EndOfWatchList && !skip) {
             clause = Database::getPointer(d, cloffset);
+            Blablabla::log("Revising clause " + Blablabla::clauseToString(clause));
+            Blablabla::increase();
             if(!WatchList::reviseWatches(wl, m, clause, cloffset, literal, watchit, skip)) { return false; }
+            Blablabla::decrease();
         }
         Blablabla::decrease();
         v.lits[literal] = false;
     }
+    v.used = v.array;
     Blablabla::log("Revising conflict list.");
     Blablabla::increase();
-    Blablabla::logWatchlist(wl, Constants::ConflictWatchlist);
+    Blablabla::logWatchList(wl, Constants::ConflictWatchlist, d);
     watchit = wl.array[Constants::ConflictWatchlist];
     while((cloffset = *watchit) != Constants::EndOfWatchList) {
         clause = Database::getPointer(d, cloffset);
-        if(!WatchList::reviseConflicts(wl, m, clause, cloffset, literal, watchit)) { return false; }
+        Blablabla::log("Revising clause " + Blablabla::clauseToString(clause));
+        Blablabla::increase();
+        if(!WatchList::reviseConflict(wl, m, clause, cloffset, watchit)) { return false; }
+        Blablabla::decrease();
     }
     Blablabla::decrease();
     return true;

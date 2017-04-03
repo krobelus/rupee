@@ -3,6 +3,7 @@
 #include <string>
 
 #include "structs.hpp"
+#include "database.hpp"
 #include "extra.hpp"
 
 namespace Parameters {
@@ -68,6 +69,7 @@ int spacecount;
 int* stackit;
 long* watchit;
 int* clause;
+int lit;
 
 void increase() {
     Blablabla::level++;
@@ -95,10 +97,12 @@ std::string litToString(int lit) {
         return "0";
     } else if (lit == -Constants::ReservedLiteral){
         return "-0";
+    } else if (lit == Constants::ConflictWatchlist) {
+        return "@";
     } else if(lit < 0) {
-        std::to_string(lit + Constants::ReservedLiteral);
+        return std::to_string(lit + Constants::ReservedLiteral);
     } else {
-        std::to_string(lit - Constants::ReservedLiteral);
+        return std::to_string(lit - Constants::ReservedLiteral);
     }
 }
 
@@ -107,9 +111,8 @@ void logModel(model& m) {
         for(spacecount = 0; spacecount < level; ++spacecount) {
             std::cout << ":\t";
         }
-        widthcount = 0
-        stackit = m.start;
-        while(stackit < m.used) {
+        widthcount = 0;
+        for(lit = Constants::ReservedLiteral; lit != Constants::EndOfModel; lit = m.next[lit]) {
             if(widthcount >= 20) {
                 std::cout << std::endl;
                 for(spacecount = 0; spacecount < level; ++spacecount) {
@@ -117,32 +120,28 @@ void logModel(model& m) {
                 }
                 widthcount = 0;
             }
-            if(stackit == m.forced) {
-                std::cout << "|| "
-            }
-            if(stackit == m.head) {
-                std::cout << "[" << litToString(*stackit) << "] ";
+            if(lit == m.head) {
+                std::cout << "[" << litToString(lit) << "] ";
             } else {
-                std::cout << litToString(*stackit) << " ";
+                std::cout << litToString(lit) << " ";
             }
-            ++widthcount;
+            if(lit == m.forced) {
+                std::cout << "|| ";
+            }
         }
-        if(stackit == m.forced) {
-            std::cout << "|| "
-        }
-        if(stackit == m.head) {
-            std::cout << "[] ";
+        if(lit == m.head) {
+            std::cout << "[]";
         }
         std::cout << std::endl;
-    }
 }
 
 void logWatchList(watchlist& wl, int literal, database& d) {
     if(Parameters::verbosity) {
         log("Clauses in watchlist " + litToString(literal) + ":");
-        for(watchit = wl[literal]; *watchit != Constants::EndOfWatchList; ++watchit) {
+        for(watchit = wl.array[literal]; *watchit != Constants::EndOfWatchList; ++watchit) {
             log(clauseToString(Database::getPointer(d, *watchit)));
         }
+        log("");
     }
 }
 
@@ -159,18 +158,19 @@ void logReasons(model& m, database& d) {
     log("Reason clauses in model:");
     stackit = m.start + 1;
     while(stackit < m.used) {
-        log(litToString(*stackit) + "  <-  " + clauseToString(Database::getPointer(m.reasons[*stackit])))
+        log(litToString(*stackit) + "  <-  " + clauseToString(Database::getPointer(d, m.reasons[*stackit])));
         ++stackit;
     }
 }
 
 void logRevision(revision& v) {
     stackit = v.array;
+    std::string str = "";
     while(stackit < v.used) {
-        std::cout << litToString(*stackit) << " ";
+        str = str + litToString(*stackit) + " ";
         ++stackit;
     }
-    std::cout << std::endl;
+    log(str);
 }
 
 void logDatabase(database& d) {
@@ -204,8 +204,8 @@ void logDatabase(database& d) {
 					str = str + "  ";
 				}
 			}
-			str = str + "  ";
-            str = clauseToString(*(d.databasearray[++i]));
+            ++i;
+			str = str + "  " + clauseToString(&(d.databasearray[i])) + "   " + std::to_string(Database::getOffset(d, d.databasearray + i));
 		} else {
 			if(d.databasearray[i] == 0) {
                 Blablabla::log(str);
@@ -218,15 +218,26 @@ void logDatabase(database& d) {
 	Blablabla::decrease();
 }
 
+void logChain(chain& ch, database& d, model& m) {
+    log("SSR chain:");
+    increase();
+    for(int i = 0; i < ch.used; ++i) {
+        log(clauseToString(Database::getPointer(d, m.reasons[ch.array[i]])));
+    }
+    log("");
+    decrease();
+}
+
 void logProof(proof& r, database& d) {
-    Blablabla::log("Database:");
+    Blablabla::log("Proof:");
 	Blablabla::increase();
     for(int i = 0; i < r.used; ++i) {
         if(i == r.noPremises) {
             Blablabla::log("------------------");
-            Blablabla::log(instructionToString(r, d, i));
         }
+        Blablabla::log(instructionToString(r, d, i));
     }
+    Blablabla::log("");
 	Blablabla::decrease();
 }
 
@@ -242,10 +253,12 @@ std::string clauseToString(int* ptr) {
 
 std::string instructionToString(proof& r, database& d, int pos) {
     std::string ans = "";
-    if(r.kinds[pos] == Constants::InstructionDeletion) {
-        ans = "--- [ ";
+    if(pos < r.noPremises) {
+        ans = "p: [";
+    } else if(r.kinds[pos] == Constants::InstructionDeletion) {
+        ans = "d: [ ";
     } else {
-        ans = "+++ [ ";
+        ans = "i: [ ";
     }
     clause = Database::getPointer(d, r.array[pos]);
     while(*clause != Constants::EndOfClause) {

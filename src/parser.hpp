@@ -29,7 +29,7 @@ namespace Parser {
 	bool openFile(parser& p, bool f);
 	bool readHeader(parser& p);
 	bool readClauses(parser& p, clause& c, hashtable& h, database& d, proof& r);
-	bool parseClause(parser& p, clause& c, std::string& s);
+	bool parseClause(parser& p, clause& c, std::string& s, bool& taut);
 	bool processClause(parser& p, clause& c, hashtable& h, database& d, proof& r);
 	int stringToLiteral(int literal);
 }

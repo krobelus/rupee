@@ -14,7 +14,7 @@ namespace Constants {
 	const int PersistencyBit = 3;
     const int PseudounitBit = 4;
 	const int ConflictBit = 5;
-	const int RawActivity = 6;
+	const int RawActivityBit = 6;
     const bool ActiveFlag = true;
     const bool InactiveFlag = false;
     const bool OriginalFlag = true;
@@ -26,24 +26,28 @@ namespace Constants {
     const bool ReasonFlag = true;
     const bool RedundantFlag = false;
 	const bool ConflictFlag = true;
-	const bool SatisfiableFlag = true;
+	const bool SatisfiableFlag = false;
 
     const bool FilePremise = OriginalFlag;
     const bool FileProof = DerivedFlag;
+
     const bool InstructionDeletion = InactiveFlag;
     const bool InstructionIntroduction = ActiveFlag;
 
 	const int ArgumentsFilePremise = 1;
 	const int ArgumentsFileProof = 2;
 	const int ArgumentsRest = 3;
-	const int ArgumentsHelp = 4;
-	const int ArgumentsError = 5;
+
+	const bool DirectionForward = true;
+	const bool DirectionBackwards = false;
 
 	const int ReservedLiteral = 1;
 	const int ConflictWatchlist = 0;
 	const int AssumedLiteral = 0;
 	const int EndOfClause = 0;
 	const int EndOfWatchList = 0;
+	const int EndOfModel = 0;
+
 	const int NoTrigger = 0;
 	const bool SoftPropagation = true;
 	const bool HardPropagation = false;
@@ -82,9 +86,11 @@ namespace Blablabla {
 	void logReasons(model& m, database& d);
 	void logRevision(revision& v);
 	void logDatabase(database& d);
+	void logChain(chain& ch, database& d, model& m);
 	void logProof(proof& r, database& d);
 	std::string clauseToString(int* ptr);
-	std::string instructionToString(int* pos);
+	std::string instructionToString(proof& r, database& d, int pos);
+	std::string litToString(int lit);
 }
 
 //

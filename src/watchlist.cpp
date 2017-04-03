@@ -15,7 +15,11 @@ int* candidate;
 int clliteral;
 long* watchit;
 long offwatch;
+int* othptr;
 int othlit;
+int triglit;
+long cloffset;
+int* clptr;
 
 bool allocate(long*& clarray, int& clused, int& clmax) {
     clarray = (long*) malloc(Parameters::hashDepth * sizeof(long));
@@ -31,7 +35,7 @@ bool allocate(long*& clarray, int& clused, int& clmax) {
 
 bool allocate(watchlist& wl) {
     error = false;
-    Blablabla::log("Allocating watchlist.");
+    Blablabla::log("Allocating watchlist");
     wl.array = (long**) malloc((2 * Parameters::noVariables + 1) * sizeof(long*));
     wl.used = (int*) malloc((2 * Parameters::noVariables + 1) * sizeof(long*));
     wl.max = (int*) malloc((2 * Parameters::noVariables + 1) * sizeof(long*));
@@ -48,8 +52,8 @@ bool allocate(watchlist& wl) {
         }
     }
     if(error) {
-        Blablabla::log("Error at watchlist allocation.");
-        Blablabla::comment("Memory management error.");
+        Blablabla::log("Error at watchlist allocation");
+        Blablabla::comment("Memory management error");
         return false;
     } else {
         return true;
@@ -57,19 +61,19 @@ bool allocate(watchlist& wl) {
 }
 
 bool reallocate(long*& clarray, int& clused, int& clmax) {
-    Blablabla::log("Reallocating watchlist.");
+    Blablabla::log("Reallocating watchlist");
     clmax = clmax * 4;
     clarray = (long*) realloc(clarray, clmax * sizeof(long));
     if(clarray == NULL) {
-        Blablabla::log("Error at watchlist allocation.");
-        Blablabla::comment("Memory management error.");
+        Blablabla::log("Error at watchlist allocation");
+        Blablabla::comment("Memory management error");
         return false;
     }
     return true;
 }
 
 void deallocate(watchlist& wl) {
-    Blablabla::log("Deallocating watchlist.");
+    Blablabla::log("Deallocating watchlist");
     for(it = -Parameters::noVariables; it <= Parameters::noVariables; ++it) {
         free(wl.array[it]);
     }
@@ -109,17 +113,17 @@ void findAndRemoveWatch(watchlist& wl, int literal, long offset) {
 
 bool addConflict(watchlist &wl, int* ptr, long offset) {
     if(Database::isFlag(ptr, Constants::ConflictBit, Constants::SatisfiableFlag)) {
-        Blablabla::log("Adding to conflict list.");
+        Blablabla::log("Adding to conflict list");
         Database::setFlag(ptr, Constants::ConflictBit, Constants::ConflictFlag);
         return addWatch(wl, Constants::ConflictWatchlist, offset);
     } else {
-        Blablabla::log("Already in conflict list.");
+        Blablabla::log("Already in conflict list");
         return true;
     }
 }
 
 void removeConflict(watchlist &wl, int* ptr, long* watch) {
-    Blablabla::log("Removing from conflict list.");
+    Blablabla::log("Removing from conflict list");
     Database::setFlag(ptr, Constants::ConflictBit, Constants::SatisfiableFlag);
     return removeWatch(wl, Constants::ConflictWatchlist, watch);
 }
@@ -131,34 +135,32 @@ bool isConflict(watchlist &wl) {
 bool setWatches(watchlist& wl, model& m, int* ptr, long offset) {
     candidate = ptr;
     if(Model::findNextNonFalsified(m, candidate, triglit)) {
-        trigger = false;
-        Blablabla::log("Falsified clause.");
+        Blablabla::log("Falsified clause");
         return WatchList::addConflict(wl, ptr, offset);
     } else {
         *candidate = ptr[0];
         ptr[0] = triglit;
         if(!WatchList::addWatch(wl, triglit, offset)) { return false; }
-        if(Model::isSatisfied(triglit)) {
-            Blablabla::log("Satisfied clause.");
-            Blablabla::log("Setting watches as " + Blablabla::clauseToString(ptr) + ".");
-            trigger = false;
-        } else if(!(trigger = Model::findNextNonFalsified(m, ++candidate, clliteral))) {
+        if(Model::isSatisfied(m, triglit)) {
+            Blablabla::log("Satisfied clause");
+            Blablabla::log("Setting watches as " + Blablabla::clauseToString(ptr));
+        } else if(!Model::findNextNonFalsified(m, ++candidate, clliteral)) {
             *candidate = ptr[1];
             ptr[1] = clliteral;
-            Blablabla::log("Pseudoidle clause.");
-            Blablabla::log("Setting watches as " + Blablabla::clauseToString(ptr) + ".");
+            Blablabla::log("Pseudoidle clause");
+            Blablabla::log("Setting watches as " + Blablabla::clauseToString(ptr));
         } else {
-            Blablabla::log("Triggered clause.");
-            Blablabla::log("Setting watches as " + Blablabla::clauseToString(ptr) + ".");
-            Model::propagateLiteral(c.stack, triglit, c.offset, c.pointer);
+            Blablabla::log("Triggered clause");
+            Blablabla::log("Setting watches as " + Blablabla::clauseToString(ptr));
+            Model::propagateLiteral(m, triglit, offset, ptr);
         }
         return WatchList::addWatch(wl, ptr[1], offset);
     }
 }
 
 bool processWatches(watchlist& wl, model& m, int* ptr, long offset, int literal, long*& watch, bool soft, bool& rup) {
-    if(m.isSatisfied(ptr[0]) || m.isSatisfied(ptr[1])) {
-        Blablabla::log("Satisfied clause.");
+    if(Model::isSatisfied(m, ptr[0]) || Model::isSatisfied(m, ptr[1])) {
+        Blablabla::log("Satisfied clause");
         ++watch;
         return true;
     } else {
@@ -167,82 +169,81 @@ bool processWatches(watchlist& wl, model& m, int* ptr, long offset, int literal,
         }
         candidate = ptr + 2;
         if(Model::findNextNonFalsified(m, candidate, clliteral)) {
-            candidate = literal;
-            ptr[1] = clliteral;
-            Blablabla::log("Replacing watches as" + Blablabla::clauseToString(ptr) + ".");
-            removeWatch(wl, literal, watch);
-            return addWatch(wl, literal, offset);
-        } else {
             ptr[1] = literal;
             clliteral = ptr[0];
-            if(m.isFalsified(clliteral)) {
-                Blablabla::log("Falsified clause.");
+            if(Model::isFalsified(m, clliteral)) {
+                Blablabla::log("Falsified clause");
                 if(soft == Constants::SoftPropagation) {
-                    Blablabla::log("Soft conflict detected.");
-                    m.reasons[Constants::ConflictWatchlist] = offset;
+                    Model::assignSoftConflict(m, offset);
                     rup = true;
                 } else {
-                    removeWatch(wl, literal, offset);
+                    removeWatch(wl, literal, watch);
                     findAndRemoveWatch(wl, clliteral, offset);
                     addConflict(wl, ptr, offset);
                 }
                 ++watch;
             } else {
-                Blablabla::log("Triggered clause.");
+                Blablabla::log("Triggered clause");
                 Model::propagateLiteral(m, clliteral, offset, ptr);
                 ++watch;
             }
             return true;
+        } else {
+            *candidate = literal;
+            ptr[1] = clliteral;
+            Blablabla::log("Replacing watches as " + Blablabla::clauseToString(ptr));
+            removeWatch(wl, literal, watch);
+            return addWatch(wl, clliteral, offset);
         }
     }
 }
 
 bool reviseWatches(watchlist& wl, model& m, int* ptr, long offset, int literal, long*& watch, bool& skip) {
-    if(ptr[0] == literal) {
-        othlit = ptr[1];
+    if(*ptr == literal) {
+        othptr = ptr + 1;
     } else {
-        othlit = ptr[0];
-        ptr[0] = literal;
+        othptr = ptr;
     }
-    if(!Model::isFalsified(m,othlit)) {
-        Blablabla::log("Watches are correct.");
+    if(!Model::isFalsified(m, (othlit = *othptr))) {
+        Blablabla::log("Watches are correct");
     } else {
         candidate = ptr + 2;
         if(Model::findNextNonFalsified(m, candidate, clliteral)) {
-            Blablabla::log("Triggered clause.");
+            Blablabla::log("Triggered clause");
             Model::propagateLiteral(m, literal, offset, ptr);
             skip = true;
         } else {
-            *candidate = othlit;
-            ptr[1] = clliteral;
             WatchList::findAndRemoveWatch(wl, othlit, offset);
+            *candidate = othlit;
+            *othptr = clliteral;
             if(!addWatch(wl, clliteral, offset)) { return false; }
-            Blablabla::log("Replacing watches as" + Blablabla::clauseToString(ptr) + ".");
+            Blablabla::log("Replacing watches as " + Blablabla::clauseToString(ptr));
         }
     }
     ++watch;
     return true;
 }
 
-bool reviseConflict(watchlist* wl, model& m, int* ptr, long offset, long*& watch) {
+bool reviseConflict(watchlist& wl, model& m, int* ptr, long offset, long*& watch) {
     if(Model::findNextNonFalsified(m, ptr, clliteral)) {
         ++watch;
-        return true;
     } else {
         removeConflict(wl, ptr, watch);
-        setWatches(wl, m, ptr, offset);
+        if(!setWatches(wl, m, ptr, offset)) { return false; }
     }
+    return true;
 }
 
-bool processList(watchlist &wl, model& m, database& d, int literal, bool soft) {
+bool processList(watchlist &wl, model& m, database& d, int literal, bool soft, bool& rup) {
+    // Blablabla::logModel(m);
     Blablabla::increase();
     Blablabla::logWatchList(wl, literal, d);
     watchit = wl.array[literal];
-    while((cloffset = *watchit) != Constants::EndOfWatchList && !(m.softConflict)) {
+    while((cloffset = *watchit) != Constants::EndOfWatchList && !rup) {
         clptr = Database::getPointer(d, cloffset);
         Blablabla::log("Processing clause " + Blablabla::clauseToString(clptr));
         Blablabla::increase();
-        if(!processWatches(wl, m, clptr, literal, watchit, soft)) { return false; }
+        if(!processWatches(wl, m, clptr, cloffset, literal, watchit, soft, rup)) { return false; }
         Blablabla::decrease();
     }
     Blablabla::decrease();

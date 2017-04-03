@@ -1,20 +1,24 @@
 BINPATH = bin/
 OBJSPATH = obj/
 LIBPATH = lib/
-SRCPATH = newsrc/
+SRCPATH = src/
 
 MkO = $(OBJSPATH)$(1).o
 MkC = $(SRCPATH)$(1).cpp
 MkH = $(SRCPATH)$(1).hpp
 
-OBJS = $(call MkO,clause) \
+OBJS = $(call MkO,chain) \
+		$(call MkO,checker) \
+		$(call MkO,clause) \
 		$(call MkO,database) \
 		$(call MkO,extra) \
 		$(call MkO,hashtable) \
+		$(call MkO,latency) \
+		$(call MkO,model) \
 		$(call MkO,parser) \
 		$(call MkO,proof) \
+		$(call MkO,revision) \
 		$(call MkO,rupee) \
-		$(call MkO,trail) \
 		$(call MkO,structs) \
 		$(call MkO,watchlist)
 
@@ -43,46 +47,57 @@ CPPFLAGS  = -g -Wall -std=c++11 -c
 EXECUTABLE = $(BINPATH)rupee
 
 $(EXECUTABLE) : directories $(OBJS)
-	$(LD) $(OBJS) $(LIBS) $(LDFLAGS) $(EXECUTABLE)
-	echo "\nBinary created in $(EXECUTABLE)"
+	@$(LD) $(OBJS) $(LIBS) $(LDFLAGS) $(EXECUTABLE)
+	@echo "\nBinary created in $(EXECUTABLE)\n"
 
-$(call MkO,structs) : $(call MkC,structs) $(call MkH,structs)
-	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,structs) -o $(call MkO,structs)
+$(call MkO,chain) : $(call MkC,chain) $(call MkH,chain) $(call MkH,structs) $(call MkH,model) $(call MkH,extra) $(call MkH,database)
+	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,chain) -o $(call MkO,chain)
+
+$(call MkO,checker) : $(call MkC,checker) $(call MkH,checker) $(call MkH,structs) $(call MkH,extra) $(call MkH,database) $(call MkH,proof) $(call MkH,watchlist) $(call MkH,model) $(call MkH,revision) $(call MkH,latency) $(call MkH,chain)
+	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,checker) -o $(call MkO,checker)
 
 $(call MkO,clause) : $(call MkC,clause) $(call MkH,clause) $(call MkH,extra) $(call MkH,structs)
 	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,clause) -o $(call MkO,clause)
 
-$(call MkO,database) : $(call MkC,database) $(call MkH,database) $(call MkH,extra) $(call MkH,clause) $(call MkH,proof) $(call MkH,structs)
+$(call MkO,database) : $(call MkC,database) $(call MkH,database) $(call MkH,structs) $(call MkH,extra) $(call MkH,clause) $(call MkH,proof)
 	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,database) -o $(call MkO,database)
 
-$(call MkO,parser) : $(call MkC,parser) $(call MkH,parser) $(call MkH,hashtable) $(call MkH,extra) $(call MkH,database) $(call MkH,clause) $(call MkH,proof) $(call MkH,structs)
-	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,parser) -o $(call MkO,parser)
-
-$(call MkO,extra) : $(call MkC,extra) $(call MkH,extra) $(call MkH,parser) $(call MkH,structs)
+$(call MkO,extra) : $(call MkC,extra) $(call MkH,extra) $(call MkH,structs) $(call MkH,database)
 	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,extra) -o $(call MkO,extra)
 
 $(call MkO,hashtable) : $(call MkC,hashtable) $(call MkH,hashtable) $(call MkH,extra) $(call MkH,database) $(call MkH,clause) $(call MkH,structs)
 	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,hashtable) -o $(call MkO,hashtable)
 
-$(call MkO,proof) : $(call MkC,proof) $(call MkH,proof) $(call MkH,extra) $(call MkH,database) $(call MkH,structs)
+$(call MkO,latency) : $(call MkC,latency) $(call MkH,latency) $(call MkH,structs) $(call MkH,database) $(call MkH,watchlist) $(call MkH,extra)
+	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,latency) -o $(call MkO,latency)
+
+$(call MkO,model) : $(call MkC,model) $(call MkH,model) $(call MkH,structs) $(call MkH,extra) $(call MkH,watchlist) $(call MkH,database)
+	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,model) -o $(call MkO,model)
+
+$(call MkO,parser) : $(call MkC,parser) $(call MkH,parser) $(call MkH,structs) $(call MkH,extra) $(call MkH,database) $(call MkH,proof) $(call MkH,hashtable) $(call MkH,clause)
+	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,parser) -o $(call MkO,parser)
+
+$(call MkO,proof) : $(call MkC,proof) $(call MkH,proof) $(call MkH,structs) $(call MkH,extra)
 	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,proof) -o $(call MkO,proof)
 
-$(call MkO,trail) : $(call MkC,trail) $(call MkH,trail) $(call MkH,parser) $(call MkH,extra) $(call MkH,structs)
-	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,trail) -o $(call MkO,trail)
+$(call MkO,revision) : $(call MkC,revision) $(call MkH,revision) $(call MkH,extra) $(call MkH,structs) $(call MkH,model) $(call MkH,database) $(call MkH,watchlist)
+	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,revision) -o $(call MkO,revision)
 
-$(call MkO,watchlist) : $(call MkC,watchlist) $(call MkH,watchlist) $(call MkH,parser) $(call MkH,extra) $(call MkH,structs)
+$(call MkO,structs) : $(call MkC,structs) $(call MkH,structs)
+	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,structs) -o $(call MkO,structs)
+
+$(call MkO,watchlist) : $(call MkC,watchlist) $(call MkH,watchlist) $(call MkH,structs) $(call MkH,extra) $(call MkH,database) $(call MkH,model)
 	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,watchlist) -o $(call MkO,watchlist)
 
-$(call MkO,rupee) : $(call MkC,rupee) $(call MkH,parser) $(call MkH,database) $(call MkH,proof) $(call MkH,clause) $(call MkH,hashtable) $(call MkH,extra) $(call MkH,trail) $(call MkH,watchlist) $(call MkH,structs)
+$(call MkO,rupee) : $(call MkC,rupee) $(call MkH,structs) $(call MkH,parser) $(call MkH,database) $(call MkH,proof) $(call MkH,clause) $(call MkH,hashtable) $(call MkH,extra) $(call MkH,checker)
 	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,rupee) -o $(call MkO,rupee)
 
 clean :
-	rm $(OBJS) $(EXECUTABLE)
+	@rm $(OBJS) $(EXECUTABLE)
 
 directories :
-	mkdir -p bin
-	mkdir -p obj
-
+	@mkdir -p bin
+	@mkdir -p obj
 
 # BINPATH = bin/
 # OBJSPATH = obj/

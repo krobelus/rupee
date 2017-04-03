@@ -3,6 +3,7 @@
 #include "structs.hpp"
 #include "database.hpp"
 #include "watchlist.hpp"
+#include "extra.hpp"
 #include "latency.hpp"
 
 namespace Latency {
@@ -28,9 +29,10 @@ bool allocate(latency& x) {
     } else {
         x.lits += Parameters::noVariables;
         for(it = -Parameters::noVariables; it <= Parameters::noVariables; ++it) {
-            v.lits[it] = false;
+            x.lits[it] = false;
         }
         *(x.array) = 0;
+        return true;
     }
 }
 
@@ -70,12 +72,12 @@ bool addClause(latency& x, long offset) {
 }
 
 bool findResolvableClauses(latency &x, watchlist &wl, database& d) {
-    for(it = -Constants::noVariables; it <= Constants::noVariables; ++it) {
-        watch = wl[it];
-        while((offset = *(wl++)) != Constants::EndOfWatchList) {
+    for(it = -Parameters::noVariables; it <= Parameters::noVariables; ++it) {
+        watch = wl.array[it];
+        while((offset = *(watch++)) != Constants::EndOfWatchList) {
             clause = Database::getPointer(d, offset);
             if((it == Constants::ConflictWatchlist || *clause == it)
-                    && Database::containsLiteral(d, offset, x.pivot)) {
+                    && Database::containsLiteral(d, clause, x.pivot)) {
                 if(!addClause(x, offset)) { return false; }
             }
         }

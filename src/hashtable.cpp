@@ -2,114 +2,130 @@
 
 #include "structs.hpp"
 #include "extra.hpp"
-#include "database.hpp"
-#include "clause.hpp"
-#include "hashtable.hpp"
 
 namespace HashTable {
-    bool error;
-    unsigned int sum;
-	unsigned int prod;
-	unsigned int xoor;
-    long* list;
-    int length;
-    int* ptr;
-    int it;
+//-------------------------------
+// Memory management
+//-------------------------------
 
-    bool allocate(hashtable& h) {
-        error = false;
-    	Blablabla::log("Allocating hash table.");
-    	h.rowarray = (long**) malloc (Parameters::databaseSize * sizeof (long*));
-    	h.rowused = (int*) malloc (Parameters::databaseSize * sizeof (int));
-    	h.rowmax = (int*) malloc (Parameters::databaseSize * sizeof (int));
-    	if(h.rowarray == NULL || h.rowused == NULL || h.rowmax == NULL) {
-    		error = true;
-    	}
-    	for(it = 0; it < Parameters::databaseSize && !error; ++it) {
-    		h.rowarray[it] = (long*) malloc (Parameters::hashDepth * sizeof (long));
-    		h.rowmax[it] = Parameters::hashDepth;
-    		h.rowused[it] = 0;
-    		if(h.rowarray[it] == NULL) {
-    			error = true;
-    		}
-    	}
-    	if(error) {
-    		Blablabla::log("Error at hash table allocation.");
-    		Blablabla::comment("Memory management error.");
-    		return false;
-    	} else {
-    		return true;
-    	}
+bool error;
+int it;
+
+bool allocate(hashtable& h) {
+    error = false;
+    #ifdef VERBOSE
+	Blablabla::log("Allocating hash table.");
+    #endif
+	h.array = (long**) malloc (Parameters::databaseSize * sizeof (long*));
+	h.used = (int*) malloc (Parameters::databaseSize * sizeof (int));
+	h.max = (int*) malloc (Parameters::databaseSize * sizeof (int));
+	if(h.array == NULL || h.used == NULL || h.max == NULL) {
+		error = true;
+	}
+	for(it = 0; it < Parameters::databaseSize && !error; ++it) {
+		h.array[it] = (long*) malloc (Parameters::hashDepth * sizeof (long));
+		h.max[it] = Parameters::hashDepth;
+		h.used[it] = 0;
+		if(h.array[it] == NULL) {
+			error = true;
+		}
+	}
+	if(error) {
+        #ifdef VERBOSE
+		Blablabla::log("Error at hash table allocation.");
+        #endif
+		Blablabla::comment("Memory management error.");
+		return false;
+	} else {
+		return true;
+	}
+}
+
+bool reallocateRow(hashtable& h, int row) {
+    #ifdef VERBOSE
+    Blablabla::log("Reallocating hash table.");
+    #endif
+    h.max[row] *= 2;
+    h.array[row] = (long*) realloc(h.array[row], h.max[row] * sizeof(long));
+    if(h.array[row] == NULL) {
+        #ifdef VERBOSE
+        Blablabla::log("Error at hash table reallocation.");
+        #endif
+        Blablabla::comment("Memory management error.");
+        return false;
+    } else {
+        return true;
     }
+}
 
-    bool reallocateRow(hashtable& h, int row) {
-        Blablabla::log("Reallocating hash table.");
-        h.rowmax[row] = (h.rowmax[row] * 3) >> 1;
-        h.rowarray[row] = (long*) realloc(h.rowarray[row], h.rowmax[row] * sizeof(long));
-        if(h.rowarray[row] == NULL) {
-            Blablabla::log("Error at hash table reallocation.");
-            Blablabla::comment("Memory management error.");
-            return false;
-        } else {
+void deallocate(hashtable& h) {
+    #ifdef VERBOSE
+    Blablabla::log("Deallocating hash table.");
+    #endif
+	for(it = 0; it < Parameters::databaseSize; ++it) {
+		free(h.array[it]);
+	}
+	free(h.array);
+	free(h.used);
+	free(h.max);
+}
+
+//-------------------------------
+// Hash computation
+//-------------------------------
+
+unsigned int sum;
+unsigned int prod;
+unsigned int xoor;
+
+unsigned int getHash(int* ptr) {
+    sum = 0;
+    prod = 1;
+    xoor = 0;
+    while(*ptr) {
+        prod *= *ptr;
+        sum += *ptr;
+        xoor ^= *ptr;
+        ++ptr;
+    }
+    return (((1023 * sum + prod) ^ (31 * xoor))) % Parameters::databaseSize;
+}
+
+//-------------------------------
+// Hash table lookup
+//-------------------------------
+
+long* list;
+int length;
+int* pointer;
+
+bool match(hashtable& h, database& d, clause& c, unsigned int hash, long& offset, int& pos) {
+    list = h.array[hash];
+    length = h.used[hash];
+    for(pos = 0; pos < length; ++pos) {
+        pointer = Database::getPointer(d, list[pos]);
+        if(Clause::equals(c, pointer)) {
+            offset = list[pos];
             return true;
         }
     }
+    return false;
+}
 
-	void deallocate(hashtable& h) {
-        Blablabla::log("Deallocating hash table.");
-    	for(it = 0; it < Parameters::databaseSize; ++it) {
-    		free(h.rowarray[it]);
-    	}
-    	free(h.rowarray);
-    	free(h.rowused);
-    	free(h.rowmax);
-    }
+//-------------------------------
+// Hash table modification
+//-------------------------------
 
-    unsigned int getHash(int* ptr) {
-        sum = 0;
-        prod = 1;
-        xoor = 0;
-        while(*ptr) {
-            prod *= *ptr;
-            sum += *ptr;
-            xoor ^= *ptr;
-            ++ptr;
-        }
-        return (((1023 * sum + prod) ^ (31 * xoor))) % Parameters::databaseSize;
+bool insertOffset(hashtable& h, unsigned int hash, long offset) {
+    if(h.used[hash] >= h.max[hash]) {
+        if(!reallocateRow(h, hash)) { return false; }
     }
+    h.array[hash][h.used[hash]++] = offset;
+    return true;
+}
 
-    bool match(hashtable& h, database& d, clause& c, unsigned int hash, long& offset) {
-        list = h.rowarray[hash];
-        length = h.rowused[hash];
-        for(it = 0; it < length; ++it) {
-            ptr = Database::getPointer(d, list[it]);
-            if(Database::isFlag(ptr, Constants::RawActivityBit, !c.kind)) {
-                if(Clause::equals(c, ptr)) {
-                    offset = list[it];
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
+void removeOffset(hashtable& h, unsigned int hash, int pos) {
+    h.array[hash][pos] = h.array[hash][--(h.used[hash])];
+}
 
-    bool insertOffset(hashtable& h, unsigned int hash, long offset) {
-        if(h.rowused[hash] >= h.rowmax[hash]) {
-            if(!reallocateRow(h, hash)) { return false; }
-        }
-        h.rowarray[hash][h.rowused[hash]++] = offset;
-        return true;
-    }
-
-    bool removeOffset(hashtable& h, unsigned int hash, long offset) {
-        list = h.rowarray[hash];
-        length = h.rowused[hash];
-        for(it = 0; it < length; ++it) {
-            if(list[it] == offset) {
-                list[it] = list[--(h.rowused[hash])];
-                return true;
-            }
-        }
-        return false;
-    }
 }

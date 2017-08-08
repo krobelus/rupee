@@ -2,59 +2,97 @@
 
 #include "structs.hpp"
 #include "extra.hpp"
-#include "model.hpp"
-#include "database.hpp"
-#include "watchlist.hpp"
-#include "revision.hpp"
 
 namespace Revision {
 
-int* stackleft;
-int* stackright;
-long reason;
+//----------------------
+// Memory management
+//----------------------
+
 int it;
-int literal;
-int* clause;
-int conelit;
-int* coneit;
-long* watchit;
-long cloffset;
-bool skip;
 
 bool allocate(revision& v) {
-    Blablabla::log("Allocating revision queue.");
-    v.array = (int*) malloc((2 * Parameters::noVariables + 1) * sizeof(int));
-    v.lits = (bool*) malloc((2 * Parameters::noVariables + 1) * sizeof(bool));
-    v.used = v.array;
-    if(v.array == NULL || v.lits == NULL) {
-        Blablabla::log("Error at revision queue allocation.");
+    #ifdef VERBOSE
+    Blablabla::log("Allocating stack bookkeeper");
+    #endif
+    v.cone = (int*) malloc ((Stats::variableBound + 1) * sizeof(int));
+    v.lits = (bool*) malloc ((2 * Stats::variableBound + 1) * sizeof(bool));
+    v.max = Parameters::databaseSize;
+    v.used = 0;
+    v.array = (long*) malloc (v.max * sizeof(long));
+    v.current = v.cone;
+    if(v.cone == NULL || v.lits == NULL || v.array == NULL) {
+        #ifdef VERBOSE
+        Blablabla::log("Error at stack bookkeeper allocation.");
+        #endif
 		Blablabla::comment("Memory management error.");
         return false;
-    } else {
-        v.lits += Parameters::noVariables;
-        for(it = -Parameters::noVariables; it <= Parameters::noVariables; ++it) {
-            v.lits[it] = false;
-        }
-        return true;
     }
+    v.lits += Stats::variableBound;
+    for(it = -Stats::variableBound; it <= Stats::variableBound; ++it) {
+        v.lits[it] = false;
+    }
+    return true;
+}
+
+bool reallocate(revision& v) {
+    #ifdef VERBOSE
+    Blablabla::log("Reallocating stack bookkeeper");
+    #endif
+    v.max *= 2;
+    v.array = (long*) realloc (v.array, v.max * sizeof(long));
+    if(v.array == NULL) {
+        #ifdef VERBOSE
+        Blablabla::log("Error at stack bookkeeper allocation.");
+        #endif
+		Blablabla::comment("Memory management error.");
+        return false;
+    }
+    return true;
 }
 
 void deallocate(revision& v) {
-    Blablabla::log("Deallocating revision queue.");
-    v.lits -= Parameters::noVariables;
-    free(v.array);
+    #ifdef VERBOSE
+    Blablabla::log("Deallocating stack bookkeeper");
+    #endif
+    v.lits -= Stats::variableBound;
+    free(v.cone);
     free(v.lits);
+    free(v.array);
 }
 
-void addLiteral(revision& v, model& m, database& d, int lit) {
+//----------------------
+// Cone construction
+//----------------------
+
+int lit;
+int cllit;
+int* leftptr;
+int* rightptr;
+long count;
+int* clause;
+
+void addToCone(revision& v, int literal) {
     v.lits[literal] = true;
-    *(v.used++) = lit;
+    *(v.current++) = literal;
 }
 
-bool isInCone(revision& v, long offset, int lit, database& d) {
+bool addToRevision(revision& v, model& m, database& d, int literal, int* position) {
+    if(v.max <= v.used + 5) {
+        if(!reallocate(v)) { return false; }
+    }
+    addToCone(v, literal);
+    Model::unassignLiteral(m, literal, d);
+    v.array[v.used++] = (long) (position - m.array);
+    v.array[v.used++] = (long) literal;
+    v.array[v.used++] = m.reason[literal];
+    return true;
+}
+
+bool isInCone(revision& v, long offset, int literal, database& d) {
     clause = Database::getPointer(d, offset);
-    while((conelit = *clause) != Constants::EndOfClause) {
-        if(conelit != lit && v.lits[-conelit]) {
+    while((cllit = *clause) != Constants::EndOfList) {
+        if(cllit != literal && v.lits[-cllit]) {
             return true;
         }
         ++clause;
@@ -62,64 +100,159 @@ bool isInCone(revision& v, long offset, int lit, database& d) {
     return false;
 }
 
-void getCone(revision& v, model& m, database& d, int* ptr) {
+bool getCone(revision& v, model& m, database& d, int* ptr) {
+    #ifdef VERBOSE
+    Blablabla::increase();
     Blablabla::logReasons(m, d);
-    while(!Model::isSatisfied(m, *ptr)) {
+    #endif
+    while((lit = *ptr) != Constants::ConflictLiteral && !Model::isSatisfied(m, lit)) {
         ++ptr;
     }
-    literal = *ptr;
-    prev[Constants::EndOfModel] = m.last;
-    addLiteral(v, m, d, literal);
-    literal = m.next[literal];
-    while(literal != Constants::EndOfModel) {
-        if(Revision::isInCone(v, m.reason[literal], literal, d)) {
-            addLiteral(v, m, d, literal);
-            literal = m.next[literal];
-            Model::dropLiteral(m, d, literal);
+    leftptr = m.position[lit];
+    if(!addToRevision(v, m, d, lit, leftptr)) { return false; }
+    count = 1;
+    rightptr = leftptr + 1;
+    while(rightptr < m.used) {
+        lit = *rightptr;
+        if(isInCone(v, m.reason[lit], lit, d)) {
+            if(!addToRevision(v, m, d, lit, rightptr)) { return false; }
+            ++count;
         } else {
-            literal = m.next[literal];
+            m.position[lit] = leftptr;
+            *(leftptr++) = *rightptr;
         }
+        ++rightptr;
     }
-    m.forced = m.last = prev[Constants::EndOfModel];
-    m.head = Constants::EndOfModel;
-    Blablabla::log("Revision list:");
-    Blablabla::logRevision(v);
-    Blablabla::log("Current model:");
+    m.head = m.forced = m.used = leftptr;
+    v.array[v.used++] = count;
+    #ifdef VERBOSE
+    Blablabla::logCone(v);
     Blablabla::logModel(m);
+    Blablabla::decrease();
+    #endif
+    return true;
 }
 
-bool reviseList(revision& v, watchlist& wl, model& m, database& d) {
-    coneit = v.array;
-    while(coneit < v.used) {
-        skip = false;
-        literal = *(coneit++);
-        Blablabla::log("Revising literal " + Blablabla::litToString(literal) + ".");
-        Blablabla::increase();
-        Blablabla::logWatchList(wl, literal, d);
-        watchit = wl.array[literal];
-        while((cloffset = *watchit) != Constants::EndOfWatchList && !skip) {
-            clause = Database::getPointer(d, cloffset);
-            Blablabla::log("Revising clause " + Blablabla::clauseToString(clause));
-            Blablabla::increase();
-            if(!WatchList::reviseWatches(wl, m, clause, cloffset, literal, watchit, skip)) { return false; }
-            Blablabla::decrease();
-        }
-        Blablabla::decrease();
-        v.lits[literal] = false;
+bool voidRevision(revision& v) {
+    if(v.max <= v.used) {
+        if(!reallocate(v)) { return false; }
     }
-    v.used = v.array;
-    Blablabla::log("Revising conflict list.");
+    v.array[v.used++] = 0;
+    return true;
+}
+
+//----------------------
+// Cone revision
+//----------------------
+
+int* coneit;
+
+bool reviseCone(revision& v, watchlist& wl, model& m, database& d) {
+    #ifdef VERBOSE
+    Blablabla::log("Revising cone literals");
     Blablabla::increase();
-    Blablabla::logWatchList(wl, Constants::ConflictWatchlist, d);
-    watchit = wl.array[Constants::ConflictWatchlist];
-    while((cloffset = *watchit) != Constants::EndOfWatchList) {
-        clause = Database::getPointer(d, cloffset);
-        Blablabla::log("Revising clause " + Blablabla::clauseToString(clause));
-        Blablabla::increase();
-        if(!WatchList::reviseConflict(wl, m, clause, cloffset, watchit)) { return false; }
-        Blablabla::decrease();
+    #endif
+    coneit = v.cone;
+    while(coneit < v.current) {
+        if(!WatchList::reviseList(wl, m, d, *coneit)) { return false; }
+        v.lits[*coneit] = false;
+        ++coneit;
     }
+    #ifdef VERBOSE
     Blablabla::decrease();
+    #endif
+    return true;
+}
+
+bool checkCone(revision& v, model& m) {
+    for(coneit = v.cone; coneit < v.current; ++coneit) {
+        if(!Model::isSatisfied(m, *coneit)) {
+            return false;
+        }
+    }
+    resetCone(v);
+    return true;
+}
+
+void resetCone(revision& v) {
+    v.current = v.cone;
+}
+
+//----------------------
+// Model revision
+//----------------------
+
+int size;
+int current;
+int leftpos;
+int rightpos;
+int revlit;
+
+void applyRevision(revision& v, model& m, database& d) {
+    #ifdef VERBOSE
+    Blablabla::log("Restoring model");
+    Blablabla::increase();
+    Blablabla::logModel(m);
+    Blablabla::logRevision(v, d);
+    #endif
+    size = (int) v.array[v.used - 1];
+    if(size == 0) {
+        --v.used;
+        #ifdef VERBOSE
+        Blablabla::log("No restoration is required");
+        Blablabla::decrease();
+        #endif
+    } else {
+        v.used -= 3 * size + 1;
+        leftpos = 0;
+        while(leftpos < size) {
+            revlit = (int) v.array[v.used + 3 * (leftpos++) + 1];
+            Database::setFlag(Database::getPointer(d, m.reason[revlit]), Constants::PseudounitBit, Constants::PassiveFlag);
+            if(!Model::isSatisfied(m, revlit)) {
+                addToCone(v, revlit);
+            }
+        }
+        rightpos = (m.used - m.array) + (v.current - v.cone) - 1;
+        leftpos = rightpos - size;
+        m.head = m.used = m.forced = m.array + rightpos + 1;
+        current = v.array[v.used + 3 * size - 3];
+        while(size > 0) {
+            if(rightpos == current) {
+                revlit = (int) v.array[v.used + 3 * size - 2];
+                m.array[rightpos] = revlit;
+                m.reason[revlit] = v.array[v.used + 3 * size - 1];
+                m.lits[revlit] = true;
+                Database::setFlag(Database::getPointer(d, m.reason[revlit]), Constants::PseudounitBit, Constants::ReasonFlag);
+                if(--size > 0) {
+                    current = v.array[v.used + 3 * size - 3];
+                }
+            } else {
+                revlit = (int) m.array[leftpos--];
+                m.array[rightpos] = revlit;
+            }
+            m.position[revlit] = m.array + (rightpos--);
+        }
+        #ifdef VERBOSE
+        Blablabla::logModel(m);
+        Blablabla::decrease();
+        #endif
+    }
+}
+
+bool alignCone(revision& v, watchlist& wl, model& m, database& d) {
+    #ifdef VERBOSE
+    Blablabla::log("Aligning cone literals");
+    Blablabla::increase();
+    #endif
+    coneit = v.cone;
+    while(coneit < v.current) {
+        if(!WatchList::alignList(wl, m, d, -*coneit, Constants::HardPropagation)) { return false; }
+        v.lits[*coneit] = false;
+        ++coneit;
+    }
+    #ifdef VERBOSE
+    Blablabla::decrease();
+    #endif
     return true;
 }
 

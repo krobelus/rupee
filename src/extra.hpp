@@ -6,110 +6,133 @@
 #include "structs.hpp"
 
 namespace Constants {
-	const int ExtraCellsDatabase = 1;
-	const int FlagsCellDatabase = -1;
-	const int ActivityBit = 0;
-	const int VerificationBit = 1;
-	const int OriginalityBit = 2;
-	const int PersistencyBit = 3;
-    const int PseudounitBit = 4;
-	const int ConflictBit = 5;
-	const int RawActivityBit = 6;
-    const bool ActiveFlag = true;
-    const bool InactiveFlag = false;
-    const bool OriginalFlag = true;
-    const bool DerivedFlag = false;
-    const bool ScheduledFlag = true;
-    const bool SkipFlag = false;
-    const bool PersistentFlag = true;
-    const bool TemporalFlag = false;
-    const bool ReasonFlag = true;
-    const bool RedundantFlag = false;
-	const bool ConflictFlag = true;
-	const bool SatisfiableFlag = false;
+	const int ExtraCellsDatabase       =  2;
+	const int FlagsCellDatabase        = -1;
+	const int IdCellDatabase           = -2;
 
-    const bool FilePremise = OriginalFlag;
-    const bool FileProof = DerivedFlag;
-
-    const bool InstructionDeletion = InactiveFlag;
+	const int ActivityBit              = 0;
+	const int RecheckBit			   = 6;
+	const bool ActiveFlag              = true;
+	const bool InactiveFlag            = false;
+	const bool InstructionDeletion     = InactiveFlag;
     const bool InstructionIntroduction = ActiveFlag;
 
-	const int ArgumentsFilePremise = 1;
-	const int ArgumentsFileProof = 2;
-	const int ArgumentsRest = 3;
+	const int OriginalityBit           = 1;
+	const bool PremiseFlag             = true;
+    const bool DerivedFlag             = false;
+	const bool FilePremise             = PremiseFlag;
+    const bool FileProof               = DerivedFlag;
 
-	const bool DirectionForward = true;
-	const bool DirectionBackwards = false;
+	const int PersistencyBit           = 2;
+	const bool PersistentFlag          = true;
+    const bool TemporalFlag            = false;
 
-	const int ReservedLiteral = 1;
-	const int ConflictWatchlist = 0;
-	const int AssumedLiteral = 0;
-	const int EndOfClause = 0;
-	const int EndOfWatchList = 0;
-	const int EndOfModel = 0;
+	const int VerificationBit          = 3;
+	const bool ScheduledFlag           = true;
+    const bool SkipFlag                = false;
 
-	const int NoTrigger = 0;
-	const bool SoftPropagation = true;
-	const bool HardPropagation = false;
+	const int PseudounitBit            = 4;
+	const bool ReasonFlag              = true;
+    const bool PassiveFlag             = false;
+
+	const int PartitionBit             = 5;
+	const bool RedFlag                 = true;
+	const bool BlueFlag                = false;
+
+	const int CopiesShift              = 7;
+	const int CopiesMask               = 127;
+
+	const int ArgumentsFilePremise     = 1;
+	const int ArgumentsFileProof       = 2;
+	const int ArgumentsRest            = 3;
+
+	const int ReservedLiteral          = 1;
+	const int ConflictLiteral          = 0;
+	const long AssumedReason           = 0;
+	const int EndOfList                = 0;
+	const long NoOffset                = 0;
+
+	const bool SoftPropagation         = false;
+	const bool HardPropagation         = true;
+
+	const bool CheckCorrect            = true;
+	const bool CheckIncorrect          = false;
+
+	const int StagePreprocessing       = 0;
+	const int StageVerifying           = 20;
+	const int StageCorrect             = 40;
+	const int StageIncorrect           = 60;
+	const int StageRecheck             = 80;
+	const int StageReject              = 100;
+	const int StageBug                 = 120;
+
+	const int DeletionModeSkip         = 1;
+	const int DeletionModeUPRedundant  = 2;
+	const int DeletionModeUnrestricted = 3;
 }
 
 namespace Parameters {
 	extern std::string pathPremise;
 	extern std::string pathProof;
-	extern int bufferSize;
+	extern std::string pathWitness;
 	extern int databaseSize;
-	extern bool verbosity;
 	extern int hashDepth;
-	extern int noVariables;
-	extern bool failFast;
+	extern int variableBound;
+	extern int proofSize;
+	extern int deletionMode;
+	extern bool generateLrat;
+	extern bool gritMode;
+	extern bool verbosity;
+	extern bool printStats;
+	extern bool recheck;
 
 	void setPremise(std::string path);
 	void setProof(std::string path);
-	void setVerbosity(bool value);
-	void setBufferSize(int value);
-	void setDatabaseSize(int value);
-	void setHashDepth(int value);
-	void setNoVariables(int value);
-	void importNoVariables(parser& p);
+	void setWitness(std::string path);
 }
 
 namespace Blablabla {
 	extern int level;
 
+	#ifdef VERBOSE
 	void increase();
 	void decrease();
-	void comment(std::string str);
 	void log(std::string str);
-	void logModel(model& m);
-	void logWatchList(watchlist& wl, int literal, database& d);
-	void logResolutionCandidates(latency& x, database& d);
-	void logReasons(model& m, database& d);
-	void logRevision(revision& v);
-	void logDatabase(database& d);
-	void logChain(chain& ch, database& d, model& m);
-	void logProof(proof& r, database& d);
 	std::string clauseToString(int* ptr);
-	std::string instructionToString(proof& r, database& d, int pos);
+	#endif
+	void comment(std::string str);
 	std::string litToString(int lit);
+
+	#ifdef VERBOSE
+	void logDatabase(database& d);
+	void logProof(proof& r, database& d);
+	void logModel(model& m);
+	void logReasons(model& m, database& d);
+	void logWatchList(watchlist& wl, int literal, database& d);
+	void logCone(revision& v);
+	void logLatency(latency& lt, database& d);
+	void logChain(witness& wt, model& m, database& d);
+	void logRevision(revision& v, database& d);
+	void logRecheckModel(bool* rc);
+	#endif
 }
 
-//
-// namespace Tools {
-// 	extern int commentLevel;
-//
-// 	int compare (const void *a, const void *b);
-// 	void sortClause(int* cla, int length);
-// 	int leap(int x);
-//
-// 	void comment(std::string str);
-// 	void increaseCommentLevel();
-// 	void decreaseCommentLevel();
-// 	std::string offsetToString(long offset);
-// 	std::string pointerToString(int* ptr);
-// 	std::string processingStackToString();
-// 	void resolutionChain();
-// 	void reprocessingStack();
-// 	void watchList(int literal);
-// }
+namespace Stats {
+	extern int databaseLeaps;
+	extern int hashLeaps;
+	extern int variableLeaps;
+	extern int firstContradiction;
+	extern int proofLength;
+	extern int premiseLength;
+	extern float parsingTime;
+	extern float initalizationTime;
+	extern float checkingTime;
+	extern float outputTime;
+	extern int longestChain;
+	extern int shortestChain;
+	extern float averageChain;
+	extern int assignedLiterals;
+	extern int variableBound;
+}
 
 #endif

@@ -1,131 +1,130 @@
 #include <stdlib.h>
 
 #include "structs.hpp"
-#include "database.hpp"
-#include "watchlist.hpp"
 #include "extra.hpp"
-#include "latency.hpp"
+
 
 namespace Latency {
 
+//-------------------------------
+// Memory management
+//-------------------------------
+
+bool allocate(latency& lt) {
+    #ifdef VERBOSE
+    Blablabla::log("Allocating latency array");
+    #endif
+    lt.max = Parameters::hashDepth;
+    lt.used = 0;
+    lt.array = (long*) malloc(lt.max * sizeof(long));
+    if(lt.array == NULL) {
+        #ifdef VERBOSE
+        Blablabla::log("Error at latency array allocation");
+        #endif
+        Blablabla::comment("Memory management error");
+        return false;
+    }
+    return true;
+}
+
+bool reallocate(latency& lt) {
+    #ifdef VERBOSE
+    Blablabla::log("Reallocating latency array");
+    #endif
+    lt.max *= 2;
+    lt.array = (long*) realloc(lt.array, lt.max * sizeof(long));
+    if(lt.array == NULL) {
+        #ifdef VERBOSE
+        Blablabla::log("Error at latency array allocation");
+        #endif
+        Blablabla::comment("Memory management error");
+        return false;
+    }
+    return true;
+}
+
+void deallocate(latency& lt) {
+    #ifdef VERBOSE
+    Blablabla::log("Deallocating latency array");
+    #endif
+    free(lt.array);
+}
+
+//-------------------------------
+// Resolution candidates collection
+//-------------------------------
+
+int litit;
+
+bool collectCandidates(latency& lt, watchlist& wl, database& d, int pivot) {
+    resetCandidates(lt);
+    for(litit = -Stats::variableBound; litit <= Stats::variableBound; ++litit) {
+        if(!WatchList::collectList(wl, lt, d, -pivot, litit)) { return false; }
+    }
+    #ifdef VERBOSE
+    Blablabla::logLatency(lt, d);
+    #endif
+    return true;
+}
+
+void resetCandidates(latency& lt) {
+    lt.used = 0;
+}
+
+bool addCandidate(latency& lt, long offset) {
+    if(lt.used >= lt.max) {
+        if(!reallocate(lt)) { return false; }
+    }
+    lt.array[lt.used++] = offset;
+    return true;
+}
+
+//-------------------------------
+// RAT check
+//-------------------------------
+
 int it;
-int lit;
-long* watch;
-long offset;
-int* clause;
+bool check;
+long off;
+int* ptr;
 
-bool allocate(latency& x) {
-    Blablabla::log("Allocating latency structures.");
-    x.array = (long*) malloc(Parameters::hashDepth * sizeof(long));
-    x.max = Parameters::hashDepth;
-    x.used = Constants::EndOfWatchList;
-    x.resolvent = (int*) malloc((2 * Parameters::noVariables + 1) * sizeof(int));
-    x.original = x.added = x.resolvent;
-    x.lits = (bool*) malloc((2 * Parameters::noVariables + 1) * sizeof(bool));
-    if(x.array == NULL || x.resolvent == NULL || x.lits == NULL) {
-        Blablabla::log("Error at latency structures allocation.");
-		Blablabla::comment("Memory management error.");
-        return false;
-    } else {
-        x.lits += Parameters::noVariables;
-        for(it = -Parameters::noVariables; it <= Parameters::noVariables; ++it) {
-            x.lits[it] = false;
-        }
-        *(x.array) = 0;
-        return true;
-    }
-}
-
-bool reallocate(latency& x) {
-    Blablabla::log("Reallocating latency structures.");
-    x.max = x.max * 4;
-    x.array = (long*) realloc(x.array, x.max * sizeof(long));
-    if(x.array == NULL) {
-        Blablabla::log("Error at latency structures allocation.");
-		Blablabla::comment("Memory management error.");
-        return false;
-    } else {
-        return true;
-    }
-}
-
-void deallocate(latency& x) {
-    Blablabla::log("Deallocating latency structures.");
-    x.lits -= Parameters::noVariables;
-    free(x.array);
-    free(x.resolvent);
-    free(x.lits);
-}
-
-void addLiteral(latency& x, int literal) {
-    *(x.added++) = literal;
-    x.lits[literal] = true;
-}
-
-bool addClause(latency& x, long offset) {
-    if(x.used >= x.max) {
-        if(!reallocate(x)) { return false; }
-    }
-    x.array[x.used++] = offset;
-    x.array[x.used] = Constants::EndOfWatchList;
-    return true;
-}
-
-bool findResolvableClauses(latency &x, watchlist &wl, database& d) {
-    for(it = -Parameters::noVariables; it <= Parameters::noVariables; ++it) {
-        watch = wl.array[it];
-        while((offset = *(watch++)) != Constants::EndOfWatchList) {
-            clause = Database::getPointer(d, offset);
-            if((it == Constants::ConflictWatchlist || *clause == it)
-                    && Database::containsLiteral(d, clause, x.pivot)) {
-                if(!addClause(x, offset)) { return false; }
-            }
-        }
-    }
-    return true;
-}
-
-void saveOriginal(latency& x) {
-    x.original = x.added;
-}
-
-void restore(latency& x) {
-    while(x.added >= x.original) {
-        x.lits[*(x.added--)] = false;
-    }
-    x.added = x.original;
-}
-
-void unload(latency& x) {
-    while(x.added >= x.resolvent) {
-        x.lits[*(x.added--)] = false;
-    }
-    x.added = x.original = x.resolvent;
-}
-
-void loadClause(latency& x, int* ptr, int pivot) {
-    x.pivot = pivot;
-    while((lit = *(ptr++)) != Constants::EndOfClause) {
-        if(lit != pivot) {
-            addLiteral(x, lit);
-        }
-    }
-    saveOriginal(x);
-}
-
-bool computeResolvent(latency& x, int* ptr) {
-    std::string clause;
-    while((lit = *(ptr++)) != Constants::EndOfClause) {
-        if(lit != -x.pivot && !x.lits[lit]) {
-            if(x.lits[-lit]) {
-                return false;
+bool checkResolventsRup(latency& lt, checker& c, clause& cl, database& d, int pivot, bool& result) {
+    for(it = 0; it < lt.used; ++it) {
+        off = lt.array[it];
+        ptr = Database::getPointer(d, off);
+        #ifdef VERBOSE
+        Blablabla::log("Checking RUP on resolvent with " + Blablabla::clauseToString(ptr));
+        #endif
+        Clause::setOuterClause(cl, ptr, pivot);
+        if(!Witness::setResolventWitness(c.tvr, off)) { return false; }
+        if(!cl.taut) {
+            #ifdef VERBOSE
+            Blablabla::log("Resolvent: " + Blablabla::clauseToString(cl.array));
+            #endif
+            check = Constants::CheckIncorrect;
+            if(!Checker::checkRup(c, d, cl.array, check, c.kk.reslits)) { return false; }
+            if(check == Constants::CheckCorrect) {
+                if(!Witness::dumpAndSchedule(c.tvr, c.stack, d)) { return false; }
             } else {
-                addLiteral(x, lit);
+                result = Constants::CheckIncorrect;
+                c.kk.clause = c.offset;
+                c.kk.resolvent = off;
+                c.kk.pivot = pivot;
+                Clause::closeBuffer(cl);
+                Clause::resetBuffer(cl);
+                return true;
             }
+        } else {
+            #ifdef VERBOSE
+            Blablabla::log("Resolvent is a tautology");
+            #endif
         }
+        Clause::resetToInner(cl);
     }
+    result = Constants::CheckCorrect;
+    Clause::closeBuffer(cl);
+    Clause::resetBuffer(cl);
     return true;
 }
-
 
 }

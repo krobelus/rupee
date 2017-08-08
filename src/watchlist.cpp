@@ -2,57 +2,53 @@
 
 #include "structs.hpp"
 #include "extra.hpp"
-#include "database.hpp"
-#include "model.hpp"
-#include "watchlist.hpp"
 
 namespace WatchList {
 
-bool error;
-int it;
-int removeit;
-int* candidate;
-int clliteral;
-long* watchit;
-long offwatch;
-int* othptr;
-int othlit;
-int triglit;
-long cloffset;
-int* clptr;
+//----------------------
+// Memory management
+//----------------------
 
+int rowit;
+bool error;
+
+// Allocates individual watchlist <clarray> with <clmax> slots and sets <clused> to 0.
 bool allocate(long*& clarray, int& clused, int& clmax) {
     clarray = (long*) malloc(Parameters::hashDepth * sizeof(long));
     clused = 0;
     clmax = Parameters::hashDepth;
     if(clarray == NULL) {
         return false;
-    } else {
-        clarray[0] = 0;
-        return true;
     }
+    clarray[0] = Constants::EndOfList;
+    return true;
 }
 
+// Allocates watchlist <wl>.
 bool allocate(watchlist& wl) {
     error = false;
+    #ifdef VERBOSE
     Blablabla::log("Allocating watchlist");
-    wl.array = (long**) malloc((2 * Parameters::noVariables + 1) * sizeof(long*));
-    wl.used = (int*) malloc((2 * Parameters::noVariables + 1) * sizeof(long*));
-    wl.max = (int*) malloc((2 * Parameters::noVariables + 1) * sizeof(long*));
+    #endif
+    wl.array = (long**) malloc((2 * Stats::variableBound + 1) * sizeof(long*));
+    wl.used = (int*) malloc((2 * Stats::variableBound + 1) * sizeof(int));
+    wl.max = (int*) malloc((2 * Stats::variableBound + 1) * sizeof(int));
     if(wl.array == NULL || wl.used == NULL || wl.max == NULL) {
         error = true;
     } else {
-        wl.array += Parameters::noVariables;
-        wl.used += Parameters::noVariables;
-        wl.max += Parameters::noVariables;
-        for(it = -Parameters::noVariables; !error && it <= Parameters::noVariables; ++it) {
-            if(!allocate(wl.array[it], wl.used[it], wl.max[it])) {
+        wl.array += Stats::variableBound;
+        wl.used  += Stats::variableBound;
+        wl.max   += Stats::variableBound;
+        for(rowit = -Stats::variableBound; !error && rowit <= Stats::variableBound; ++rowit) {
+            if(!allocate(wl.array[rowit], wl.used[rowit], wl.max[rowit])) {
                 error = true;
             }
         }
     }
     if(error) {
+        #ifdef VERBOSE
         Blablabla::log("Error at watchlist allocation");
+        #endif
         Blablabla::comment("Memory management error");
         return false;
     } else {
@@ -60,194 +56,264 @@ bool allocate(watchlist& wl) {
     }
 }
 
+// Reallocates individual watchlist <clarray> with <clmax> slots and <clused> current size.
 bool reallocate(long*& clarray, int& clused, int& clmax) {
+    #ifdef VERBOSE
     Blablabla::log("Reallocating watchlist");
-    clmax = clmax * 4;
+    #endif
+    clmax *= 2;
     clarray = (long*) realloc(clarray, clmax * sizeof(long));
     if(clarray == NULL) {
+        #ifdef VERBOSE
         Blablabla::log("Error at watchlist allocation");
+        #endif
         Blablabla::comment("Memory management error");
         return false;
     }
     return true;
 }
 
+// Deallocates watchlist <wl>.
 void deallocate(watchlist& wl) {
+    #ifdef VERBOSE
     Blablabla::log("Deallocating watchlist");
-    for(it = -Parameters::noVariables; it <= Parameters::noVariables; ++it) {
-        free(wl.array[it]);
+    #endif
+    for(rowit = -Stats::variableBound; rowit <= Stats::variableBound; ++rowit) {
+        free(wl.array[rowit]);
     }
-    wl.array -= Parameters::noVariables;
-    wl.used -= Parameters::noVariables;
-    wl.max -= Parameters::noVariables;
+    wl.array -= Stats::variableBound;
+    wl.used -= Stats::variableBound;
+    wl.max -= Stats::variableBound;
     free(wl.array);
     free(wl.used);
     free(wl.max);
 }
 
+//----------------------
+// Core commands
+//----------------------
+
+int firstlit;
+int* firstptr;
+int secondlit;
+int* secondptr;
+
+bool insertWatches(watchlist &wl, model& m, long offset, int* pointer) {
+    if(Database::isEmpty(pointer)) {
+        #ifdef VERBOSE
+        Blablabla::log("Empty clause, no watches inserted");
+        #endif
+        if(!Model::isContradicted(m)) {
+            Model::propagateLiteral(m, Constants::ConflictLiteral, offset, pointer, Constants::HardPropagation);
+        }
+    } else {
+        firstptr = pointer;
+        if(Database::nextNonFalsified(firstptr, firstlit, m)) {
+            *firstptr = *pointer;
+            *pointer = firstlit;
+            secondptr = firstptr + 1;
+            secondlit = pointer[1];
+            if(!WatchList::addWatch(wl, firstlit, offset)) { return false; }
+            if(!Model::isSatisfied(m, firstlit)) {
+                if(Database::nextNonFalsified(secondptr, secondlit, m)) {
+                    *secondptr = pointer[1];
+                    pointer[1] = secondlit;
+                } else {
+                    Model::propagateLiteral(m, firstlit, offset, pointer, Constants::HardPropagation);
+                }
+            }
+            if(!WatchList::addWatch(wl, secondlit, offset));
+            #ifdef VERBOSE
+            Blablabla::log("Setting watches: " + Blablabla::clauseToString(pointer));
+            #endif
+        } else {
+            if(!WatchList::addWatch(wl, pointer[0], offset)) { return false; }
+            if(!WatchList::addWatch(wl, pointer[1], offset)) { return false; }
+            #ifdef VERBOSE
+            Blablabla::log("Setting watches: " + Blablabla::clauseToString(pointer));
+            #endif
+            Model::propagateLiteral(m, Constants::ConflictLiteral, offset, pointer, Constants::HardPropagation);
+        }
+    }
+    return true;
+}
+
+void removeWatches(watchlist &wl, long offset, int* pointer) {
+    if(!Database::isEmpty(pointer)) {
+        findAndRemoveWatch(wl, pointer[0], offset);
+        findAndRemoveWatch(wl, pointer[1], offset);
+    }
+}
+
+bool alignWatches(watchlist& wl, model& m, long offset, int* pointer, int literal, long*& watch, bool hard) {
+    #ifdef VERBOSE
+    Blablabla::log("Aligning clause " + Blablabla::clauseToString(pointer));
+    Blablabla::increase();
+    #endif
+    if(Model::isSatisfied(m, pointer[0]) || Model::isSatisfied(m, pointer[1])) {
+        #ifdef VERBOSE
+        Blablabla::log("Watches are correct");
+        #endif
+        ++watch;
+    } else {
+        if(pointer[0] == literal) {
+            pointer[0] = pointer[1];
+        }
+        firstptr = pointer + 2;
+        if(Database::nextNonFalsified(firstptr, firstlit, m)) {
+            *firstptr = literal;
+            pointer[1] = firstlit;
+            #ifdef VERBOSE
+            Blablabla::log("Setting watches: " + Blablabla::clauseToString(pointer));
+            #endif
+            removeWatch(wl, literal, watch);
+            if(!addWatch(wl, firstlit, offset)) { return false; }
+        } else {
+            pointer[1] = literal;
+            #ifdef VERBOSE
+            Blablabla::log("Triggered clause");
+            #endif
+            if(Model::isFalsified(m, pointer[0])) {
+                Model::propagateLiteral(m, Constants::ConflictLiteral, offset, pointer, hard);
+            } else {
+                Model::propagateLiteral(m, *pointer, offset, pointer, hard);
+            }
+            ++watch;
+        }
+    }
+    #ifdef VERBOSE
+    Blablabla::decrease();
+    #endif
+    return true;
+}
+
+bool reviseWatches(watchlist& wl, model& m, long offset, int* pointer, int literal, long*& watch) {
+    #ifdef VERBOSE
+    Blablabla::log("Revising clause " + Blablabla::clauseToString(pointer));
+    Blablabla::increase();
+    #endif
+    if(pointer[1] == literal) {
+        pointer[1] = pointer[0];
+        pointer[0] = literal;
+    }
+    if(Model::isFalsified(m, pointer[1])) {
+        firstptr = pointer + 2;
+        if(Database::nextNonFalsified(firstptr, firstlit, m)) {
+            *firstptr = pointer[1];
+            pointer[1] = firstlit;
+            removeWatch(wl, literal, watch);
+            if(!addWatch(wl, firstlit, offset)) { return false; }
+            #ifdef VERBOSE
+            Blablabla::log("Setting watches: " + Blablabla::clauseToString(pointer));
+            #endif
+        } else {
+            #ifdef VERBOSE
+            Blablabla::log("Triggered clause");
+            #endif
+            Model::propagateLiteral(m, literal, offset, pointer, Constants::HardPropagation);
+        }
+    } else {
+        #ifdef VERBOSE
+        Blablabla::log("Watches are correct");
+        #endif
+        ++watch;
+    }
+    #ifdef VERBOSE
+    Blablabla::decrease();
+    #endif
+    return true;
+}
+
+//----------------------
+// List processing
+//----------------------
+
+long* listwatch;
+long listoffset;
+int* listclause;
+
+
+bool alignList(watchlist& wl, model& m, database& d, int literal, bool hard) {
+    #ifdef VERBOSE
+    Blablabla::log("Aligning watchlist for literal " + Blablabla::litToString(literal));
+    Blablabla::increase();
+    Blablabla::logWatchList(wl, literal, d);
+    #endif
+    listwatch = wl.array[literal];
+    while((listoffset = *listwatch) != Constants::EndOfList && !Model::isContradicted(m)) {
+        listclause = Database::getPointer(d, listoffset);
+        if(!alignWatches(wl, m, listoffset, listclause, literal, listwatch, hard)) { return false; }
+    }
+    #ifdef VERBOSE
+    Blablabla::decrease();
+    #endif
+    return true;
+}
+
+bool reviseList(watchlist& wl, model& m, database& d, int literal) {
+    #ifdef VERBOSE
+    Blablabla::log("Revising watchlist for literal " + Blablabla::litToString(literal));
+    Blablabla::increase();
+    Blablabla::logWatchList(wl, literal, d);
+    #endif
+    listwatch = wl.array[literal];
+    while((listoffset = *listwatch) != Constants::EndOfList && !Model::isSatisfied(m, literal)) {
+        listclause = Database::getPointer(d, listoffset);
+        if(!reviseWatches(wl, m, listoffset, listclause, literal, listwatch)) { return false; }
+    }
+    #ifdef VERBOSE
+    Blablabla::decrease();
+    #endif
+    return true;
+}
+
+bool collectList(watchlist& wl, latency& lt, database& d, int pivot, int literal) {
+    listwatch = wl.array[literal];
+    while((listoffset = *(listwatch++)) != Constants::EndOfList) {
+        listclause = Database::getPointer(d, listoffset);
+        if(listclause[0] == literal && Database::containsLiteral(listclause, pivot)) {
+            if(!Latency::addCandidate(lt, listoffset)) { return false; }
+        }
+    }
+    return true;
+}
+
+//----------------------
+// Watchlist handling
+//----------------------
+
+long* removewatch;
+long removeoffset;
+
+// Adds <offset> at the end of <wl[literal]>
 bool addWatch(watchlist &wl, int literal, long offset) {
-    if(wl.used[literal] >= wl.max[literal]) {
+    if(wl.used[literal] >= wl.max[literal] - 1) {
         if(!reallocate(wl.array[literal], wl.used[literal], wl.max[literal])) { return false; }
     }
     wl.array[literal][wl.used[literal]++] = offset;
-    wl.array[literal][wl.used[literal]] = Constants::EndOfWatchList;
+    wl.array[literal][wl.used[literal]] = Constants::EndOfList;
     return true;
 }
-
+//
+// // Removes the offset pointed by <watch> from <wl[literal]>
+// // Behavior is undefined if <watch> does not point to an element in <wl[literal]>
 void removeWatch(watchlist &wl, int literal, long* watch) {
     *watch = wl.array[literal][--wl.used[literal]];
-    wl.array[literal][wl.used[literal]] = Constants::EndOfWatchList;
+    wl.array[literal][wl.used[literal]] = Constants::EndOfList;
 }
-
+//
+// // Removes the first occurrence of <offset> in <wl[literal]>, if there is one;
+// // otherwise it does nothing.
 void findAndRemoveWatch(watchlist& wl, int literal, long offset) {
-    watchit = wl.array[literal];
-    while((offwatch = *watchit) != Constants::EndOfWatchList) {
-        if(offwatch == offset) {
-            removeWatch(wl, literal, watchit);
+    removewatch = wl.array[literal];
+    while((removeoffset = *removewatch) != Constants::EndOfList) {
+        if(removeoffset == offset) {
+            removeWatch(wl, literal, removewatch);
             return;
         } else {
-            ++watchit;
+            ++removewatch;
         }
     }
-}
-
-bool addConflict(watchlist &wl, int* ptr, long offset) {
-    if(Database::isFlag(ptr, Constants::ConflictBit, Constants::SatisfiableFlag)) {
-        Blablabla::log("Adding to conflict list");
-        Database::setFlag(ptr, Constants::ConflictBit, Constants::ConflictFlag);
-        return addWatch(wl, Constants::ConflictWatchlist, offset);
-    } else {
-        Blablabla::log("Already in conflict list");
-        return true;
-    }
-}
-
-void removeConflict(watchlist &wl, int* ptr, long* watch) {
-    Blablabla::log("Removing from conflict list");
-    Database::setFlag(ptr, Constants::ConflictBit, Constants::SatisfiableFlag);
-    return removeWatch(wl, Constants::ConflictWatchlist, watch);
-}
-
-bool isConflict(watchlist &wl) {
-    return wl.used[Constants::ConflictWatchlist] != 0;
-}
-
-bool setWatches(watchlist& wl, model& m, int* ptr, long offset) {
-    candidate = ptr;
-    if(Model::findNextNonFalsified(m, candidate, triglit)) {
-        Blablabla::log("Falsified clause");
-        return WatchList::addConflict(wl, ptr, offset);
-    } else {
-        *candidate = ptr[0];
-        ptr[0] = triglit;
-        if(!WatchList::addWatch(wl, triglit, offset)) { return false; }
-        if(Model::isSatisfied(m, triglit)) {
-            Blablabla::log("Satisfied clause");
-            Blablabla::log("Setting watches as " + Blablabla::clauseToString(ptr));
-        } else if(!Model::findNextNonFalsified(m, ++candidate, clliteral)) {
-            *candidate = ptr[1];
-            ptr[1] = clliteral;
-            Blablabla::log("Pseudoidle clause");
-            Blablabla::log("Setting watches as " + Blablabla::clauseToString(ptr));
-        } else {
-            Blablabla::log("Triggered clause");
-            Blablabla::log("Setting watches as " + Blablabla::clauseToString(ptr));
-            Model::propagateLiteral(m, triglit, offset, ptr);
-        }
-        return WatchList::addWatch(wl, ptr[1], offset);
-    }
-}
-
-bool processWatches(watchlist& wl, model& m, int* ptr, long offset, int literal, long*& watch, bool soft, bool& rup) {
-    if(Model::isSatisfied(m, ptr[0]) || Model::isSatisfied(m, ptr[1])) {
-        Blablabla::log("Satisfied clause");
-        ++watch;
-        return true;
-    } else {
-        if(ptr[0] == literal) {
-            ptr[0] = ptr[1];
-        }
-        candidate = ptr + 2;
-        if(Model::findNextNonFalsified(m, candidate, clliteral)) {
-            ptr[1] = literal;
-            clliteral = ptr[0];
-            if(Model::isFalsified(m, clliteral)) {
-                Blablabla::log("Falsified clause");
-                if(soft == Constants::SoftPropagation) {
-                    Model::assignSoftConflict(m, offset);
-                    rup = true;
-                } else {
-                    removeWatch(wl, literal, watch);
-                    findAndRemoveWatch(wl, clliteral, offset);
-                    addConflict(wl, ptr, offset);
-                }
-                ++watch;
-            } else {
-                Blablabla::log("Triggered clause");
-                Model::propagateLiteral(m, clliteral, offset, ptr);
-                ++watch;
-            }
-            return true;
-        } else {
-            *candidate = literal;
-            ptr[1] = clliteral;
-            Blablabla::log("Replacing watches as " + Blablabla::clauseToString(ptr));
-            removeWatch(wl, literal, watch);
-            return addWatch(wl, clliteral, offset);
-        }
-    }
-}
-
-bool reviseWatches(watchlist& wl, model& m, int* ptr, long offset, int literal, long*& watch, bool& skip) {
-    if(*ptr == literal) {
-        othptr = ptr + 1;
-    } else {
-        othptr = ptr;
-    }
-    if(!Model::isFalsified(m, (othlit = *othptr))) {
-        Blablabla::log("Watches are correct");
-    } else {
-        candidate = ptr + 2;
-        if(Model::findNextNonFalsified(m, candidate, clliteral)) {
-            Blablabla::log("Triggered clause");
-            Model::propagateLiteral(m, literal, offset, ptr);
-            skip = true;
-        } else {
-            WatchList::findAndRemoveWatch(wl, othlit, offset);
-            *candidate = othlit;
-            *othptr = clliteral;
-            if(!addWatch(wl, clliteral, offset)) { return false; }
-            Blablabla::log("Replacing watches as " + Blablabla::clauseToString(ptr));
-        }
-    }
-    ++watch;
-    return true;
-}
-
-bool reviseConflict(watchlist& wl, model& m, int* ptr, long offset, long*& watch) {
-    if(Model::findNextNonFalsified(m, ptr, clliteral)) {
-        ++watch;
-    } else {
-        removeConflict(wl, ptr, watch);
-        if(!setWatches(wl, m, ptr, offset)) { return false; }
-    }
-    return true;
-}
-
-bool processList(watchlist &wl, model& m, database& d, int literal, bool soft, bool& rup) {
-    // Blablabla::logModel(m);
-    Blablabla::increase();
-    Blablabla::logWatchList(wl, literal, d);
-    watchit = wl.array[literal];
-    while((cloffset = *watchit) != Constants::EndOfWatchList && !rup) {
-        clptr = Database::getPointer(d, cloffset);
-        Blablabla::log("Processing clause " + Blablabla::clauseToString(clptr));
-        Blablabla::increase();
-        if(!processWatches(wl, m, clptr, cloffset, literal, watchit, soft, rup)) { return false; }
-        Blablabla::decrease();
-    }
-    Blablabla::decrease();
-    return true;
 }
 
 }

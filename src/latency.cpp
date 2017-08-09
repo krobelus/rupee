@@ -102,7 +102,8 @@ bool checkResolventsRup(latency& lt, checker& c, clause& cl, database& d, int pi
             Blablabla::log("Resolvent: " + Blablabla::clauseToString(cl.array));
             #endif
             check = Constants::CheckIncorrect;
-            if(!Checker::checkRup(c, d, cl.array, check, c.kk.reslits)) { return false; }
+            Checker::precheckRup(c, d, cl.array, check);
+            if(!Checker::checkRup(c, d, check, c.kk.reslits, -pivot, off)) { return false; }
             if(check == Constants::CheckCorrect) {
                 if(!Witness::dumpAndSchedule(c.tvr, c.stack, d)) { return false; }
             } else {

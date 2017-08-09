@@ -271,7 +271,7 @@ bool collectList(watchlist& wl, latency& lt, database& d, int pivot, int literal
     listwatch = wl.array[literal];
     while((listoffset = *(listwatch++)) != Constants::EndOfList) {
         listclause = Database::getPointer(d, listoffset);
-        if(listclause[0] == literal && Database::containsLiteral(listclause, pivot)) {
+        if(listclause[0] == literal && Database::isFlag(listclause, Constants::VerificationBit, Constants::ScheduledFlag) && Database::containsLiteral(listclause, pivot)) {
             if(!Latency::addCandidate(lt, listoffset)) { return false; }
         }
     }

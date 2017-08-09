@@ -360,7 +360,7 @@ int* itptr;
 int lit;
 bool check;
 
-bool checkRup(checker& c, database& d, int* pointer, bool& result, bool* copy) {
+void precheckRup(checker& c, database& d, int* pointer, bool& result) {
     #ifdef VERBOSE
     Blablabla::increase();
     #endif
@@ -383,23 +383,29 @@ bool checkRup(checker& c, database& d, int* pointer, bool& result, bool* copy) {
                 result = Constants::CheckCorrect;
             }
         }
-        if(result == Constants::CheckIncorrect) {
-            if(!Model::propagateModel(c.stack, c.watch, d, Constants::SoftPropagation)) { return false; }
-            if(Model::isContradicted(c.stack)) {
-                #ifdef VERBOSE
-                Blablabla::log("Reached soft contradiction");
-                #endif
-                Witness::extractDependencies(c.tvr, c.stack, d, Constants::ConflictLiteral);
-                result = Constants::CheckCorrect;
-            } else {
-                #ifdef VERBOSE
-                Blablabla::log("UP-stable model found");
-                #endif
-                if(Parameters::recheck) {
-                    Recheck::copyModel(c.stack, copy);
-                }
-                result = Constants::CheckIncorrect;
+    }
+}
+
+bool checkRup(checker& c, database& d, bool& result, bool* copy, int counterpivot, long reason) {
+    if(result == Constants::CheckIncorrect) {
+        if(counterpivot != Constants::ConflictLiteral) {
+            Model::propagateLiteral(c.stack, counterpivot, reason, Database::getPointer(d, reason), Constants::SoftPropagation);
+        }
+        if(!Model::propagateModel(c.stack, c.watch, d, Constants::SoftPropagation)) { return false; }
+        if(Model::isContradicted(c.stack)) {
+            #ifdef VERBOSE
+            Blablabla::log("Reached soft contradiction");
+            #endif
+            Witness::extractDependencies(c.tvr, c.stack, d, Constants::ConflictLiteral);
+            result = Constants::CheckCorrect;
+        } else {
+            #ifdef VERBOSE
+            Blablabla::log("UP-stable model found");
+            #endif
+            if(Parameters::recheck) {
+                Recheck::copyModel(c.stack, copy);
             }
+            result = Constants::CheckIncorrect;
         }
     }
     #ifdef VERBOSE
@@ -422,7 +428,8 @@ bool checkInference(checker& c, database& d) {
         #ifdef VERBOSE
         Blablabla::log("Checking RUP property");
         #endif
-        if(!checkRup(c, d, c.pointer, check, c.kk.natlits)) { return false; }
+        precheckRup(c, d, c.pointer, check);
+        if(!checkRup(c, d, check, c.kk.natlits, Constants::ConflictLiteral, 0)) { return false; }
         if(check == Constants::CheckCorrect) {
             #ifdef VERBOSE
             Blablabla::log("RUP check succeeded");

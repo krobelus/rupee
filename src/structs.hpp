@@ -379,7 +379,8 @@ void recheckFormula(checker& c, database& d, proof& r);
 void recheckNaturalModel(checker& c, database& d);
 void recheckResolventModel(checker& c, database& d);
 
-bool checkRup(checker& c, database& d, int* pointer, bool& result, bool* copy);
+void precheckRup(checker& c, database& d, int* pointer, bool& result);
+bool checkRup(checker& c, database& d, bool& result, bool* copy, int counterpivot, long reason);
 bool checkInference(checker& c, database& d);
 
 }

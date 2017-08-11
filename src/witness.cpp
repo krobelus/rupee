@@ -14,13 +14,14 @@ bool allocate(witness& wt) {
     #ifdef VERBOSE
     Blablabla::log("Allocating witness");
     #endif
-    wt.max = Parameters::databaseSize;
-    wt.used = 0;
-    wt.array = (long*) malloc(wt.max * sizeof(long));
+    wt.intmax = wt.delmax = Parameters::databaseSize / 2;
+    wt.intused = wt.delused = 0;
+    wt.intarray = (long*) malloc(wt.intmax * sizeof(long));
+    wt.delarray = (long*) malloc(wt.delmax * sizeof(long));
     wt.lits = (bool*) malloc((2 * Stats::variableBound + 1) * sizeof(bool));
     wt.chain = (int*) malloc((2 * Stats::variableBound + 1) * sizeof(int));
     wt.head = wt.last = wt.chain;
-    if(wt.array == NULL || wt.lits == NULL || wt.chain == NULL) {
+    if(wt.intarray == NULL || wt.delarray == NULL || wt.lits == NULL || wt.chain == NULL) {
         #ifdef VERBOSE
         Blablabla::log("Error at witness allocation");
         #endif
@@ -35,13 +36,18 @@ bool allocate(witness& wt) {
     return true;
 }
 
-bool reallocate(witness& wt) {
+bool reallocate(witness& wt, bool array) {
     #ifdef VERBOSE
     Blablabla::log("Reallocating witness");
     #endif
-    wt.max *= 2;
-    wt.array = (long*) realloc(wt.array, wt.max * sizeof(long));
-    if(wt.array == NULL) {
+    if(array == Constants::InstructionDeletion) {
+        wt.delmax *= 2;
+        wt.delarray = (long*) realloc(wt.delarray, wt.delmax * sizeof(long));
+    } else {
+        wt.intmax *= 2;
+        wt.intarray = (long*) realloc(wt.intarray, wt.intmax * sizeof(long));
+    }
+    if(wt.delarray == NULL || wt.intarray == NULL) {
         #ifdef VERBOSE
         Blablabla::log("Error at witness allocation");
         #endif
@@ -56,7 +62,8 @@ void deallocate(witness& wt) {
     Blablabla::log("Deallocating witness");
     #endif
     wt.lits -= Stats::variableBound;
-    free(wt.array);
+    free(wt.delarray);
+    free(wt.intarray);
     free(wt.lits);
     free(wt.chain);
 }
@@ -66,117 +73,102 @@ void deallocate(witness& wt) {
 //-------------------------------
 
 long off;
+int* cls;
+
+bool insertIntroduction(witness& wt, long value) {
+    if(wt.intused + 1 >= wt.intmax) {
+        if(!reallocate(wt, Constants::InstructionIntroduction)) { return false; }
+    }
+    wt.intarray[wt.intused++] = value;
+    return true;
+}
+
+bool insertDeletion(witness& wt, long value) {
+    if(wt.delused + 1 >= wt.delmax) {
+        if(!reallocate(wt, Constants::InstructionDeletion)) { return false; }
+    }
+    wt.delarray[wt.delused++] = value;
+    return true;
+}
 
 bool openWitness(witness& wt, long offset) {
-    if(wt.used + 1 >= wt.max) {
-        if(!reallocate(wt)) { return false; }
-    }
-    wt.array[wt.used++] = offset;
-    return true;
+    return insertIntroduction(wt, offset);
 }
 
 bool setRupWitness(witness& wt) {
-    return setRatWitness(wt, Constants::ConflictLiteral);
+    return insertIntroduction(wt, (long) Constants::ReservedLiteral);
+}
+
+bool setPremiseWitness(witness& wt) {
+    return insertIntroduction(wt, (long) -Constants::ReservedLiteral);
 }
 
 bool setRatWitness(witness& wt, int literal) {
-    if(wt.used + 1 >= wt.max) {
-        if(!reallocate(wt)) { return false; }
-    }
-    wt.array[wt.used++] = (long) literal;
-    wt.array[wt.used++] = (long) Constants::EndOfList;
-    return true;
-}
-
-bool dumpAndSchedule(witness& wt, model& m, database& d) {
-    // while(wt.used + (wt.last - wt.chain) + 1 >= wt.max) {
-    //     if(!reallocate(wt)) { return false; }
-    // }
-    // wt.head = wt.chain;
-    // while(wt.head < wt.last) {
-    //     off = m.reason[*(wt.head++)];
-    //     wt.array[wt.used++] = off;
-    //     Database::setFlag(Database::getPointer(d, off), Constants::VerificationBit, Constants::ScheduledFlag);
-    // }
-    while(wt.used + (wt.last - wt.chain) + 1 >= wt.max) {
-        if(!reallocate(wt)) { return false; }
-    }
-    wt.head = wt.last;
-    while(wt.chain <= --wt.head) {
-        off = m.reason[*wt.head];
-        wt.array[wt.used++] = off;
-        Database::setFlag(Database::getPointer(d, off), Constants::VerificationBit, Constants::ScheduledFlag);
-    }
-    return true;
+    return insertIntroduction(wt, (long) literal);
 }
 
 bool setResolventWitness(witness& wt, long offset) {
-    if(wt.used >= wt.max) {
-        if(!reallocate(wt)) { return false; }
+    return insertIntroduction(wt, -offset);
+}
+
+bool dumpChain(witness& wt, model& m, database& d) {
+    wt.head = wt.last;
+    while(wt.chain <= --wt.head) {
+        off = m.reason[*wt.head];
+        if(!insertIntroduction(wt, off)) { return false; }
+        cls = Database::getPointer(d, off);
+        if(Database::isFlag(cls, Constants::VerificationBit, Constants::SkipFlag)) {
+            Database::setFlag(cls, Constants::VerificationBit, Constants::ScheduledFlag);
+            insertDeletion(wt, off);
+        }
     }
-    wt.array[wt.used++] = -offset;
     return true;
 }
 
 bool closeWitness(witness& wt) {
-    if(wt.used >= wt.max) {
-        if(!reallocate(wt)) { return false; }
-    }
-    wt.array[wt.used++] = Constants::EndOfList;
-    return true;
+    return (insertIntroduction(wt, Constants::EndOfList) && insertDeletion(wt, Constants::EndOfList));
 }
 
-bool recordDeletion(witness& wt, long offset) {
-    if(wt.used >= wt.max) {
-        if(!reallocate(wt)) { return false; }
-    }
-    wt.array[wt.used++] = -offset;
-    return true;
-}
-//
-// //-------------------------------
-// // Witness extraction
-// //-------------------------------
+//-------------------------------
+// Witness extraction
+//-------------------------------
 
-long* extptr;
-long extoff;
-int* extclause;
-bool extmode;
-std::string extstr;
-bool extpremise;
+int nopremises;
+long* intptr;
+long* delptr;
+long* wtptr;
+long wtoff;
+long clsoff;
+int* clsptr;
+int clspivot;
+bool deletepremises;
 std::ofstream output;
 
 void extractWitness(witness& wt, database& d) {
     if(Parameters::generateLrat) {
-        extptr = wt.array + wt.used;
-        extmode = Constants::InstructionIntroduction;
+        nopremises = d.idCount;
+        intptr = wt.intarray + (wt.intused - 1);
+        delptr = wt.delarray + (wt.delused - 1);
+        deletepremises = false;
         output.open(Parameters::pathWitness, std::ofstream::out | std::ofstream::trunc);
-        while(stepBack(wt, extptr, extmode)) {
-            if(extmode == Constants::InstructionIntroduction) {
-                extclause = Database::getPointer(d, *extptr);
-                if((extpremise = Database::isFlag(extclause, Constants::OriginalityBit, Constants::DerivedFlag)) || Parameters::gritMode) {
-                    if(extpremise) {
-                        extclause[Constants::IdCellDatabase] = ++(d.idCount);
-                    }
-                    extstr = std::to_string(extclause[Constants::IdCellDatabase]) + " ";
-                    extractClause(extclause, (int) extptr[1], extstr);
-                    extractChain(d, extptr + 3, extstr);
-                    output << extstr << std::endl;
-                }
+        while(stepBack(wt, intptr, delptr)) {
+            clsoff = intptr[1];
+            clsptr = Database::getPointer(d, clsoff);
+            clspivot = (int) intptr[2];
+            if(clspivot == -Constants::ReservedLiteral) {
+                extractPremise(d, clsptr, deletepremises, output);
             } else {
-                if(*extptr != Constants::EndOfList) {
-                    extstr = std::to_string(d.idCount) + " d ";
-                    while(*extptr != Constants::EndOfList) {
-                        extclause = Database::getPointer(d, -*extptr);
-                        if(Database::isFlag(extclause, Constants::VerificationBit, Constants::ScheduledFlag) ||
-                                Database::isFlag(extclause, Constants::OriginalityBit, Constants::PremiseFlag)) {
-                            extstr += std::to_string(extclause[Constants::IdCellDatabase]) + " ";
-                        }
-                        --extptr;
-                    }
-                    extstr += "0";
-                    output << extstr << std::endl;
+                if(deletepremises) {
+                    output << "0" << std::endl;
+                    deletepremises = false;
                 }
+                wtptr = intptr + 3;
+                clsptr[Constants::IdCellDatabase] = ++d.idCount;
+                output << d.idCount << " ";
+                extractClause(clsptr, clspivot, output);
+                extractChain(d, wtptr, output);
+                wtptr = delptr + 1;
+                extractDeletions(d, wtptr, output);
             }
         }
         output.close();
@@ -184,44 +176,63 @@ void extractWitness(witness& wt, database& d) {
     }
 }
 
-bool stepBack(witness& wt, long*& wtcell, bool& wtmd) {
-    if(wtmd == Constants::InstructionIntroduction) {
-        --wtcell;
-        if(wtcell <= wt.array) {
-            return false;
-        }
+bool stepBack(witness& wt, long*& ip, long*& dp) {
+    if(--ip < wt.intarray) {
+        return false;
     } else {
-        while(*(--wtcell) != Constants::EndOfList) {}
-        wtcell -= 2;
+        --dp;
+        while(*ip != Constants::EndOfList) {
+            --ip;
+        }
+        while(*dp != Constants::EndOfList) {
+            --dp;
+        }
     }
-    wtmd = !wtmd;
     return true;
 }
 
-void extractClause(int*& cls, int piv, std::string& str) {
-    if(piv != Constants::EndOfList) {
-        str += Blablabla::litToString(piv) + " ";
-    }
-    while(*cls != Constants::EndOfList) {
-        if(*cls != piv && *cls != -Constants::ReservedLiteral) {
-            str += Blablabla::litToString(*cls) + " ";
+void extractPremise(database& d, int*& clsp, bool& delpr, std::ofstream& op) {
+    if(Database::isFlag(clsp, Constants::VerificationBit, Constants::SkipFlag)) {
+        if(!delpr) {
+            delpr = true;
+            op << d.idCount << " d ";
         }
-        cls++;
+        op << clsp[Constants::IdCellDatabase] << " ";
     }
-    str += "0 ";
 }
 
-void extractChain(database& d, long* lptr, std::string& str) {
-    while((extoff = *lptr++) != Constants::EndOfList) {
-        if(extoff > 0) {
-            str += std::to_string((Database::getPointer(d, extoff))[Constants::IdCellDatabase]) + " ";
+void extractClause(int*& clsp, int pv, std::ofstream& op) {
+    if(pv != Constants::ReservedLiteral) {
+        op << Blablabla::litToString(pv) << " ";
+    }
+    while(*clsp != Constants::EndOfList) {
+        if(*clsp != pv && *clsp != -Constants::ReservedLiteral) {
+            op << Blablabla::litToString(*clsp) << " ";
+        }
+        clsp++;
+    }
+    op << "0 ";
+}
+
+void extractChain(database& d, long*& wptr, std::ofstream& op) {
+    while((wtoff = *wptr++) != Constants::EndOfList) {
+        if(wtoff > 0) {
+            op << Database::getPointer(d, wtoff)[Constants::IdCellDatabase] << " ";
         } else {
-            str += std::to_string(-((Database::getPointer(d, -extoff))[Constants::IdCellDatabase])) + " ";
-        }
+            op << -Database::getPointer(d, -wtoff)[Constants::IdCellDatabase] << " ";        }
     }
-    str += "0";
+    op << "0" << std::endl;
 }
 
+void extractDeletions(database& d, long*& wptr, std::ofstream& op) {
+    if(*wptr != Constants::EndOfList) {
+        op << d.idCount << " d ";
+        while((wtoff = *wptr++) != Constants::EndOfList) {
+            op << Database::getPointer(d, wtoff)[Constants::IdCellDatabase] << " ";
+        }
+        op << "0" << std::endl;
+    }
+}
 
 //-------------------------------
 // Chain generation

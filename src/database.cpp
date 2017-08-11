@@ -158,11 +158,12 @@ bool insertBufferClause(database& d, clause& c, hashtable& h, bool file, long& o
 		}
 		d.used += c.used + Constants::ExtraCellsDatabase + 1;
 		setFlag(pointer, Constants::ActivityBit, Constants::InactiveFlag);
-		setFlag(pointer, Constants::RecheckBit, Constants::InactiveFlag);
 		setFlag(pointer, Constants::OriginalityBit, file);
 		setFlag(pointer, Constants::PersistencyBit, Constants::PersistentFlag);
 		setFlag(pointer, Constants::VerificationBit, Constants::SkipFlag);
 		setFlag(pointer, Constants::PseudounitBit, Constants::PassiveFlag);
+		setFlag(pointer, Constants::RecheckBit, Constants::InactiveFlag);
+		setFlag(pointer, Constants::TrimmingBit, Constants::SkipFlag);
 		setCopies(pointer, 1);
 		offset = getOffset(d, pointer);
 		if(!HashTable::insertOffset(h, hash, offset)) { return false; }
@@ -213,6 +214,7 @@ bool deriveContradiction(database& d, long& offset) {
 	setFlag(pointer, Constants::VerificationBit, Constants::ScheduledFlag);
 	setFlag(pointer, Constants::PseudounitBit, Constants::PassiveFlag);
 	setFlag(pointer, Constants::RecheckBit, Constants::InactiveFlag);
+	setFlag(pointer, Constants::TrimmingBit, Constants::ScheduledFlag);
 	setCopies(pointer, 1);
 	offset = getOffset(d, pointer);
 	return true;

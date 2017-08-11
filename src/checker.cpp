@@ -241,7 +241,8 @@ bool verifyIntroduction(checker& c, database& d) {
     #ifdef VERBOSE
     Blablabla::logModel(c.stack);
     #endif
-    if(Database::isFlag(c.pointer, Constants::VerificationBit, Constants::ScheduledFlag)) {
+    if(Database::isFlag(c.pointer, Constants::VerificationBit, Constants::ScheduledFlag) ||
+            Database::isFlag(c.pointer, Constants::OriginalityBit, Constants::PremiseFlag)) {
         if(!checkInference(c, d)) { return false; }
     } else {
         #ifdef VERBOSE
@@ -270,7 +271,6 @@ bool verifyDeletion(checker& c, database& d) {
         if(!WatchList::insertWatches(c.watch, c.stack, c.offset, c.pointer)) { return false; }
         if(!Revision::alignCone(c.cone, c.watch, c.stack, d)) { return false; }
         Revision::resetCone(c.cone);
-        Witness::recordDeletion(c.tvr, c.offset);
     }
     #ifdef VERBOSE
     Blablabla::decrease();
@@ -422,7 +422,7 @@ bool checkInference(checker& c, database& d) {
         #ifdef VERBOSE
         Blablabla::log("Clause is a premise, skipping");
         #endif
-        if(!Witness::setRupWitness(c.tvr)) { return false; }
+        if(!Witness::setPremiseWitness(c.tvr)) { return false; }
         check = Constants::CheckCorrect;
     } else {
         #ifdef VERBOSE
@@ -435,7 +435,7 @@ bool checkInference(checker& c, database& d) {
             Blablabla::log("RUP check succeeded");
             #endif
             if(!Witness::setRupWitness(c.tvr)) { return false; }
-            if(!Witness::dumpAndSchedule(c.tvr, c.stack, d)) { return false; }
+            if(!Witness::dumpChain(c.tvr, c.stack, d)) { return false; }
         } else {
             #ifdef VERBOSE
             Blablabla::log("RUP check failed");

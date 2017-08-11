@@ -28,6 +28,7 @@ namespace Constants {
     const bool TemporalFlag            = false;
 
 	const int VerificationBit          = 3;
+	const int TrimmingBit              = 7;
 	const bool ScheduledFlag           = true;
     const bool SkipFlag                = false;
 
@@ -39,8 +40,8 @@ namespace Constants {
 	const bool RedFlag                 = true;
 	const bool BlueFlag                = false;
 
-	const int CopiesShift              = 7;
-	const int CopiesMask               = 127;
+	const int CopiesShift              = 8;
+	const int CopiesMask               = 255;
 
 	const int ArgumentsFilePremise     = 1;
 	const int ArgumentsFileProof       = 2;

@@ -43,7 +43,8 @@ CPP = g++
 #  -std=c++11	uses C++11 as a language
 CPPFLAGS  = -g -O2 -Wall -std=c++11 -c $(VERBOSEFLAG)
 
-VERBOSEFLAG =
+# VERBOSEFLAG = -DVERBOSE
+VERBOSEFLAG = 
 
 #output name
 EXECUTABLE = $(BINPATH)rupee

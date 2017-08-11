@@ -70,14 +70,16 @@ struct revision {
 };
 
 struct witness {
-	long* array;
+	long* delarray;
+	int delused;
+	int delmax;
+	long* intarray;
+	int intused;
+	int intmax;
 	int* chain;
 	int* head;
 	int* last;
 	bool* lits;
-	int used;
-	int max;
-	bool mode;
 };
 
 struct latency {
@@ -313,21 +315,25 @@ bool checkResolventsRup(latency& lt, checker& c, clause& cl, database& d, int pi
 namespace Witness {
 
 bool allocate(witness& wt);
-bool reallocate(witness& wt);
+bool reallocate(witness& wt, bool array);
 void deallocate(witness& wt);
 
+bool insertIntroduction(witness& wt, long value);
+bool insertDeletion(witness& wt, long value);
 bool openWitness(witness& wt, long offset);
 bool setRupWitness(witness& wt);
+bool setPremiseWitness(witness& wt);
 bool setRatWitness(witness& wt, int literal);
-bool dumpAndSchedule(witness& wt, model& m, database& d);
 bool setResolventWitness(witness& wt, long offset);
+bool dumpChain(witness& wt, model& m, database& d);
 bool closeWitness(witness& wt);
-bool recordDeletion(witness& wt, long offset);
 
 void extractWitness(witness& wt, database& d);
-bool stepBack(witness& wt, long*& wtcell, bool& wtmd);
-void extractClause(int*& cls, int piv, std::string& str);
-void extractChain(database& d, long* lptr, std::string& str);
+bool stepBack(witness& wt, long*& ip, long*& dp);
+void extractPremise(database& d, int*& clsp, bool& delpr, std::ofstream& op);
+void extractClause(int*& clsp, int pv, std::ofstream& op);
+void extractChain(database& d, long*& wptr, std::ofstream& op);
+void extractDeletions(database& d, long*& wptr, std::ofstream& op);
 
 void extractDependencies(witness& wt, model& m, database& d, int literal);
 void findShift(witness& wt, model& m, database& d);

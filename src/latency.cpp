@@ -105,7 +105,7 @@ bool checkResolventsRup(latency& lt, checker& c, clause& cl, database& d, int pi
             Checker::precheckRup(c, d, cl.array, check);
             if(!Checker::checkRup(c, d, check, c.kk.reslits, -pivot, off)) { return false; }
             if(check == Constants::CheckCorrect) {
-                if(!Witness::dumpAndSchedule(c.tvr, c.stack, d)) { return false; }
+                if(!Witness::dumpChain(c.tvr, c.stack, d)) { return false; }
             } else {
                 result = Constants::CheckIncorrect;
                 c.kk.clause = c.offset;

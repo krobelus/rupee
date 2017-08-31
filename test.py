@@ -13,13 +13,17 @@ for f in filenames:
     for line in verification:
         if line == "s VERIFIED\n":
             print "DRAT proof accepted by rupee"
-            command2 = "./coq-lrat/Interface.native proofs/" + f + ".cnf proofs/" + f + ".lrat"
+            # command2 = "./coq-lrat/Interface.native proofs/" + f + ".cnf proofs/" + f + ".lrat"
+            # verification2 = os.popen(command2)
+            # for line in verification2:
+            #     if line == "True\n":
+            #         print "LRAT certificate validated by Coq"
+            #     if line == "False\n":
+            #         print "LRAT certificate rejected by Coq"
+            command2 = "./bin/lratcheck proofs/" + f + ".cnf proofs/" + f + ".lrat"
             verification2 = os.popen(command2)
             for line in verification2:
-                if line == "True\n":
-                    print "LRAT certificate validated by Coq"
-                if line == "False\n":
-                    print "LRAT certificate rejected by Coq"
+                print line
         if line == "s BUG\n":
             print "Bug detected in rupee"
         if line == "s REJECTED\n":

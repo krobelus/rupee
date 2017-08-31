@@ -37,7 +37,6 @@ bool allocatePtr(lrat& l, int n) {
 }
 
 bool allocateLits(lrat& l, int n) {
-    // std::cout << "allocating " << n << " literals" << std::endl;
     l.nolits = n;
     l.stack = (int*) malloc((2 * n + 1) * sizeof(int));
     l.lits = (bool*) malloc((2 * n + 1) * sizeof(bool));
@@ -88,32 +87,21 @@ void checkClause(lrat& l, int*& ptr, bool& contradiction) {
     int unsat = 0;
     int prop = 0;
     if(!contradiction) {
-        // for(int i = -l.nolits; i <= l.nolits; ++i) {
-        //     if(l.lits[i]) { std::cout << i << " "; }
-        // }
-        // std::cout << std::endl;
         while((lit = *ptr++) != 0) {
-            // std::cout << "literal " << lit;
             if(l.lits[-lit]) {
-                // std::cout << " falsified, ignoring" << std::endl;
                 ignore = true;
             } else {
                 if(!l.lits[lit]) {
-                    // std::cout << " unassigned" << std::endl;
                     ++unsat;
                     prop = lit;
-                } else {
-                    // std::cout << " idle" << std::endl;
                 }
             }
         }
         if(!ignore) {
             if(unsat == 0) {
-                // std::cout << "fully satisfied clause" << std::endl;
                 contradiction = true;
             }
             if(unsat == 1) {
-                // std::cout << "propagating " << -prop << std::endl;
                 l.lits[-prop] = true;
                 *(l.stackused++) = -prop;
             }
@@ -126,7 +114,6 @@ bool checkDoubleChain(lrat& l, int*& prechain, int*& postchain) {
     int* clsptr;
     bool contradiction = false;
     while((index = *prechain++) > 0) {
-        // std::cout << "clause " << index << std::endl;
         clsptr = l.ptrarray[index];
         if(*clsptr % 2 == 0) {
             return false;
@@ -135,7 +122,6 @@ bool checkDoubleChain(lrat& l, int*& prechain, int*& postchain) {
         }
     }
     while((index = *postchain++) > 0) {
-        // std::cout << "clause " << index << std::endl;
         clsptr = l.ptrarray[index];
         if(*clsptr % 2 == 0) {
             return false;
@@ -151,20 +137,13 @@ bool checkChain(lrat& l, int*& ptr) {
     int* clsptr;
     bool contradiction = false;
     while((index = *ptr++) > 0) {
-        // std::cout << "clause " << index << std::endl;
         clsptr = l.ptrarray[index];
         if(*clsptr % 2 == 0) {
-            // std::cout << "dependency is inactive" << std::endl;
             return false;
         } else {
             checkClause(l, clsptr, contradiction);
         }
     }
-    // if(contradiction) {
-    //     std::cout << "UP chain correct and inconsistent" << std::endl;
-    // } else {
-    //     std::cout << "UP chain correct but consistent" << std::endl;
-    // }
     return contradiction;
 }
 
@@ -196,7 +175,6 @@ bool checkRat(lrat& l, int* ptr, int*& chain, int pivot, int bound) {
         clause = ptr + 2;
         resclause = l.ptrarray[index];
         if(resclause != NULL && *resclause % 2 == 1 && containsLit(resclause + 2, -pivot)) {
-            // std::cout << "resolvable with clause " << index << std::endl;
             resclause += 2;
             if(copyClause(l, clause, 0) && copyClause(l, resclause, -pivot)) {
                 reschain = chain;
@@ -323,7 +301,6 @@ int main(int argc, char* argv[]) {
         }
     }
     input.close();
-    // std::cout << "Parsed CNF formula." << std::endl;
     input.open(argv[2]);
     if(input.fail()) {
         std::cout << "s ERROR: invalid input arguments" << std::endl;
@@ -333,7 +310,6 @@ int main(int argc, char* argv[]) {
     refutation = false;
     while(input.good()) {
         getline(input, line);
-        // std::cout << line << " (" << mode << ")" << std::endl;
         while(boost::regex_search(line, parsed, word)) {
             if(mode == modeLratIndex) {
                 index = boost::lexical_cast<int>(parsed[1]);
@@ -394,43 +370,31 @@ int main(int argc, char* argv[]) {
                 }
                 line = parsed[2];
             }
-            // std::cout << line << " (" << mode << ")" << std::endl;
         }
     }
     if(!dbInsert(Data, 0)) { return 1; }
     input.close();
-    // std::cout << "Parsed LRAT proof." << std::endl;
 
     if(!allocateLits(Data, maxint + 1) || !allocatePtr(Data, ptrcount + 3)) {
         std::cout << "s BUG" << std::endl;
         return 1;
     }
 
-    // std::cout << std::endl;
-    // for(int i = 0; i < Data.dbused; ++i) {
-    //     std::cout << Data.dbarray[i] << " ";
-    // }
-    // std::cout << std::endl << std::endl;
-
     clauseptr = Data.dbarray;
     check = 0;
     while(check == 0) {
         index = clauseptr[1];
-        // std::cout << "checking instruction " << index << std::endl;
         Data.ptrarray[index] = clauseptr;
         chainptr = clauseptr + 2;
         if(copyClause(Data, chainptr, 0)) {
-            // std::cout << "proper clause" << std::endl;
             if((*clauseptr >> 1) % 2 == 0) {
                 if(*chainptr != 0 && !findNegative(chainptr)) {
-                    // std::cout << "RUP inference" << std::endl;
                     if(!checkChain(Data, chainptr)) {
                         check = 1;
                     } else {
                         dropModel(Data);
                     }
                 } else {
-                    // std::cout << "RAT inference upon " << clauseptr[2] << std::endl;
                     dropModel(Data);
                     if(!checkRat(Data, clauseptr, chainptr, clauseptr[2], index)) {
                         check = 1;
@@ -439,17 +403,13 @@ int main(int argc, char* argv[]) {
             } else {
                 dropModel(Data);
                 ++chainptr;
-                // std::cout << "premise" << std::endl;
-                // std::cout << chainptr - Data.dbarray << std::endl;
             }
         } else {
-            // std::cout << "tautology" << std::endl;
             while(*chainptr++ != 0) {}
         }
         if(check == 0) {
             activateClause(Data, index);
             while((index = *chainptr++) != 0) {
-                // std::cout << "deactivating clause " << index << std::endl;
                 deactivateClause(Data, index);
             }
         }

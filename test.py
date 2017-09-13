@@ -7,7 +7,7 @@ allfiles = os.listdir(os.path.dirname(os.path.abspath(__file__)) + "/proofs")
 cnffiles = filter(lambda x: fnmatch.fnmatch(x, '*.cnf'), allfiles)
 filenames = map(lambda x: x[0:-4], cnffiles)
 for f in filenames:
-    command = "./bin/rupee proofs/" + f + ".cnf proofs/" + f + ".drat -lrat proofs/" + f + ".lrat -full-deletion"
+    command = "./bin/rupee proofs/" + f + ".cnf proofs/" + f + ".drat -lrat proofs/" + f + ".lrat -full-deletion -recheck"
     print f
     verification = os.popen(command)
     for line in verification:

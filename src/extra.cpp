@@ -14,12 +14,11 @@ namespace Objects {
 	checker Checker;
 }
 
-
 namespace Parameters {
-
 std::string pathPremise;
 std::string pathProof;
 std::string pathWitness;
+std::string pathRecheck;
 int databaseSize = 10000;
 int hashDepth = 10;
 int noVariables = 1000;
@@ -29,7 +28,9 @@ bool generateLrat = true;
 bool gritMode = false;
 bool verbosity = false;
 bool printStats = true;
-bool recheck = false;
+bool recheck = true;
+bool tryit = false;
+bool trytwo = false;
 
 void setPremise(std::string path) {
     pathPremise = path;
@@ -52,6 +53,13 @@ void setWitness(std::string path) {
 	#endif
 }
 
+void setRecheck(std::string path) {
+    pathRecheck = path;
+	#ifdef VERBOSE
+    Blablabla::log("Recheck: " + path);
+	#endif
+}
+
 }
 
 namespace Blablabla {
@@ -65,7 +73,7 @@ long* watchit;
 int* clause;
 int lit;
 
-#ifdef VERBOSE
+// #ifdef VERBOSE
 void increase() {
     Blablabla::level++;
 }
@@ -82,7 +90,7 @@ void log(std::string str) {
         std::cout << str << std::endl;
     }
 }
-#endif
+// #endif
 
 void comment(std::string str) {
     std::cout << str << std::endl;
@@ -102,7 +110,7 @@ std::string litToString(int lit) {
     }
 }
 
-#ifdef VERBOSE
+// #ifdef VERBOSE
 std::string clauseToString(int* ptr) {
     std::string ans = "[ ";
     while(*ptr != Constants::EndOfList) {
@@ -273,7 +281,7 @@ void logRecheckModel(bool* rc) {
 	}
 }
 
-#endif
+// #endif
 
 }
 

@@ -35,6 +35,8 @@ bool readArguments(int argc, char* argv[]) {
 				stringArgument = argv[++i];
 				Parameters::setWitness(stringArgument);
 			} else if(stringArgument == "recheck") {
+				stringArgument = argv[++i];
+				Parameters::setRecheck(stringArgument);
 				Parameters::recheck = true;
 			} else if(stringArgument == "verbose") {
 				Parameters::verbosity = true;
@@ -93,6 +95,9 @@ bool parse() {
 	Blablabla::comment("c Parsing DRAT proof " + Parameters::pathProof);
 		if(!Parser::openFile(Objects::Parser, Constants::FileProof)) { return false; }
 		if(!Parser::readClauses(Objects::Parser, Objects::Clause, Objects::HashTable, Objects::Database, Objects::Proof)) { return false; }
+		// if(Parameters::recheck) {
+		// 	if(!Database::copyFormula(Objects::Database)) { return false; }
+		// }
 	#ifdef VERBOSE
 	Blablabla::decrease();
 	Blablabla::log("Deallocating parsing data structures");
@@ -117,7 +122,8 @@ bool check() {
 	if(Checker::isFinished(Objects::Checker)) { return true; }
 	if(!Checker::verifyProof(Objects::Checker, Objects::Proof, Objects::Database)) { return false; }
 	if(!Checker::isVerified(Objects::Checker)) {
-		Checker::recheckInstruction(Objects::Checker, Objects::Database, Objects::Proof);
+		Objects::Checker.stage = Constants::StageReject;
+		// Checker::recheckInstruction(Objects::Checker, Objects::Database, Objects::Proof);
 	}
 	return true;
 }
@@ -126,10 +132,9 @@ void output() {
 	if(Checker::isVerified(Objects::Checker)) {
 		Blablabla::comment("s VERIFIED");
 		Witness::extractWitness(Objects::Checker.tvr, Objects::Database);
-	} else if(Checker::isBuggy(Objects::Checker)) {
-		Blablabla::comment("s BUG");
 	} else {
 		Blablabla::comment("s REJECTED");
+		Recheck::extractRecheck(Objects::Checker.kk, Objects::Database);
 	}
 }
 

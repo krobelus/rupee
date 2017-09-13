@@ -167,49 +167,70 @@ int lit;
 boost::smatch result;
 long offset;
 
-bool parseInstruction(clause& c, std::string& s) {
-    if(boost::regex_search(s, result, Parser::deletionRegex)) {
-        c.kind = Constants::InstructionDeletion;
-    } else {
-        c.kind = Constants::InstructionIntroduction;
-    }
-    done = false;
-    while(!done) {
-        if(!boost::regex_search(s, result, Parser::literalRegex)) {
-            return false;
-        } else {
-            lit = stringToLiteral(boost::lexical_cast<int>(result[1]));
-            if(lit == Constants::EndOfList) {
-                Clause::preventUnit(c);
-                Clause::closeBuffer(c);
-                done = true;
-            } else {
-                if(!addLiteral(c, lit)) { return true; }
-                done |= c.taut;
-                s = result[2];
-            }
-        }
-    }
-    return true;
+void setInstructionKind(clause& c, bool kind) {
+	c.kind = kind;
 }
 
+bool processLiteral(clause& c, int literal) {
+	lit = stringToLiteral(literal);
+	if(lit == Constants::EndOfList) {
+		Clause::preventUnit(c);
+		Clause::closeBuffer(c);
+	} else if(!c.taut) {
+		if(!addLiteral(c, lit)) { return false; }
+	}
+	return true;
+}
+//
+// bool parseInstruction(clause& c, std::string& s) {
+//     if(boost::regex_search(s, result, Parser::deletionRegex)) {
+//         c.kind = Constants::InstructionDeletion;
+//     } else {
+//         c.kind = Constants::InstructionIntroduction;
+//     }
+//     done = false;
+//     while(!done) {
+//         if(!boost::regex_search(s, result, Parser::literalRegex)) {
+//             return false;
+//         } else {
+//             lit = stringToLiteral(boost::lexical_cast<int>(result[1]));
+//             if(lit == Constants::EndOfList) {
+//                 Clause::preventUnit(c);
+//                 Clause::closeBuffer(c);
+//                 done = true;
+//             } else {
+//                 if(!addLiteral(c, lit)) { return true; }
+//                 done |= c.taut;
+//                 s = result[2];
+//             }
+//         }
+//     }
+//     return true;
+// }
+
 bool processInstruction(clause& c, hashtable& h, database& d, proof& r, bool file) {
-    if(c.kind == Constants::InstructionIntroduction) {
-        lit = *(c.array);
+	if(c.taut) {
 		#ifdef VERBOSE
-        Blablabla::log("Parsed instruction: +++" + Blablabla::clauseToString(c.array));
+		Blablabla::log("Parsed a tautology, skipping");
 		#endif
-        if(!Database::insertBufferClause(d, c, h, file, offset)) { return false; }
-    } else {
-        lit = 0;
-		#ifdef VERBOSE
-        Blablabla::log("Parsed instruction: ---" + Blablabla::clauseToString(c.array));
-		#endif
-        Database::removeBufferClause(d, c, h, offset);
-    }
-    if(offset != Constants::NoOffset) {
-        if(!Proof::storeInstruction(r, offset, lit, c.kind)) { return false; }
-    }
+	} else {
+	    if(c.kind == Constants::InstructionIntroduction) {
+	        lit = *(c.array);
+			#ifdef VERBOSE
+	        Blablabla::log("Parsed instruction: +++" + Blablabla::clauseToString(c.array));
+			#endif
+	        if(!Database::insertBufferClause(d, c, h, file, offset)) { return false; }
+	    } else {
+	        lit = 0;
+			#ifdef VERBOSE
+	        Blablabla::log("Parsed instruction: ---" + Blablabla::clauseToString(c.array));
+			#endif
+	        Database::removeBufferClause(d, c, h, offset);
+	    }
+	    if(offset != Constants::NoOffset) {
+	        if(!Proof::storeInstruction(r, offset, lit, c.kind)) { return false; }
+	    }
+	}
     return true;
 }
 

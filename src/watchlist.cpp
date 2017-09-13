@@ -97,6 +97,8 @@ int firstlit;
 int* firstptr;
 int secondlit;
 int* secondptr;
+int* bestptr;
+int* bestpos;
 
 bool insertWatches(watchlist &wl, model& m, long offset, int* pointer) {
     if(Database::isEmpty(pointer)) {
@@ -120,6 +122,7 @@ bool insertWatches(watchlist &wl, model& m, long offset, int* pointer) {
                     pointer[1] = secondlit;
                 } else {
                     Model::propagateLiteral(m, firstlit, offset, pointer, Constants::HardPropagation);
+                    secondlit = pointer[1];
                 }
             }
             if(!WatchList::addWatch(wl, secondlit, offset));
@@ -199,8 +202,8 @@ bool reviseWatches(watchlist& wl, model& m, long offset, int* pointer, int liter
     if(Model::isFalsified(m, pointer[1])) {
         firstptr = pointer + 2;
         if(Database::nextNonFalsified(firstptr, firstlit, m)) {
-            *firstptr = pointer[1];
-            pointer[1] = firstlit;
+            *firstptr = literal;
+            *pointer = firstlit;
             removeWatch(wl, literal, watch);
             if(!addWatch(wl, firstlit, offset)) { return false; }
             #ifdef VERBOSE
@@ -221,6 +224,59 @@ bool reviseWatches(watchlist& wl, model& m, long offset, int* pointer, int liter
     #ifdef VERBOSE
     Blablabla::decrease();
     #endif
+    return true;
+}
+
+bool resetWatches(watchlist& wl, model& m, long offset, int* pointer, int literal, long*& watch) {
+    if(literal == *pointer) {
+        #ifdef VERBOSE
+        Blablabla::log("Resetting clause " + Blablabla::clauseToString(pointer));
+        Blablabla::increase();
+        #endif
+        firstptr = pointer;
+        bestptr = pointer;
+        bestpos = NULL;
+        if(!Database::findWatch(firstptr, bestptr, bestpos, m)) {
+            #ifdef VERBOSE
+            Blablabla::log("Clause is falsified, invariant is broken");
+            #endif
+            Blablabla::comment("Error during invariant maintenance");
+            return false;
+        }
+        secondptr = firstptr + 1;
+        if(!Database::findWatch(secondptr, bestptr, bestpos, m)) {
+            if(firstptr > bestptr) {
+                secondptr = firstptr;
+                firstptr = bestptr;
+            } else {
+                secondptr = bestptr;
+            }
+        }
+        firstlit = *firstptr;
+        secondlit = *secondptr;
+        if(secondptr != pointer + 1) {
+            findAndRemoveWatch(wl, pointer[1], offset);
+            if(!addWatch(wl, secondlit, offset)) { return false; }
+        }
+        if(firstptr != pointer) {
+            removeWatch(wl, literal, watch);
+            if(firstptr != pointer + 1) {
+                if(!addWatch(wl, firstlit, offset)) { return false; }
+            }
+        } else {
+            ++watch;
+        }
+        *firstptr = literal;
+        pointer[0] = firstlit;
+        *secondptr = pointer[1];
+        pointer[1] = secondlit;
+        #ifdef VERBOSE
+        Blablabla::log("Setting watches: " + Blablabla::clauseToString(pointer));
+        Blablabla::decrease();
+        #endif
+    } else {
+        ++watch;
+    }
     return true;
 }
 
@@ -260,6 +316,23 @@ bool reviseList(watchlist& wl, model& m, database& d, int literal) {
     while((listoffset = *listwatch) != Constants::EndOfList && !Model::isSatisfied(m, literal)) {
         listclause = Database::getPointer(d, listoffset);
         if(!reviseWatches(wl, m, listoffset, listclause, literal, listwatch)) { return false; }
+    }
+    #ifdef VERBOSE
+    Blablabla::decrease();
+    #endif
+    return true;
+}
+
+bool resetList(watchlist& wl, model& m, database& d, int literal) {
+    #ifdef VERBOSE
+    Blablabla::log("Resetting watchlist for literal " + Blablabla::litToString(literal));
+    Blablabla::increase();
+    Blablabla::logWatchList(wl, literal, d);
+    #endif
+    listwatch = wl.array[literal];
+    while((listoffset = *listwatch) != Constants::EndOfList) {
+        listclause = Database::getPointer(d, listoffset);
+        if(!resetWatches(wl, m, listoffset, listclause, literal, listwatch)) { return false; }
     }
     #ifdef VERBOSE
     Blablabla::decrease();
@@ -314,6 +387,22 @@ void findAndRemoveWatch(watchlist& wl, int literal, long offset) {
             ++removewatch;
         }
     }
+}
+
+bool checkWatchlist(watchlist& wl, database& d) {
+    int* cls;
+    for(int i = -Stats::variableBound; i <= Stats::variableBound; i++) {
+        for(int j = 0; j < wl.used[i]; ++j) {
+            cls = Database::getPointer(d, wl.array[i][j]);
+            if((cls[0] != i && cls[1] != i) || Database::isFlag(cls, Constants::ActivityBit, Constants::InactiveFlag)) {
+                // std::cout << "wrong: " << Blablabla::clauseToString(cls) << " on " << i << std::endl;
+                // std::cout << "WATCHLIST INCORRECT" << std::endl;
+                return false;
+            }
+        }
+    }
+    // std::cout << "WATCHLIST OK" << std::endl;
+    return true;
 }
 
 }

@@ -76,6 +76,7 @@ namespace Parameters {
 	extern std::string pathPremise;
 	extern std::string pathProof;
 	extern std::string pathWitness;
+	extern std::string pathRecheck;
 	extern int databaseSize;
 	extern int hashDepth;
 	extern int variableBound;
@@ -86,25 +87,28 @@ namespace Parameters {
 	extern bool verbosity;
 	extern bool printStats;
 	extern bool recheck;
+	extern 	bool tryit;
+	extern bool trytwo;
 
 	void setPremise(std::string path);
 	void setProof(std::string path);
 	void setWitness(std::string path);
+	void setRecheck(std::string path);
 }
 
 namespace Blablabla {
 	extern int level;
 
-	#ifdef VERBOSE
+	// #ifdef VERBOSE
 	void increase();
 	void decrease();
 	void log(std::string str);
 	std::string clauseToString(int* ptr);
-	#endif
+	// #endif
 	void comment(std::string str);
 	std::string litToString(int lit);
 
-	#ifdef VERBOSE
+	// #ifdef VERBOSE
 	void logDatabase(database& d);
 	void logProof(proof& r, database& d);
 	void logModel(model& m);
@@ -115,7 +119,7 @@ namespace Blablabla {
 	void logChain(witness& wt, model& m, database& d);
 	void logRevision(revision& v, database& d);
 	void logRecheckModel(bool* rc);
-	#endif
+	// #endif
 }
 
 namespace Stats {

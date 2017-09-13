@@ -25,9 +25,8 @@ bool allocate(database& d) {
 		#endif
 		Blablabla::comment("Memory management error");
 		return false;
-	} else {
-		return true;
 	}
+	return true;
 }
 
 bool reallocate(database& d) {
@@ -42,9 +41,8 @@ bool reallocate(database& d) {
 		#endif
 		Blablabla::comment("Memory management error");
 		return false;
-	} else {
-		return true;
 	}
+	return true;
 }
 
 void deallocate(database& d) {
@@ -52,6 +50,9 @@ void deallocate(database& d) {
 	Blablabla::log("Deallocating clause database");
 	#endif
 	free(d.array);
+	// if(Parameters::recheck) {
+	// 	// free(d.recheck);
+	// }
 }
 
 //-------------------------------
@@ -122,18 +123,20 @@ unsigned int hash;
 int it;
 int* pointer;
 int pos;
+int* recheckptr;
 
 bool insertBufferClause(database& d, clause& c, hashtable& h, bool file, long& offset) {
 	Clause::sortClause(c);
     hash = HashTable::getHash(c.array);
-	if(file == Constants::FilePremise) {
-		++d.idCount;
-	}
+	// if(file == Constants::FilePremise) {
+	// 	++d.idCount;
+	// }
 	if(c.taut) {
 		#ifdef VERBOSE
 		Blablabla::log("Trying to introduce a tautological clause; ignoring instruction");
 		#endif
 		offset = Constants::NoOffset;
+		std::cout << "TAUT" << std::endl;
 		return true;
 	} else if(HashTable::match(h, d, c, hash, offset, pos)) {
 		#ifdef VERBOSE
@@ -141,6 +144,7 @@ bool insertBufferClause(database& d, clause& c, hashtable& h, bool file, long& o
 		#endif
 		addCopy(d, offset);
 		offset = Constants::NoOffset;
+		std::cout << "COPY" << std::endl;
 		return true;
 	} else {
 		#ifdef VERBOSE
@@ -178,6 +182,7 @@ void removeBufferClause(database& d, clause& c, hashtable& h, long& offset) {
 		#ifdef VERBOSE
 		Blablabla::log("Trying to delete a tautological clause; ignoring instruction");
 		#endif
+		std::cout << "TAUT-D" << std::endl;
 		offset = Constants::NoOffset;
 	} else if(HashTable::match(h, d, c, hash, offset, pos)) {
 		if(removeCopy(d, offset)) {
@@ -191,12 +196,14 @@ void removeBufferClause(database& d, clause& c, hashtable& h, long& offset) {
 			#ifdef VERBOSE
 			Blablabla::log("Removing a multicopy clause");
 			#endif
+			std::cout << "COPY-D" << std::endl;
 			offset = Constants::NoOffset;
 		}
 	} else {
 		#ifdef VERBOSE
 		Blablabla::log("Trying to delete a missing clause; ignoring instruction");
 		#endif
+		std::cout << "MISS-D" << std::endl;
 		offset = Constants::NoOffset;
 	}
 }
@@ -224,6 +231,8 @@ bool deriveContradiction(database& d, long& offset) {
 // Clause tests
 //-------------------------------
 
+int literal;
+
 bool isEmpty(int* ptr) {
 	return *ptr == Constants::EndOfList;
 }
@@ -239,74 +248,186 @@ bool nextNonFalsified(int*& ptr, int& lit, model& m) {
 	return false;
 }
 
-bool containsLiteral(int* ptr, int literal) {
+bool findWatch(int*& watchlit, int*& bestfalse, int*& bestpos, model& m) {
+	while((literal = *watchlit) != Constants::EndOfList) {
+        if(Model::isFalsified(m, literal)) {
+            if(m.position[-literal] > bestpos) {
+                bestpos = m.position[-literal];
+                bestfalse = watchlit;
+            }
+            ++watchlit;
+         } else {
+             return true;
+        }
+    }
+	return false;
+}
+
+bool containsLiteral(int* ptr, int lit) {
 	while(*ptr != Constants::EndOfList) {
-		if(*(ptr++) == literal) {
+		if(*(ptr++) == lit) {
 			return true;
 		}
 	}
 	return false;
 }
-
-//-------------------------------
-// Database tests
-//-------------------------------
-
-int* dit;
-int dlit;
-bool dsat;
-bool dact;
-int dunk;
-
-bool recheckActivity(database& d) {
-	dit = d.array + Constants::ExtraCellsDatabase;
-	while(dit - d.array < d.used) {
-		if(((dit[Constants::FlagsCellDatabase] >> Constants::ActivityBit) % 2) !=
-				((dit[Constants::FlagsCellDatabase] >> Constants::RecheckBit) % 2)) {
-			return false;
-		}
-		while(*dit != Constants::EndOfList) { ++dit; }
-		dit += 3;
-	}
-	return true;
-}
-
-bool checkUpModel(database& d, bool* lits) {
-	#ifdef VERBOSE
-	Blablabla::logDatabase(d);
-	Blablabla::log("Checking model against formula");
-	Blablabla::increase();
-	#endif
-	dit = d.array + Constants::ExtraCellsDatabase;
-	dact = Database::isFlag(dit, Constants::ActivityBit, Constants::ActiveFlag);
-	while(dit - d.array < d.used) {
-		#ifdef VERBOSE
-		Blablabla::log("Clause " + Blablabla::clauseToString(dit));
-		#endif
-		dsat = false;
-		dunk = 0;
-		while((dlit = *(dit++)) != Constants::EndOfList) {
-			if(lits[dlit]) {
-				dsat = true;
-			} else if(!lits[-dlit]) {
-				++dunk;
-			}
-		}
-		if(!dsat && dunk <= 1 && dact) {
-			#ifdef VERBOSE
-			Blablabla::log("Unstable UP-model");
-			Blablabla::decrease();
-			#endif
-			return false;
-		} else {
-			dit += 2;
-			dact = Database::isFlag(dit, Constants::ActivityBit, Constants::ActiveFlag);
-		}
-	}
-	#ifdef VERBOSE
-	Blablabla::decrease();
-	#endif
-	return true;
-}
+//
+// //-------------------------------
+// // Database tests
+// //-------------------------------
+//
+// int* dit;
+// int dlit;
+// bool dsat;
+// bool dact;
+// int dunk;
+//
+// bool recheckActivity(database& d) {
+// 	dit = d.array + Constants::ExtraCellsDatabase;
+// 	while(dit - d.array < d.used) {
+// 		if(((dit[Constants::FlagsCellDatabase] >> Constants::ActivityBit) % 2) !=
+// 				((dit[Constants::FlagsCellDatabase] >> Constants::RecheckBit) % 2)) {
+// 			return false;
+// 		}
+// 		while(*dit != Constants::EndOfList) { ++dit; }
+// 		dit += 3;
+// 	}
+// 	return true;
+// }
+//
+// bool checkUpModel(database& d, bool* lits) {
+// 	#ifdef VERBOSE
+// 	Blablabla::log("Checking model against formula");
+// 	Blablabla::increase();
+// 	#endif
+// 	dit = d.array + Constants::ExtraCellsDatabase;
+// 	dact = Database::isFlag(dit, Constants::ActivityBit, Constants::ActiveFlag);
+// 	while(dit - d.array < d.used) {
+// 		#ifdef VERBOSE
+// 		Blablabla::log("Clause " + Blablabla::clauseToString(dit));
+// 		#endif
+// 		dsat = false;
+// 		dunk = 0;
+// 		while((dlit = *(dit++)) != Constants::EndOfList) {
+// 			if(lits[dlit]) {
+// 				dsat = true;
+// 			} else if(!lits[-dlit]) {
+// 				++dunk;
+// 			}
+// 		}
+// 		if(!dsat && dunk <= 1 && dact) {
+// 			#ifdef VERBOSE
+// 			Blablabla::log("Unstable UP-model");
+// 			Blablabla::decrease();
+// 			#endif
+// 			return false;
+// 		} else {
+// 			dit += 2;
+// 			dact = Database::isFlag(dit, Constants::ActivityBit, Constants::ActiveFlag);
+// 		}
+// 	}
+// 	#ifdef VERBOSE
+// 	Blablabla::decrease();
+// 	#endif
+// 	return true;
+// }
+//
+// bool copyFormula(database& d) {
+// 	if(Parameters::recheck) {
+// 		d.recheck = (int*) malloc ((d.used + 20) * sizeof(int));
+// 		if(d.recheck == NULL) {
+// 			#ifdef VERBOSE
+// 			Blablabla::log("Error at clause database allocation");
+// 			#endif
+// 			Blablabla::comment("Memory management error");
+// 			return false;
+// 		}
+// 	}
+// 	for(it = 0; it < d.used; it++) {
+// 		d.recheck[it] = d.array[it];
+// 	}
+// 	it = d.used + Constants::ExtraCellsDatabase;
+// 	d.recheck[it] = 0;
+// 	return true;
+// }
+//
+// bool checkRepetition(database& d) {
+// 	bool* lits =  (bool*) malloc ((2 * Stats::variableBound + 1) * sizeof(bool));
+// 	lits += Stats::variableBound;
+// 	for(int i = -Stats::variableBound; i <= Stats::variableBound; ++i) {
+// 		lits[i] = false;
+// 	}
+// 	int cnfptr;
+// 	int cnfpost;
+// 	cnfptr = Constants::ExtraCellsDatabase;
+// 	while(cnfptr < d.used) {
+// 		cnfpost = cnfptr;
+// 		while(d.array[cnfptr] != 0) {
+// 			if(lits[d.array[cnfptr]]) {
+// 				// std::cout << "REPETITION" << std;
+// 				// while(d.array[cnfpost] != 0) {
+// 				// 	std::cout << Blablabla::litToString(d.array[cnfpost]);
+// 				// 	++cnfpost;
+// 				// }
+// 				// std::cout << std::endl;
+// 				lits -= Stats::variableBound;
+// 				free(lits);
+// 				return false;
+// 			}
+// 			lits[d.array[cnfptr++]] = true;
+// 		}
+// 		while(d.array[cnfpost] != 0) {
+// 			lits[d.array[cnfpost++]] = false;
+// 		}
+// 		cnfptr += Constants::ExtraCellsDatabase + 1;
+// 	}
+// 	lits -= Stats::variableBound;
+// 	free(lits);
+// 	// std::cout << "NO REPETITION" << std::endl;
+// 	return true;
+// }
+//
+// bool checkFormulaEquality(database& d) {
+// 	bool* lits =  (bool*) malloc ((2 * Stats::variableBound + 1) * sizeof(bool));
+// 	lits += Stats::variableBound;
+// 	for(int i = -Stats::variableBound; i <= Stats::variableBound; ++i) {
+// 		lits[i] = false;
+// 	}
+// 	int cnfptr;
+// 	int postptr;
+// 	int copyptr;
+// 	cnfptr = copyptr = Constants::ExtraCellsDatabase;
+// 	while(cnfptr < d.used) {
+// 		postptr = cnfptr;
+// 		while(d.array[cnfptr] != 0) {
+// 			// std::cout << d.array[cnfptr] << " ";
+// 			lits[d.array[cnfptr++]] = true;
+// 		}
+// 		// std::cout<< std::endl;
+// 		while(d.recheck[copyptr] != 0) {
+// 			// std::cout << d.recheck[copyptr] << " ";
+// 			if(!lits[d.recheck[copyptr]]) {
+// 				// std::cout << std::endl;
+// 				lits -= Stats::variableBound;
+// 				free(lits);
+// 				return false;
+// 			}
+// 			lits[d.recheck[copyptr++]] = false;
+// 		}
+// 		// std::cout << std::endl;
+// 		while(d.array[postptr] != 0) {
+// 			if(lits[d.recheck[postptr++]]) {
+// 				lits -= Stats::variableBound;
+// 				free(lits);
+// 				return false;
+// 			}
+// 		}
+// 		cnfptr += Constants::ExtraCellsDatabase + 1;
+// 		copyptr += Constants::ExtraCellsDatabase + 1;
+// 	}
+// 	lits -= Stats::variableBound;
+// 	free(lits);
+// 	return true;
+// }
 
 }

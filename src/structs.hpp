@@ -22,6 +22,7 @@ struct database {
     int* array;
     int max;
     int used;
+	// int* recheck;
     int idCount;
 };
 
@@ -42,6 +43,7 @@ struct hashtable {
 struct parser {
 	bool file;
 	std::ifstream input;
+	FILE* inputfile;
 };
 
 struct model {
@@ -138,7 +140,9 @@ void setInnerClause(clause& c, int* pointer, int pivot);
 void setOuterClause(clause& c, int* pointer, int pivot);
 void resetToInner(clause& c);
 
-bool parseInstruction(clause& c, std::string& s);
+void setInstructionKind(clause& c, bool kind);
+bool processLiteral(clause& c, int literal);
+// bool parseInstruction(clause& c, std::string& s);
 bool processInstruction(clause& c, hashtable& h, database& d, proof& r, bool file);
 int stringToLiteral(int literal);
 
@@ -175,10 +179,14 @@ bool deriveContradiction(database& d, long& offset);
 
 bool isEmpty(int* ptr);
 bool nextNonFalsified(int*& ptr, int& lit, model& m);
+bool findWatch(int*& watchlit, int*& bestfalse, int*& bestpos, model& m);
 bool containsLiteral(int* ptr, int literal);
 
-bool recheckActivity(database& d);
-bool checkUpModel(database& d, bool* lits);
+// bool recheckActivity(database& d);
+// bool checkUpModel(database& d, bool* lits);
+// bool copyFormula(database& d);
+// bool checkFormulaEquality(database& d);
+// bool checkRepetition(database& d);
 
 }
 
@@ -260,15 +268,19 @@ void deallocate(watchlist& wl);
 bool insertWatches(watchlist &wl, model& m, long offset, int* pointer);
 void removeWatches(watchlist &wl, long offset, int* pointer);
 bool alignWatches(watchlist& wl, model& m, long offset, int* pointer, int literal, long*& watch, bool hard);
+bool resetWatches(watchlist& wl, model& m, long offset, int* pointer, int literal, long*& watch);
 bool reviseWatches(watchlist& wl, model& m, long offset, int* pointer, int literal, long*& watch);
 
 bool alignList(watchlist& wl, model& m, database& d, int literal, bool hard);
+bool resetList(watchlist& wl, model& m, database& d, int literal);
 bool reviseList(watchlist& wl, model& m, database& d, int literal);
 bool collectList(watchlist& wl, latency& lt, database& d, int pivot, int literal);
 
 bool addWatch(watchlist &wl, int literal, long offset);
 void removeWatch(watchlist &wl, int literal, long* watch);
 void findAndRemoveWatch(watchlist& wl, int literal, long offset);
+
+bool checkWatchlist(watchlist& wl, database& d);
 
 }
 
@@ -287,10 +299,10 @@ bool voidRevision(revision& v);
 
 bool reviseCone(revision& v, watchlist& wl, model& m, database& d);
 bool checkCone(revision& v, model& m);
-
-void applyRevision(revision& v, model& m, database& d);
-bool alignCone(revision& v, watchlist& wl, model& m, database& d);
 void resetCone(revision& v);
+
+bool applyRevision(revision& v, model& m, database& d);
+bool resetWatches(watchlist& wl, model& m, database& d);
 
 }
 
@@ -351,12 +363,13 @@ bool allocate(recheck& rc);
 void deallocate(recheck& rc);
 
 void copyModel(model& m, bool* dst);
-
-bool checkPointer(int* clause, bool* model, int except);
-bool checkConsistency(bool* model);
-bool checkPresence(database& d, long ptr);
-bool checkClause(recheck& rc, database& d);
-bool checkResolvent(recheck& rc, database& d);
+// void retrieveInstruction(proof& r, recheck& rc);
+// bool checkPointer(int* clause, bool* model, int except);
+// bool checkConsistency(bool* model);
+// bool checkPresence(database& d, recheck& rc);
+// bool checkClause(recheck& rc, database& d);
+// bool checkResolvent(recheck& rc, database& d);
+void extractRecheck(recheck& rc, database& d);
 
 }
 

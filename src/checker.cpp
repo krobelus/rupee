@@ -76,8 +76,12 @@ bool preprocessProof(checker& c, proof& r, database& d) {
             if(c.kind == Constants::InstructionDeletion) {
                 if(!Checker::preprocessDeletion(c, d)) { return false; }
             } else {
-                if(!Checker::preprocessIntroduction(c, d)) { return false; }
-                if(Model::isContradicted(c.stack)) {
+                if(!Database::isEmpty(c.pointer)) {
+                    if(!Checker::preprocessIntroduction(c, d)) { return false; }
+                } else {
+                    --c.position;
+                }
+                if(Model::isContradicted(c.stack) || Database::isEmpty(c.pointer)) {
                     #ifdef VERBOSE
                     Blablabla::log("Contradiction by unit propagation found, closing proof");
                     #endif
@@ -127,30 +131,35 @@ bool verifyProof(checker& c, proof& r, database& d) {
 
 bool recheckInstruction(checker& c, database& d, proof& r) {
     if(Parameters::recheck) {
-        #ifdef VERBOSE
-        Blablabla::log("Rechecking instruction " + std::to_string(c.kk.instruction));
-        Blablabla::increase();
-        #endif
-        c.stage = Constants::StageRecheck;
-        recheckFormula(c, d, r);
-        if(c.stage == Constants::StageRecheck) {
-            #ifdef VERBOSE
-            Blablabla::log("Instruction: +++ " + Blablabla::clauseToString(Database::getPointer(d, c.kk.clause)));
-            #endif
-            recheckNaturalModel(c, d);
-            if(c.stage == Constants::StageRecheck) {
-                recheckResolventModel(c, d);
-                if(c.stage == Constants::StageRecheck) {
-                    c.stage = Constants::StageReject;
-                }
-            }
-        }
-        #ifdef VERBOSE
-        Blablabla::decrease();
-        #endif
-    } else {
-        c.stage = Constants::StageReject;
+        // Parameters::verbosity = true;
+        // #ifdef VERBOSE
+        // Blablabla::log("Rechecking instruction " + std::to_string(c.kk.instruction + 1));
+        // Blablabla::increase();
+        // #endif
+        // c.stage = Constants::StageRecheck;
+        // Recheck::retrieveInstruction(r, c.kk);
+        // recheckFormula(c, d, r);
+        // if(c.stage == Constants::StageRecheck) {
+        //     #ifdef VERBOSE
+        //     Blablabla::log("Instruction: +++ " + Blablabla::clauseToString(Database::getPointer(d, c.kk.clause)));
+        //     #endif
+        //     recheckNaturalModel(c, d);
+        //     if(c.stage == Constants::StageRecheck) {
+        //         if(c.kk.pivot != Constants::ConflictLiteral) {
+        //             recheckResolventModel(c, d);
+        //         }
+        //         if(c.stage == Constants::StageRecheck) {
+        //             c.stage = Constants::StageReject;
+        //         }
+        //     }
+        // }
+        // #ifdef VERBOSE
+        // Blablabla::decrease();
+        // #endif
+        // Parameters::verbosity = false;
+
     }
+    c.stage = Constants::StageReject;
     return true;
 }
 
@@ -267,10 +276,10 @@ bool verifyDeletion(checker& c, database& d) {
         Blablabla::log("Nothing to do in DRAT-trim mode.");
         #endif
     } else {
-        Revision::applyRevision(c.cone, c.stack, d);
+        if(Revision::applyRevision(c.cone, c.stack, d)) {
+            if(!Revision::resetWatches(c.watch, c.stack, d)) { return false; }
+        }
         if(!WatchList::insertWatches(c.watch, c.stack, c.offset, c.pointer)) { return false; }
-        if(!Revision::alignCone(c.cone, c.watch, c.stack, d)) { return false; }
-        Revision::resetCone(c.cone);
     }
     #ifdef VERBOSE
     Blablabla::decrease();
@@ -278,78 +287,78 @@ bool verifyDeletion(checker& c, database& d) {
     return true;
 }
 
-//-------------------------------
-// Rechecking commands
-//-------------------------------
-
-void recheckFormula(checker& c, database& d, proof& r) {
-    #ifdef VERBOSE
-    Blablabla::log("Checking accumulated formula");
-    Blablabla::increase();
-    #endif
-    c.position = 0;
-    while(c.position < c.kk.instruction) {
-        Proof::nextInstruction(r, c.position, c.offset, c.pivot, c.kind);
-        c.pointer = Database::getPointer(d, c.offset);
-        if(c.kind == Constants::InstructionDeletion) {
-            Database::setFlag(c.pointer, Constants::RecheckBit, Constants::InactiveFlag);
-        } else {
-            Database::setFlag(c.pointer, Constants::RecheckBit, Constants::ActiveFlag);
-        }
-    }
-    if(!Database::recheckActivity(d)) {
-        #ifdef VERBOSE
-        Blablabla::log("Incorrect accumulated formula");
-        #endif
-        c.stage = Constants::StageBug;
-    } else {
-        #ifdef VERBOSE
-        Blablabla::log("Accumulated formula is correct");
-        #endif
-    }
-    #ifdef VERBOSE
-    Blablabla::decrease();
-    #endif
-}
-
-void recheckNaturalModel(checker& c, database& d) {
-    #ifdef VERBOSE
-    Blablabla::log("Checking natural model");
-    Blablabla::increase();
-    Blablabla::log("Natural model:");
-    Blablabla::logRecheckModel(c.kk.natlits);
-    #endif
-    if(!Recheck::checkClause(c.kk, d) || !Database::checkUpModel(d, c.kk.natlits)) {
-        c.stage = Constants::StageBug;
-    } else {
-        #ifdef VERBOSE
-        Blablabla::log("Natural model is correct");
-        #endif
-    }
-    #ifdef VERBOSE
-    Blablabla::decrease();
-    #endif
-}
-
-void recheckResolventModel(checker& c, database& d) {
-    #ifdef VERBOSE
-    Blablabla::log("Checking resolvent model");
-    Blablabla::increase();
-    Blablabla::log("Resolvent model:");
-    Blablabla::logRecheckModel(c.kk.reslits);
-    Blablabla::log("Resolution clause: " + Blablabla::clauseToString(Database::getPointer(d, c.kk.resolvent)));
-    #endif
-    if(!Recheck::checkResolvent(c.kk, d) || !Database::checkUpModel(d, c.kk.reslits)) {
-        c.stage = Constants::StageBug;
-    } else {
-        #ifdef VERBOSE
-        Blablabla::log("Resolvent model is correct");
-        #endif
-    }
-    #ifdef VERBOSE
-    Blablabla::decrease();
-    #endif
-}
+// //-------------------------------
+// // Rechecking commands
+// //-------------------------------
+//
+// void recheckFormula(checker& c, database& d, proof& r) {
+//     #ifdef VERBOSE
+//     Blablabla::log("Checking accumulated formula");
+//     Blablabla::increase();
+//     #endif
+//     c.position = 0;
+//     while(c.position < c.kk.instruction) {
+//         Proof::nextInstruction(r, c.position, c.offset, c.pivot, c.kind);
+//         c.pointer = Database::getPointer(d, c.offset);
+//         if(c.kind == Constants::InstructionDeletion) {
+//             Database::setFlag(c.pointer, Constants::RecheckBit, Constants::InactiveFlag);
+//         } else {
+//             Database::setFlag(c.pointer, Constants::RecheckBit, Constants::ActiveFlag);
+//         }
+//     }
+//     if(!Database::recheckActivity(d) || !Database::checkFormulaEquality(d) || !WatchList::checkWatchlist(c.watch, d)) {
+//         #ifdef VERBOSE
+//         Blablabla::log("Incorrect accumulated formula");
+//         #endif
+//         c.stage = Constants::StageBug;
+//     } else {
+//         #ifdef VERBOSE
+//         Blablabla::log("Accumulated formula is correct");
+//         #endif
+//     }
+//     #ifdef VERBOSE
+//     Blablabla::decrease();
+//     #endif
+// }
+//
+// void recheckNaturalModel(checker& c, database& d) {
+//     #ifdef VERBOSE
+//     Blablabla::log("Checking natural model");
+//     Blablabla::increase();
+//     Blablabla::log("Natural model:");
+//     Blablabla::logRecheckModel(c.kk.natlits);
+//     #endif
+//     if(!Recheck::checkClause(c.kk, d) || !Database::checkUpModel(d, c.kk.natlits)) {
+//         c.stage = Constants::StageBug;
+//     } else {
+//         #ifdef VERBOSE
+//         Blablabla::log("Natural model is correct");
+//         #endif
+//     }
+//     #ifdef VERBOSE
+//     Blablabla::decrease();
+//     #endif
+// }
+//
+// void recheckResolventModel(checker& c, database& d) {
+//     #ifdef VERBOSE
+//     Blablabla::log("Checking resolvent model");
+//     Blablabla::increase();
+//     Blablabla::log("Resolvent model:");
+//     Blablabla::logRecheckModel(c.kk.reslits);
+//     Blablabla::log("Resolution clause: " + Blablabla::clauseToString(Database::getPointer(d, c.kk.resolvent)));
+//     #endif
+//     if(!Recheck::checkResolvent(c.kk, d) || !Database::checkUpModel(d, c.kk.reslits)) {
+//         c.stage = Constants::StageBug;
+//     } else {
+//         #ifdef VERBOSE
+//         Blablabla::log("Resolvent model is correct");
+//         #endif
+//     }
+//     #ifdef VERBOSE
+//     Blablabla::decrease();
+//     #endif
+// }
 
 
 //-------------------------------
@@ -463,6 +472,9 @@ bool checkInference(checker& c, database& d) {
                 #ifdef VERBOSE
                 Blablabla::log("No RAT pivot provided");
                 #endif
+                c.kk.clause = c.offset;
+                c.kk.resolvent = 0;
+                c.kk.pivot = 0;
             }
         }
     }

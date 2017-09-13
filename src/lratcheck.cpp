@@ -412,6 +412,8 @@ int main(int argc, char* argv[]) {
             while((index = *chainptr++) != 0) {
                 deactivateClause(Data, index);
             }
+        } else {
+            std::cout << "instruction " << index << std::endl;
         }
         if(chainptr - Data.dbarray == Data.dbused && refutation) {
             check = 2;

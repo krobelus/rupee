@@ -51,10 +51,15 @@ EXECUTABLE = $(BINPATH)rupee
 
 CHECKER = $(BINPATH)lratcheck
 
-$(EXECUTABLE) : directories $(OBJS) $(call MkO,lratcheck)
+SICK = $(BINPATH)sickcheck
+
+$(EXECUTABLE) : directories $(OBJS) $(call MkO,lratcheck) $(call MkO,sickcheck)
 	@$(LD) $(OBJS) $(LIBS) $(LDFLAGS) $(EXECUTABLE)
-	@$(LD) $(call MkO,lratcheck) $(LIBS) $(LDFLAGS) $(CHECKER)
 	@echo "\nBinary created in $(EXECUTABLE)\n"
+	@$(LD) $(call MkO,lratcheck) $(LIBS) $(LDFLAGS) $(CHECKER)
+	@echo "\nBinary created in $(CHECKER)\n"
+	@$(LD) $(call MkO,sickcheck) $(LIBS) $(LDFLAGS) $(SICK)
+	@echo "\nBinary created in $(SICK)\n"
 
 $(call MkO,checker) : $(call MkC,checker) $(call MkH,structs) $(call MkH,extra)
 	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,checker) -o $(call MkO,checker)
@@ -100,6 +105,9 @@ $(call MkO,rupee) : $(call MkC,rupee) $(call MkH,structs) $(call MkH,extra)
 
 $(call MkO,lratcheck) : $(call MkC,lratcheck)
 	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,lratcheck) -o $(call MkO,lratcheck)
+
+$(call MkO,sickcheck) : $(call MkC,sickcheck)
+	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,sickcheck) -o $(call MkO,sickcheck)
 
 clean :
 	@rm $(OBJS) $(EXECUTABLE)

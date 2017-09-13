@@ -187,8 +187,9 @@ int current;
 int leftpos;
 int rightpos;
 int revlit;
+int intcount;
 
-void applyRevision(revision& v, model& m, database& d) {
+bool applyRevision(revision& v, model& m, database& d) {
     #ifdef VERBOSE
     Blablabla::log("Restoring model");
     Blablabla::increase();
@@ -202,17 +203,20 @@ void applyRevision(revision& v, model& m, database& d) {
         Blablabla::log("No restoration is required");
         Blablabla::decrease();
         #endif
+        return false;
     } else {
         v.used -= 3 * size + 1;
         leftpos = 0;
+        intcount = 0;
         while(leftpos < size) {
             revlit = (int) v.array[v.used + 3 * (leftpos++) + 1];
+            addToCone(v, revlit);
             Database::setFlag(Database::getPointer(d, m.reason[revlit]), Constants::PseudounitBit, Constants::PassiveFlag);
             if(!Model::isSatisfied(m, revlit)) {
-                addToCone(v, revlit);
+                intcount++;
             }
         }
-        rightpos = (m.used - m.array) + (v.current - v.cone) - 1;
+        rightpos = (m.used - m.array) + intcount - 1;
         leftpos = rightpos - size;
         m.head = m.used = m.forced = m.array + rightpos + 1;
         current = v.array[v.used + 3 * size - 3];
@@ -232,23 +236,24 @@ void applyRevision(revision& v, model& m, database& d) {
             }
             m.position[revlit] = m.array + (rightpos--);
         }
+        resetCone(v);
         #ifdef VERBOSE
         Blablabla::logModel(m);
         Blablabla::decrease();
         #endif
+        return true;
     }
 }
 
-bool alignCone(revision& v, watchlist& wl, model& m, database& d) {
+bool resetWatches(watchlist& wl, model& m, database& d) {
     #ifdef VERBOSE
-    Blablabla::log("Aligning cone literals");
+    Blablabla::log("Resetting watchlists");
     Blablabla::increase();
     #endif
-    coneit = v.cone;
-    while(coneit < v.current) {
-        if(!WatchList::alignList(wl, m, d, -*coneit, Constants::HardPropagation)) { return false; }
-        v.lits[*coneit] = false;
-        ++coneit;
+    for(revlit = -Stats::variableBound; revlit <= Stats::variableBound; ++revlit) {
+        if(wl.used[revlit] != 0) {
+            if(!WatchList::resetList(wl, m, d, revlit)) { return false; }
+        }
     }
     #ifdef VERBOSE
     Blablabla::decrease();

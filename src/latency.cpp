@@ -89,9 +89,22 @@ long off;
 int* ptr;
 
 bool checkResolventsRup(latency& lt, checker& c, clause& cl, database& d, int pivot, bool& result) {
+    if(c.position == 19472808) { std::cout << "now checking RAT upon " << pivot << std::endl; }
     for(it = 0; it < lt.used; ++it) {
         off = lt.array[it];
         ptr = Database::getPointer(d, off);
+        if(c.position == 19472808) {
+            std::cout << "clause ";
+            for(int* u = ptr; *u != 0; ++u) {
+                std::cout << *u << " ";
+            }
+            if(Database::isFlag(ptr, Constants::ActivityBit, Constants::ActiveFlag)) {
+                std::cout << " PRESENT";
+            } else {
+                std::cout << " MISSING";
+            }
+            std::cout << std::endl;
+        }
         #ifdef VERBOSE
         Blablabla::log("Checking RUP on resolvent with " + Blablabla::clauseToString(ptr));
         #endif

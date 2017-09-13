@@ -111,6 +111,7 @@ bool propagateModel(model& m, watchlist& wl, database& d, bool hard) {
         #ifdef VERBOSE
         Blablabla::logModel(m);
         #endif
+
     }
     #ifdef VERBOSE
     Blablabla::decrease();

@@ -119,3 +119,6 @@ clean :
 directories :
 	@mkdir -p bin
 	@mkdir -p obj
+
+runexperiment:
+	 cat instance-2016 | while read line ; do ./experiment.py $line ; done

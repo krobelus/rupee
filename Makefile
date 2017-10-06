@@ -113,6 +113,8 @@ $(call MkO,sickcheck) : $(call MkC,sickcheck)
 
 clean :
 	@rm $(OBJS) $(EXECUTABLE)
+	@rm $(OBJS) $(CHECKER)
+	@rm $(OBJS) $(SICK)
 
 directories :
 	@mkdir -p bin

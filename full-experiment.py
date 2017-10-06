@@ -6,8 +6,8 @@ import fnmatch
 import time
 import shutil
 
-def generate(f):
-    wr = open("jobs/" + f + ".sub")
+def generate(f, k):
+    wr = open("jobs/" + str(k) + ".sub", "w")
     wr.write("# Unix submit description file\n")
     wr.write("\n")
     wr.write("executable              = ../experiment.py\n")
@@ -19,13 +19,16 @@ def generate(f):
     wr.write("should_transfer_files   = Yes\n")
     wr.write("when_to_transfer_output = ON_EXIT\n")
     wr.write("queue\n")
+    wr.close()
 
 def clean():
     shutil.rmtree("jobs")
     os.mkdir("jobs")
 
 clean()
-files = open(sys.args[1]).read().splitlines()
+files = open(sys.argv[1]).read().splitlines()
+k = 0
 for f in files:
-    generate(f)
-    # os.popen("grep -v \"^[0-9]* 0\" " + f + ".DT.temp | sort -n > " + f + ".DT.lrat")
+    k = k + 1
+    generate(f, k)
+    os.popen("condor_submit jobs/" + f + ".sub")

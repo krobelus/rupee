@@ -43,7 +43,7 @@ def c_lratcheck(f, suf):
     for line in output:
         if line.find("s VERIFIED") != -1:
             result = "TRUE"
-        if line.find("s NOT VERIFIED") != -1:
+        if line.find("s INCORRECT") != -1:
             result = "FALSE"
         if line[:1] == "t":
             ttime = line[2:]
@@ -57,7 +57,7 @@ def c_sickcheck(f, suf):
     for line in output:
         if line.find("s VERIFIED") != -1:
             result = "TRUE"
-        if line.find("s NOT VERIFIED") != -1:
+        if line.find("s INCORRECT") != -1:
             result = "FALSE"
         if line[:1] == "t":
             ttime = line[2:]
@@ -93,7 +93,7 @@ def parse_rupee(out):
     for line in out:
         if line.find("s VERIFIED") != -1:
             result = "TRUE"
-        if line.find("s NOT VERIFIED") != -1:
+        if line.find("s REJECTED") != -1:
             result = "FALSE"
         nopremises = rupee_parameter(line, "nf", nopremises)
         noinferences = rupee_parameter(line, "np", noinferences)

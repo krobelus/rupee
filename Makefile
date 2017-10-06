@@ -62,8 +62,6 @@ $(EXECUTABLE) : directories $(OBJS) $(call MkO,lratcheck) $(call MkO,sickcheck)
 	@echo "\nBinary created in $(CHECKER)\n"
 	@$(LD) $(call MkO,sickcheck) $(LIBS) $(LDFLAGS) $(SICK)
 	@echo "\nBinary created in $(SICK)\n"
-	# @ocamlbuild $(COQLRAT) -use-ocamlfind -package io-system
-	# @echo "\nBinary created in $(SICK)\n"
 
 $(call MkO,checker) : $(call MkC,checker) $(call MkH,structs) $(call MkH,extra)
 	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,checker) -o $(call MkO,checker)

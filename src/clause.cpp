@@ -229,7 +229,9 @@ bool processInstruction(clause& c, hashtable& h, database& d, proof& r, bool fil
 	    }
 	    if(offset != Constants::NoOffset) {
 	        if(!Proof::storeInstruction(r, offset, lit, c.kind)) { return false; }
-	    }
+	    } else {
+			if(!Proof::storeDummy(r, c.kind)) { return false; }
+		}
 	}
     return true;
 }

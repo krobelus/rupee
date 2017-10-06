@@ -227,12 +227,15 @@ bool reviseWatches(watchlist& wl, model& m, long offset, int* pointer, int liter
     return true;
 }
 
+int otherlit;
+
 bool resetWatches(watchlist& wl, model& m, long offset, int* pointer, int literal, long*& watch) {
     if(literal == *pointer) {
         #ifdef VERBOSE
         Blablabla::log("Resetting clause " + Blablabla::clauseToString(pointer));
         Blablabla::increase();
         #endif
+        otherlit = pointer[1];
         firstptr = pointer;
         bestptr = pointer;
         bestpos = NULL;
@@ -243,30 +246,34 @@ bool resetWatches(watchlist& wl, model& m, long offset, int* pointer, int litera
             Blablabla::comment("Error during invariant maintenance");
             return false;
         }
+        firstlit = *firstptr;
         secondptr = firstptr + 1;
         if(!Database::findWatch(secondptr, bestptr, bestpos, m)) {
             if(firstptr > bestptr) {
+                *firstptr = *bestptr;
+                *bestptr = firstlit;
                 secondptr = firstptr;
                 firstptr = bestptr;
             } else {
                 secondptr = bestptr;
             }
         }
-        firstlit = *firstptr;
         secondlit = *secondptr;
-        if(secondptr != pointer + 1) {
-            findAndRemoveWatch(wl, pointer[1], offset);
+        if(firstlit == literal || secondlit == literal) {
+            ++watch;
+        } else {
+            removeWatch(wl, literal, watch);
+        }
+        if(firstlit != otherlit && secondlit != otherlit) {
+            findAndRemoveWatch(wl, otherlit, offset);
+        }
+        if(firstlit != literal && firstlit != otherlit) {
+            if(!addWatch(wl, firstlit, offset)) { return false; }
+        }
+        if(secondlit != literal && secondlit != otherlit) {
             if(!addWatch(wl, secondlit, offset)) { return false; }
         }
-        if(firstptr != pointer) {
-            removeWatch(wl, literal, watch);
-            if(firstptr != pointer + 1) {
-                if(!addWatch(wl, firstlit, offset)) { return false; }
-            }
-        } else {
-            ++watch;
-        }
-        *firstptr = literal;
+        *firstptr = pointer[0];
         pointer[0] = firstlit;
         *secondptr = pointer[1];
         pointer[1] = secondlit;

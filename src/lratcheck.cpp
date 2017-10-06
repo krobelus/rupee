@@ -4,6 +4,7 @@
 #include <string>
 #include <boost/regex.hpp>
 #include <boost/lexical_cast.hpp>
+#include <sys/time.h>
 
 struct lrat {
     int* dbarray;
@@ -238,12 +239,16 @@ int main(int argc, char* argv[]) {
     const boost::regex deletion("d(.*)");
     bool parsedok;
     int mode;
+    struct timeval startTime;
+    struct timeval endTime;
     const int modeCnfNewClause = 1;
     const int modeCnfInClause = 2;
     const int modeLratIndex = 3;
     const int modeLratInClause = 4;
     const int modeLratChain = 5;
     const int modeLratInDeletion = 6;
+
+    gettimeofday (&startTime, NULL);
 
     if(!allocate(Data)) {
         std::cout << "s BUG" << std::endl;
@@ -421,16 +426,18 @@ int main(int argc, char* argv[]) {
         clauseptr = chainptr;
     }
     if(check == 1) {
-        std::cout << "s REJECTED" << std::endl;
+        std::cout << "s INCORRECT" << std::endl;
     } else if(check == 2) {
         std::cout << "s VERIFIED" << std::endl;
     } else {
-        std::cout << "s BUG" << std::endl;
+        std::cout << "s FAIL" << std::endl;
     }
     Data.lits -= Data.nolits;
     free(Data.dbarray);
     free(Data.ptrarray);
     free(Data.stack);
     free(Data.lits);
+    gettimeofday (&endTime, NULL);
+    std::cout << "t " << (((endTime.tv_sec  - startTime.tv_sec) * 1000L) + ((endTime.tv_usec - startTime.tv_usec) / 1000L)) << std::endl;
     return 0;
 }

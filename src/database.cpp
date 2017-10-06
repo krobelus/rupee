@@ -128,15 +128,11 @@ int* recheckptr;
 bool insertBufferClause(database& d, clause& c, hashtable& h, bool file, long& offset) {
 	Clause::sortClause(c);
     hash = HashTable::getHash(c.array);
-	// if(file == Constants::FilePremise) {
-	// 	++d.idCount;
-	// }
 	if(c.taut) {
 		#ifdef VERBOSE
 		Blablabla::log("Trying to introduce a tautological clause; ignoring instruction");
 		#endif
 		offset = Constants::NoOffset;
-		std::cout << "TAUT" << std::endl;
 		return true;
 	} else if(HashTable::match(h, d, c, hash, offset, pos)) {
 		#ifdef VERBOSE
@@ -144,7 +140,6 @@ bool insertBufferClause(database& d, clause& c, hashtable& h, bool file, long& o
 		#endif
 		addCopy(d, offset);
 		offset = Constants::NoOffset;
-		std::cout << "COPY" << std::endl;
 		return true;
 	} else {
 		#ifdef VERBOSE
@@ -166,8 +161,6 @@ bool insertBufferClause(database& d, clause& c, hashtable& h, bool file, long& o
 		setFlag(pointer, Constants::PersistencyBit, Constants::PersistentFlag);
 		setFlag(pointer, Constants::VerificationBit, Constants::SkipFlag);
 		setFlag(pointer, Constants::PseudounitBit, Constants::PassiveFlag);
-		setFlag(pointer, Constants::RecheckBit, Constants::InactiveFlag);
-		setFlag(pointer, Constants::TrimmingBit, Constants::SkipFlag);
 		setCopies(pointer, 1);
 		offset = getOffset(d, pointer);
 		if(!HashTable::insertOffset(h, hash, offset)) { return false; }
@@ -182,7 +175,6 @@ void removeBufferClause(database& d, clause& c, hashtable& h, long& offset) {
 		#ifdef VERBOSE
 		Blablabla::log("Trying to delete a tautological clause; ignoring instruction");
 		#endif
-		std::cout << "TAUT-D" << std::endl;
 		offset = Constants::NoOffset;
 	} else if(HashTable::match(h, d, c, hash, offset, pos)) {
 		if(removeCopy(d, offset)) {
@@ -196,14 +188,12 @@ void removeBufferClause(database& d, clause& c, hashtable& h, long& offset) {
 			#ifdef VERBOSE
 			Blablabla::log("Removing a multicopy clause");
 			#endif
-			std::cout << "COPY-D" << std::endl;
 			offset = Constants::NoOffset;
 		}
 	} else {
 		#ifdef VERBOSE
 		Blablabla::log("Trying to delete a missing clause; ignoring instruction");
 		#endif
-		std::cout << "MISS-D" << std::endl;
 		offset = Constants::NoOffset;
 	}
 }
@@ -220,7 +210,6 @@ bool deriveContradiction(database& d, long& offset) {
 	setFlag(pointer, Constants::PersistencyBit, Constants::PersistentFlag);
 	setFlag(pointer, Constants::VerificationBit, Constants::ScheduledFlag);
 	setFlag(pointer, Constants::PseudounitBit, Constants::PassiveFlag);
-	setFlag(pointer, Constants::RecheckBit, Constants::InactiveFlag);
 	setFlag(pointer, Constants::TrimmingBit, Constants::ScheduledFlag);
 	setCopies(pointer, 1);
 	offset = getOffset(d, pointer);

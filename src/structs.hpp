@@ -198,6 +198,7 @@ bool reallocate(proof& r);
 void deallocate(proof& r);
 
 bool storeInstruction(proof& r, long offset, int pivot, bool kind);
+bool storeDummy(proof& r, bool kind);
 void retrieveInstruction(proof& r, int position, long& offset, int& pivot, bool& kind);
 bool nextInstruction(proof& r, int& position, long& offset, int& pivot, bool& kind);
 bool prevInstruction(proof& r, int& position, long& offset, int& pivot, bool& kind);
@@ -253,6 +254,7 @@ bool isSatisfied(model& m, int literal);
 bool isFalsified(model& m, int literal);
 bool isUnassigned(model& m, int literal);
 bool isContradicted(model& m);
+bool isUnit(model& m, int* pointer);
 
 }
 

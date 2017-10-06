@@ -1,5 +1,6 @@
 #include <iostream>
 #include <boost/lexical_cast.hpp>
+#include <sys/time.h>
 
 #include "structs.hpp"
 #include "extra.hpp"
@@ -17,18 +18,16 @@ bool readArguments(int argc, char* argv[]) {
 				Blablabla::comment("Usage:");
 				Blablabla::comment("\trupee [options] [DIMACS CNF file] [DRAT proof file]");
 				Blablabla::comment("Options:");
-				Blablabla::comment("\t-help\t\t\tPrints this help message.");
-				Blablabla::comment("\t-skip-deletion\t\tLeaves deletion instructions unchecked (DRAT-trim mode).");
-				Blablabla::comment("\t-upr-deletion\t\tAllows only UP-redundant clause deletion.");
-				Blablabla::comment("\t-full-deletion\t\tFully checks unrestricted deletion.");
-				Blablabla::comment("\t-lrat [FILE]\t\tProduces an LRAT witness stored in [FILE].");
-				Blablabla::comment("\t-grit\t\t\tUses the GRIT convention for premises in the witness.");
-				Blablabla::comment("\t-verbose\t\tPrints a lot of information about the execution.");
+				Blablabla::comment("\t-help\t\t\tPrints this help message");
+				Blablabla::comment("\t-skip-deletion\t\tLeaves deletion instructions unchecked (DRAT-trim mode)");
+				Blablabla::comment("\t-full-deletion\t\tFully checks unrestricted deletion");
+				Blablabla::comment("\t-lrat [FILE]\t\tProduces an LRAT witness stored in [FILE]");
+				Blablabla::comment("\t-stats\t\tPrints out stats about the run");
+				Blablabla::comment("\t-recheck [FILE]\t\tProduces a recheck incorrect witness stored in [FILE]");
+				Blablabla::comment("\t-r-mark\t\tAdds the \"r\" marker for RATs in LRAT");
 				return false;
 			} else if(stringArgument == "skip-deletion") {
 				Parameters::deletionMode = Constants::DeletionModeSkip;
-			} else if(stringArgument == "upr-deletion") {
-				Parameters::deletionMode = Constants::DeletionModeUPRedundant;
 			} else if(stringArgument == "full-deletion") {
 				Parameters::deletionMode = Constants::DeletionModeUnrestricted;
 			} else if(stringArgument == "lrat") {
@@ -38,12 +37,10 @@ bool readArguments(int argc, char* argv[]) {
 				stringArgument = argv[++i];
 				Parameters::setRecheck(stringArgument);
 				Parameters::recheck = true;
-			} else if(stringArgument == "verbose") {
-				Parameters::verbosity = true;
-			} else if(stringArgument == "grit") {
-				Parameters::gritMode = true;
-			// } else if(stringArgument == "stats") {
-			// 	Parameters::printStats = true;
+			} else if(stringArgument == "stats") {
+				Parameters::printStats = true;
+			} else if(stringArgument == "r-mark") {
+				Parameters::lratRmark = true;
 			} else {
 				Blablabla::comment("Error: invalid input.");
 				Blablabla::comment("\tType rupee -help for more information.");
@@ -95,9 +92,6 @@ bool parse() {
 	Blablabla::comment("c Parsing DRAT proof " + Parameters::pathProof);
 		if(!Parser::openFile(Objects::Parser, Constants::FileProof)) { return false; }
 		if(!Parser::readClauses(Objects::Parser, Objects::Clause, Objects::HashTable, Objects::Database, Objects::Proof)) { return false; }
-		// if(Parameters::recheck) {
-		// 	if(!Database::copyFormula(Objects::Database)) { return false; }
-		// }
 	#ifdef VERBOSE
 	Blablabla::decrease();
 	Blablabla::log("Deallocating parsing data structures");
@@ -119,16 +113,18 @@ bool check() {
 	Blablabla::logProof(Objects::Proof, Objects::Database);
 	#endif
 	if(!Checker::preprocessProof(Objects::Checker, Objects::Proof, Objects::Database)) { return false; }
-	if(Checker::isFinished(Objects::Checker)) { return true; }
+	gettimeofday (&Stats::preprocessingTime, NULL);
 	if(!Checker::verifyProof(Objects::Checker, Objects::Proof, Objects::Database)) { return false; }
+	gettimeofday (&Stats::checkingTime, NULL);
+	if(Checker::isFinished(Objects::Checker)) { return true; }
 	if(!Checker::isVerified(Objects::Checker)) {
 		Objects::Checker.stage = Constants::StageReject;
-		// Checker::recheckInstruction(Objects::Checker, Objects::Database, Objects::Proof);
 	}
 	return true;
 }
 
 void output() {
+	gettimeofday(&Stats::endTime, NULL);
 	if(Checker::isVerified(Objects::Checker)) {
 		Blablabla::comment("s VERIFIED");
 		Witness::extractWitness(Objects::Checker.tvr, Objects::Database);
@@ -136,6 +132,17 @@ void output() {
 		Blablabla::comment("s REJECTED");
 		Recheck::extractRecheck(Objects::Checker.kk, Objects::Database);
 	}
+	std::cout << "nf " << Stats::premiseLength << std::endl;
+	std::cout << "np " << Stats::proofLength << std::endl;
+	std::cout << "nr " << Stats::ratIntroductions << std::endl;
+	std::cout << "dc " << Stats::clauseDeletions << std::endl;
+	std::cout << "ds " << Stats::skippedDeletions << std::endl;
+	std::cout << "dr " << Stats::reasonDeletions << std::endl;
+	std::cout << "tt " << Stats::msDifference(Stats::startTime, Stats::endTime) << std::endl;
+	std::cout << "tp " << Stats::msDifference(Stats::startTime, Stats::parsingTime) << std::endl;
+	std::cout << "tf " << Stats::msDifference(Stats::parsingTime, Stats::preprocessingTime) << std::endl;
+	std::cout << "tb " << Stats::msDifference(Stats::preprocessingTime, Stats::checkingTime) << std::endl;
+	std::cout << "td " << (long) ((Stats::deleteTime.tv_sec * 1000L) + (Stats::deleteTime.tv_usec / 1000L)) << std::endl;
 }
 
 void deallocate() {
@@ -154,9 +161,12 @@ void deallocate() {
 }
 
 int main(int argc, char* argv[]) {
+	gettimeofday (&Stats::startTime, NULL);
+	Stats::resetDeleteTime();
 	if(!Frontend::readArguments(argc, argv)) { return 1; }
 	if(!Frontend::initialize()) { return 1; }
 	if(!Frontend::parse()) { return 1; }
+	gettimeofday (&Stats::parsingTime, NULL);
 	if(!Frontend::check()) { return 1; }
 	Frontend::output();
 	Frontend::deallocate();

@@ -2,6 +2,7 @@
 #define __EXTRA_H_INCLUDED__
 
 #include <string>
+#include <sys/time.h>
 
 #include "structs.hpp"
 
@@ -68,7 +69,6 @@ namespace Constants {
 	const int StageBug                 = 120;
 
 	const int DeletionModeSkip         = 1;
-	const int DeletionModeUPRedundant  = 2;
 	const int DeletionModeUnrestricted = 3;
 }
 
@@ -83,12 +83,10 @@ namespace Parameters {
 	extern int proofSize;
 	extern int deletionMode;
 	extern bool generateLrat;
-	extern bool gritMode;
 	extern bool verbosity;
 	extern bool printStats;
 	extern bool recheck;
-	extern 	bool tryit;
-	extern bool trytwo;
+	extern bool lratRmark;
 
 	void setPremise(std::string path);
 	void setProof(std::string path);
@@ -123,21 +121,25 @@ namespace Blablabla {
 }
 
 namespace Stats {
-	extern int databaseLeaps;
-	extern int hashLeaps;
-	extern int variableLeaps;
-	extern int firstContradiction;
 	extern int proofLength;
 	extern int premiseLength;
-	extern float parsingTime;
-	extern float initalizationTime;
-	extern float checkingTime;
-	extern float outputTime;
-	extern int longestChain;
-	extern int shortestChain;
-	extern float averageChain;
-	extern int assignedLiterals;
+	extern struct timeval startTime;
+	extern struct timeval parsingTime;
+	extern struct timeval preprocessingTime;
+	extern struct timeval checkingTime;
+	extern struct timeval endTime;
+	extern struct timeval deleteTime;
 	extern int variableBound;
+	extern int clauseDeletions;
+	extern int skippedDeletions;
+	extern int reasonDeletions;
+	extern int ratIntroductions;
+
+	long msDifference(struct timeval& t0, struct timeval& t1);
+	void resetDeleteTime();
+	void startDeleteTime();
+	void stopDeleteTime();
+
 }
 
 #endif

@@ -73,6 +73,10 @@ bool storeInstruction(proof& r, long offset, int pivot, bool kind) {
 	return true;
 }
 
+bool storeDummy(proof& r, bool kind) {
+	return storeInstruction(r, Constants::NoOffset, Constants::ConflictLiteral, kind);
+}
+
 void retrieveInstruction(proof& r, int position, long& offset, int& pivot, bool& kind) {
 	offset = r.array[position];
 	pivot = r.pivot[position];

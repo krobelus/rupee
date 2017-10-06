@@ -99,6 +99,7 @@ void unassignLiteral(model& m, int literal, database& d) {
 
 int* itptr;
 int lit;
+bool found;
 
 bool propagateModel(model& m, watchlist& wl, database& d, bool hard) {
     #ifdef VERBOSE
@@ -159,6 +160,20 @@ bool isUnassigned(model& m, int literal) {
 
 bool isContradicted(model& m) {
     return m.lits[Constants::ConflictLiteral];
+}
+
+bool isUnit(model& m, int* pointer) {
+    found = false;
+    while((lit = *pointer++) != 0) {
+        if(!m.lits[-lit]) {
+            if(found) {
+                return false;
+            } else {
+                found = true;
+            }
+        }
+    }
+    return found;
 }
 
 }

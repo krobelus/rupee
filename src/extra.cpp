@@ -1,9 +1,32 @@
 #include <stdlib.h>
 #include <iostream>
 #include <string>
+#include <sys/time.h>
 
 #include "structs.hpp"
 #include "extra.hpp"
+
+# define timerclear(tvp)                                  \
+  ((tvp)->tv_sec = (tvp)->tv_usec = 0)
+# define timeradd(a, b, result)						      \
+  do {									                  \
+    (result)->tv_sec = (a)->tv_sec + (b)->tv_sec;		  \
+    (result)->tv_usec = (a)->tv_usec + (b)->tv_usec;	  \
+    if ((result)->tv_usec >= 1000000)					  \
+      {									                  \
+	++(result)->tv_sec;						              \
+	(result)->tv_usec -= 1000000;					      \
+      }									                  \
+  } while (0)
+# define timersub(a, b, result)						      \
+  do {									                  \
+    (result)->tv_sec = (a)->tv_sec - (b)->tv_sec;		  \
+    (result)->tv_usec = (a)->tv_usec - (b)->tv_usec;	  \
+    if ((result)->tv_usec < 0) {					      \
+      --(result)->tv_sec;						          \
+      (result)->tv_usec += 1000000;					      \
+    }									                  \
+} while (0)
 
 namespace Objects {
 	clause Clause;
@@ -25,12 +48,10 @@ int noVariables = 1000;
 int proofSize = 5000;
 int deletionMode = Constants::DeletionModeUnrestricted;
 bool generateLrat = true;
-bool gritMode = false;
+bool lratRmark = false;
 bool verbosity = false;
-bool printStats = true;
-bool recheck = true;
-bool tryit = false;
-bool trytwo = false;
+bool printStats = false;
+bool recheck = false;
 
 void setPremise(std::string path) {
     pathPremise = path;
@@ -286,19 +307,42 @@ void logRecheckModel(bool* rc) {
 }
 
 namespace Stats {
-    int databaseLeaps = 0;
-    int hashLeaps = 0;
-    int variableLeaps = 0;
-    int proofLength = 0;
-    int premiseLength = 0;
-    int witnessLength = 0;
-    float parsingTime = 0.0;
-    float initalizationTime = 0.0;
-    float checkingTime = 0.0;
-    float outputTime = 0.0;
-    int longestChain = 0;
-    int shortestChain = 65535;
-    float averageChain = 0.0;
-    int assignedLiterals = 0;
     int variableBound = Parameters::noVariables;
+	int proofLength = 0;
+	int premiseLength = 0;
+	int deletionLength = 0;
+	struct timeval startTime;
+	struct timeval parsingTime;
+	struct timeval preprocessingTime;
+	struct timeval checkingTime;
+	struct timeval endTime;
+	struct timeval deleteTime;
+	struct timeval scratchTimeOne;
+	struct timeval scratchTimeTwo;
+	struct timeval scratchTimeThree;
+	int clauseDeletions = 0;
+	int skippedDeletions = 0;
+	int reasonDeletions = 0;
+	int ratIntroductions = 0;
+
+	long msDifference(struct timeval& t0, struct timeval& t1) {
+		timersub(&t1, &t0, &scratchTimeOne);
+		return (long) ((scratchTimeOne.tv_sec * 1000L) + (scratchTimeOne.tv_usec / 1000L));
+	}
+
+	void resetDeleteTime() {
+		timerclear(&deleteTime);
+	}
+
+	void startDeleteTime() {
+		gettimeofday(&scratchTimeOne, NULL);
+	}
+
+	void stopDeleteTime() {
+		gettimeofday(&scratchTimeTwo, NULL);
+		timersub(&scratchTimeTwo, &scratchTimeOne, &scratchTimeThree);
+		timeradd(&scratchTimeThree, &deleteTime, &scratchTimeOne);
+		deleteTime = scratchTimeOne;
+	}
+
 }

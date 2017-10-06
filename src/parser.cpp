@@ -129,6 +129,11 @@ bool readClauses(parser& p, clause& c, hashtable& h, database& d, proof& r) {
         if(parsed == 1) {
             if(!Clause::processLiteral(c, number)) { return false; }
             if(number == Constants::EndOfList) {
+                if(p.file == Constants::FilePremise) {
+                    ++Stats::premiseLength;
+                } else {
+                    ++Stats::proofLength;
+                }
                 if(!Clause::processInstruction(c, h, d, r, p.file)) { return false; }
                 inclause = false;
                 Clause::resetBuffer(c);

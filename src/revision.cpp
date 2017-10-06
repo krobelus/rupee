@@ -205,6 +205,7 @@ bool applyRevision(revision& v, model& m, database& d) {
         #endif
         return false;
     } else {
+        Stats::startDeleteTime();
         v.used -= 3 * size + 1;
         leftpos = 0;
         intcount = 0;
@@ -255,6 +256,7 @@ bool resetWatches(watchlist& wl, model& m, database& d) {
             if(!WatchList::resetList(wl, m, d, revlit)) { return false; }
         }
     }
+    Stats::stopDeleteTime();
     #ifdef VERBOSE
     Blablabla::decrease();
     #endif

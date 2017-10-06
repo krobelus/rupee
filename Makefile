@@ -119,4 +119,4 @@ directories :
 	@mkdir -p obj
 
 test:
-	 cat test-list.txt | while read line ; do ./experiment.py $line ; done
+	 @cat test-list.txt | while read line ; do ./experiment.py $$line ; done

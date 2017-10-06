@@ -23,7 +23,7 @@ def drattrim_sort(f, res):
     if res == "TRUE":
         os.popen("grep -v \"^[0-9]* 0\" " + f + ".DT.temp | sort -n > " + f + ".DT.lrat")
         os.popen("tail " + f + ".DT.temp | grep \"^[0-9]* 0\" >> " + f + ".DT.lrat")
-        os.remove(f + ".DT.temp")
+    os.remove(f + ".DT.temp")
 
 def verify(f, suf, res):
     if res == "FAIL":
@@ -41,7 +41,6 @@ def c_lratcheck(f, suf):
     output = os.popen(c_lratcheck_command(f, suf)).read().splitlines()
     result = "FAIL"
     for line in output:
-        print line
         if line.find("s VERIFIED") != -1:
             result = "TRUE"
         if line.find("s NOT VERIFIED") != -1:

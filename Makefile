@@ -140,6 +140,6 @@ test:
 
 cleandata:
 	cd data
-	rm -rfv *.out
-	rm -rfv *.lrat
+	rm -rfv *.out *.lrat *.sick
 	cd ..
+	rm -fv *.out *.lrat *.sick

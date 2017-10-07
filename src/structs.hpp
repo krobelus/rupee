@@ -348,6 +348,7 @@ void extractPremise(database& d, int*& clsp, bool& delpr, std::ofstream& op);
 void extractClause(int*& clsp, int pv, std::ofstream& op);
 void extractChain(database& d, long*& wptr, std::ofstream& op);
 void extractDeletions(database& d, long*& wptr, std::ofstream& op);
+void trivialWitness();
 
 void extractDependencies(witness& wt, model& m, database& d, int literal);
 void findShift(witness& wt, model& m, database& d);
@@ -372,6 +373,7 @@ void copyModel(model& m, bool* dst);
 // bool checkClause(recheck& rc, database& d);
 // bool checkResolvent(recheck& rc, database& d);
 void extractRecheck(recheck& rc, database& d);
+void trivialRecheck();
 
 }
 

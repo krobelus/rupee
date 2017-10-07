@@ -87,6 +87,7 @@ namespace Parameters {
 	extern bool printStats;
 	extern bool recheck;
 	extern bool lratRmark;
+	extern int timeout;
 
 	void setPremise(std::string path);
 	void setProof(std::string path);
@@ -97,16 +98,13 @@ namespace Parameters {
 namespace Blablabla {
 	extern int level;
 
-	// #ifdef VERBOSE
 	void increase();
 	void decrease();
 	void log(std::string str);
 	std::string clauseToString(int* ptr);
-	// #endif
 	void comment(std::string str);
 	std::string litToString(int lit);
 
-	// #ifdef VERBOSE
 	void logDatabase(database& d);
 	void logProof(proof& r, database& d);
 	void logModel(model& m);
@@ -117,7 +115,6 @@ namespace Blablabla {
 	void logChain(witness& wt, model& m, database& d);
 	void logRevision(revision& v, database& d);
 	void logRecheckModel(bool* rc);
-	// #endif
 }
 
 namespace Stats {
@@ -139,7 +136,7 @@ namespace Stats {
 	void resetDeleteTime();
 	void startDeleteTime();
 	void stopDeleteTime();
-
+	bool isTimeout();
 }
 
 #endif

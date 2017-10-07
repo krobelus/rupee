@@ -66,6 +66,10 @@ bool preprocessProof(checker& c, proof& r, database& d) {
     c.stage = Constants::StagePreprocessing;
     c.position = 0;
     while(c.stage == Constants::StagePreprocessing) {
+        if(Stats::isTimeout()) {
+            Blablabla::comment("Timeout at " + std::to_string(Parameters::timeout) + "s");
+            return false;
+        }
         if(!Proof::nextInstruction(r, c.position, c.offset, c.pivot, c.kind)) {
             #ifdef VERBOSE
             Blablabla::log("End of proof reached without unit propagation contradiction");
@@ -109,6 +113,10 @@ bool verifyProof(checker& c, proof& r, database& d) {
     #endif
     c.position = r.used;
     while(c.stage == Constants::StageVerifying) {
+        if(Stats::isTimeout()) {
+            Blablabla::comment("Timeout at " + std::to_string(Parameters::timeout) + "s");
+            return false;
+        }
         if(!Proof::prevInstruction(r, c.position, c.offset, c.pivot, c.kind)) {
             #ifdef VERBOSE
             Blablabla::log("Start of proof reached without incorrect inferences detected");
@@ -222,26 +230,6 @@ bool verifyDeletion(checker& c, database& d) {
         if(!WatchList::insertWatches(c.watch, c.stack, c.offset, c.pointer)) { return false; }      //This may lead to problems. Probably everything's fine if you do this first.
     }
     return true;
-    // #ifdef VERBOSE
-    // Blablabla::log("Verifying instruction:  ---" + Blablabla::clauseToString(c.pointer));
-    // Blablabla::increase();
-    // #endif
-    // Database::setClauseActive(c.pointer);
-    // if(Parameters::deletionMode == Constants::DeletionModeSkip) {
-    //     if(!WatchList::insertWatches(c.watch, c.stack, c.offset, c.pointer)) { return false; }
-    //     #ifdef VERBOSE
-    //     Blablabla::log("Nothing to do in DRAT-trim mode.");
-    //     #endif
-    // } else {
-    //     if(Revision::applyRevision(c.cone, c.stack, d)) {
-    //         if(!Revision::resetWatches(c.watch, c.stack, d)) { return false; }
-    //     }
-    //     if(!WatchList::insertWatches(c.watch, c.stack, c.offset, c.pointer)) { return false; }      //This may lead to problems. Probably everything's fine if you do this first.
-    // }
-    // #ifdef VERBOSE
-    // Blablabla::decrease();
-    // #endif
-    // return true;
 }
 
 

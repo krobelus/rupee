@@ -121,6 +121,12 @@ void extractRecheck(recheck& rc, database& d) {
     output.close();
 }
 
+void trivialRecheck() {
+    std::ofstream output;
+    output.open(Parameters::pathRecheck, std::ofstream::out | std::ofstream::trunc);
+    output.close();
+}
+
 //
 // //----------------------
 // // Clausal checks

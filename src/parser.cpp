@@ -34,24 +34,6 @@ bool openFile(parser& p, bool f) {
     return true;
 }
 
-// bool openFile(parser& p, bool f) {
-//     p.file = f;
-// 	if(f == Constants::FilePremise) {
-// 		p.input.open(Parameters::pathPremise);
-// 	} else {
-// 		p.input.open(Parameters::pathProof);
-// 	}
-// 	if(p.input.fail()) {
-//         #ifdef VERBOSE
-// 		Blablabla::log("File was not found.");
-//         #endif
-// 		Blablabla::comment("Input error.");
-// 		return false;
-// 	} else {
-// 		return true;
-// 	}
-// }
-
 bool readHeader(parser& p) {
     while(true) {
         parsed = fscanf(p.inputfile, "p cnf %i %i \n", &number, &othernumber);
@@ -71,23 +53,6 @@ bool readHeader(parser& p) {
         parsed = fscanf(p.inputfile, "%*s\n");
     }
 }
-//
-// bool readHeader(parser& p) {
-//     while(p.input.good()) {
-// 		getline(p.input, line);
-// 		if(boost::regex_search(line, result, headerRegex)) {
-//             #ifdef VERBOSE
-// 			Blablabla::log("Header found.");
-//             #endif
-// 			return true;
-// 		}
-// 	}
-//     #ifdef VERBOSE
-// 	Blablabla::log("No header was found in CNF instance.");
-//     #endif
-// 	Blablabla::comment("Input error.");
-// 	return false;
-// }
 
 bool inclause;
 

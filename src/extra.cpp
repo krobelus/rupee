@@ -52,6 +52,7 @@ bool lratRmark = false;
 bool verbosity = false;
 bool printStats = false;
 bool recheck = false;
+int timeout = 5000;
 
 void setPremise(std::string path) {
     pathPremise = path;
@@ -326,8 +327,8 @@ namespace Stats {
 	int ratIntroductions = 0;
 
 	long msDifference(struct timeval& t0, struct timeval& t1) {
-		timersub(&t1, &t0, &scratchTimeOne);
-		return (long) ((scratchTimeOne.tv_sec * 1000L) + (scratchTimeOne.tv_usec / 1000L));
+		timersub(&t1, &t0, &scratchTimeThree);
+		return (long) ((scratchTimeThree.tv_sec * 1000L) + (scratchTimeThree.tv_usec / 1000L));
 	}
 
 	void resetDeleteTime() {
@@ -345,4 +346,8 @@ namespace Stats {
 		deleteTime = scratchTimeOne;
 	}
 
+    bool isTimeout() {
+        gettimeofday(&scratchTimeTwo, NULL);
+        return (int) msDifference(startTime, scratchTimeTwo) > 1000 * Parameters::timeout;
+    }
 }

@@ -136,7 +136,7 @@ directories :
 
 test:
 	rm -fv proofs/*.out proofs/*.lrat proofs/*.sick
-	cat test-list.txt | while read line ; do ./experiment.py proofs/$$line -delete ; done
+	cat test-list.txt | while read line ; do ./test.py proofs/$$line -delete ; done
 
 cleandata:
 	rm -fv data/*.out data/*.lrat data/*.sick data/*.condout data/*.conderr jobs/*.sub *.out *.lrat *.sick

@@ -30,5 +30,5 @@ files = open(sys.argv[1]).read().splitlines()
 k = 0
 for f in files:
     k = k + 1
-    generate(f, k)
-    os.popen("condor_submit jobs/" + f + ".sub")
+    generate(f[2:], k)
+    os.popen("condor_submit jobs/" + f[2:] + ".sub")

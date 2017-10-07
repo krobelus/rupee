@@ -10,7 +10,7 @@ def generate(f, k):
     wr = open("jobs/" + str(k) + ".sub", "w")
     wr.write("# Unix submit description file\n")
     wr.write("\n")
-    wr.write("executable              = ../experiment.py\n")
+    wr.write("executable              = experiment.py\n")
     wr.write("arguments               = " + f + " -delete \n")
     wr.write("output                  = " + f + ".condout\n")
     wr.write("errors                  = " + f + ".conderr\n")

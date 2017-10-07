@@ -11,7 +11,7 @@ def generate(f, k):
     wr.write("# Unix submit description file\n")
     wr.write("\n")
     wr.write("executable              = ../experiment.py\n")
-    wr.write("arguments               = \"" + f + "\"\n")
+    wr.write("arguments               = " + f + " -delete \n")
     wr.write("output                  = " + f + ".condout\n")
     wr.write("errors                  = " + f + ".conderr\n")
     wr.write("transfer_input_files    = " + f + ".cnf," + f + ".drat\n")

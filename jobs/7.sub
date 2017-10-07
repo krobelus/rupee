@@ -1,0 +1,11 @@
+# Unix submit description file
+
+executable              = ../experiment.py
+arguments               = "./data/2016/crafted/stone-width3chain-nmarkers-15_shuffled"
+output                  = ./data/2016/crafted/stone-width3chain-nmarkers-15_shuffled.condout
+errors                  = ./data/2016/crafted/stone-width3chain-nmarkers-15_shuffled.conderr
+transfer_input_files    = ./data/2016/crafted/stone-width3chain-nmarkers-15_shuffled.cnf,./data/2016/crafted/stone-width3chain-nmarkers-15_shuffled.drat
+transfer_output_files   = ./data/2016/crafted/stone-width3chain-nmarkers-15_shuffled.out,./data/2016/crafted/stone-width3chain-nmarkers-15_shuffled.DT.sick.SD.sick,./data/2016/crafted/stone-width3chain-nmarkers-15_shuffled.FD.sick
+should_transfer_files   = Yes
+when_to_transfer_output = ON_EXIT
+queue

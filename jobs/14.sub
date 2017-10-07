@@ -1,0 +1,11 @@
+# Unix submit description file
+
+executable              = ../experiment.py
+arguments               = "./data/2016/app/modgen-n200-m90860q08c40-29020"
+output                  = ./data/2016/app/modgen-n200-m90860q08c40-29020.condout
+errors                  = ./data/2016/app/modgen-n200-m90860q08c40-29020.conderr
+transfer_input_files    = ./data/2016/app/modgen-n200-m90860q08c40-29020.cnf,./data/2016/app/modgen-n200-m90860q08c40-29020.drat
+transfer_output_files   = ./data/2016/app/modgen-n200-m90860q08c40-29020.out,./data/2016/app/modgen-n200-m90860q08c40-29020.DT.sick.SD.sick,./data/2016/app/modgen-n200-m90860q08c40-29020.FD.sick
+should_transfer_files   = Yes
+when_to_transfer_output = ON_EXIT
+queue

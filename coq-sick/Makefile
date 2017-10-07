@@ -1,0 +1,2 @@
+compile:
+	ghc Interface.hs

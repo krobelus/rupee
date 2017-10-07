@@ -2,6 +2,8 @@ BINPATH = bin/
 OBJSPATH = obj/
 LIBPATH = lib/
 SRCPATH = src/
+COQLRATPATH = coq-lrat/
+COQSICKPATH = coq-sick/
 
 MkO = $(OBJSPATH)$(1).o
 MkC = $(SRCPATH)$(1).cpp
@@ -47,21 +49,21 @@ CPPFLAGS  = -g -O2 -Wall -std=c++11 -c $(VERBOSEFLAG)
 VERBOSEFLAG =
 
 #output name
-EXECUTABLE = $(BINPATH)rupee
+RUPEEBIN = $(BINPATH)rupee
 
-CHECKER = $(BINPATH)lratcheck
+LRATBIN = $(BINPATH)lratcheck
 
-SICK = $(BINPATH)sickcheck
+SICKBIN = $(BINPATH)sickcheck
 
-# COQLRAT = $(BINPATH)coq-lratcheck.native
+compile: ctools coqlrat coqsick
 
-$(EXECUTABLE) : directories $(OBJS) $(call MkO,lratcheck) $(call MkO,sickcheck)
-	@$(LD) $(OBJS) $(LIBS) $(LDFLAGS) $(EXECUTABLE)
-	@echo "\nBinary created in $(EXECUTABLE)\n"
-	@$(LD) $(call MkO,lratcheck) $(LIBS) $(LDFLAGS) $(CHECKER)
-	@echo "\nBinary created in $(CHECKER)\n"
-	@$(LD) $(call MkO,sickcheck) $(LIBS) $(LDFLAGS) $(SICK)
-	@echo "\nBinary created in $(SICK)\n"
+ctools : directories $(OBJS) $(call MkO,lratcheck) $(call MkO,sickcheck)
+	@$(LD) $(OBJS) $(LIBS) $(LDFLAGS) $(RUPEEBIN)
+	@echo "\nBinary created in $(RUPEEBIN)\n"
+	@$(LD) $(call MkO,lratcheck) $(LIBS) $(LDFLAGS) $(LRATBIN)
+	@echo "\nBinary created in $(LRATBIN)\n"
+	@$(LD) $(call MkO,sickcheck) $(LIBS) $(LDFLAGS) $(SICKBIN)
+	@echo "\nBinary created in $(SICKBIN)\n"
 
 $(call MkO,checker) : $(call MkC,checker) $(call MkH,structs) $(call MkH,extra)
 	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,checker) -o $(call MkO,checker)
@@ -111,14 +113,27 @@ $(call MkO,lratcheck) : $(call MkC,lratcheck)
 $(call MkO,sickcheck) : $(call MkC,sickcheck)
 	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,sickcheck) -o $(call MkO,sickcheck)
 
+coqlrat:
+	make -C $(COQLRATPATH)
+	cp $(COQLRATPATH)_build/Interface.native bin/
+	mv bin/Interface.native bin/coq-lrat-check
+
+coqsick:
+	make -C $(COQSICKPATH)
+	cp $(COQSICKPATH)Interface bin/
+	mv bin/Interface bin/coq-sick-check
+
 clean :
-	@rm $(OBJS) $(EXECUTABLE)
-	@rm $(OBJS) $(CHECKER)
-	@rm $(OBJS) $(SICK)
+	rm -fv $(OBJS) $(RUPEEBIN) $(LRATBIN) $(SICKBIN) $(COQLRATPATH)*.vo $(COQLRATPATH)*.o $(COQLRATPATH)*.glob \
+	$(COQLRATPATH).*.aux $(COQLRATPATH)Interface $(COQLRATPATH)Interface.native $(COQLRATPATH)Checker.mli \
+	$(COQSICKPATH)Interface $(COQSICKPATH)*.hi $(COQSICKPATH)*.o
+	rm -frv $(COQLRATPATH)_build
 
 directories :
 	@mkdir -p bin
 	@mkdir -p obj
+	@mkdir -p jobs
 
 test:
-	 @cat test-list.txt | while read line ; do ./experiment.py $$line ; done
+	rm -fv proofs/*.out proofs/*.lrat proofs/*.sick
+	cat test-list.txt | while read line ; do ./experiment.py $$line -delete ; done

@@ -1,0 +1,11 @@
+# Unix submit description file
+
+executable              = ../experiment.py
+arguments               = "./data/2016/app/barman-pfile06-022.sas.ex.7"
+output                  = ./data/2016/app/barman-pfile06-022.sas.ex.7.condout
+errors                  = ./data/2016/app/barman-pfile06-022.sas.ex.7.conderr
+transfer_input_files    = ./data/2016/app/barman-pfile06-022.sas.ex.7.cnf,./data/2016/app/barman-pfile06-022.sas.ex.7.drat
+transfer_output_files   = ./data/2016/app/barman-pfile06-022.sas.ex.7.out,./data/2016/app/barman-pfile06-022.sas.ex.7.DT.sick.SD.sick,./data/2016/app/barman-pfile06-022.sas.ex.7.FD.sick
+should_transfer_files   = Yes
+when_to_transfer_output = ON_EXIT
+queue

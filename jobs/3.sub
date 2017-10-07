@@ -1,0 +1,11 @@
+# Unix submit description file
+
+executable              = ../experiment.py
+arguments               = "./data/2016/app/sokoban-p09.sas.cr.25"
+output                  = ./data/2016/app/sokoban-p09.sas.cr.25.condout
+errors                  = ./data/2016/app/sokoban-p09.sas.cr.25.conderr
+transfer_input_files    = ./data/2016/app/sokoban-p09.sas.cr.25.cnf,./data/2016/app/sokoban-p09.sas.cr.25.drat
+transfer_output_files   = ./data/2016/app/sokoban-p09.sas.cr.25.out,./data/2016/app/sokoban-p09.sas.cr.25.DT.sick.SD.sick,./data/2016/app/sokoban-p09.sas.cr.25.FD.sick
+should_transfer_files   = Yes
+when_to_transfer_output = ON_EXIT
+queue

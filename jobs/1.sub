@@ -1,0 +1,11 @@
+# Unix submit description file
+
+executable              = ../experiment.py
+arguments               = "./data/2016/crafted/tseitingrid4x185_shuffled"
+output                  = ./data/2016/crafted/tseitingrid4x185_shuffled.condout
+errors                  = ./data/2016/crafted/tseitingrid4x185_shuffled.conderr
+transfer_input_files    = ./data/2016/crafted/tseitingrid4x185_shuffled.cnf,./data/2016/crafted/tseitingrid4x185_shuffled.drat
+transfer_output_files   = ./data/2016/crafted/tseitingrid4x185_shuffled.out,./data/2016/crafted/tseitingrid4x185_shuffled.DT.sick.SD.sick,./data/2016/crafted/tseitingrid4x185_shuffled.FD.sick
+should_transfer_files   = Yes
+when_to_transfer_output = ON_EXIT
+queue

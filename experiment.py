@@ -30,9 +30,11 @@ def verify(f, suf, res):
         [verif, ttime] = ["NONE", "NONE"]
     elif res == "TRUE":
         [verif, ttime] = c_lratcheck(f, suf)
+        # [verif, ttime] = coq_lratcheck(f, suf)
     else:
         if os.path.isfile(f + "." + suf + ".sick"):
             [verif, ttime] = c_sickcheck(f, suf)
+            # [verif, ttime] = coq_sickcheck(f, suf)
         else:
             [verif, ttime] = ["NONE", "NONE"]
     return [verif, ttime]
@@ -65,8 +67,36 @@ def c_sickcheck(f, suf):
         ttime = "FAIL"
     return [result, ttime]
 
-def delete_files(f, suf):
-    if os.path.isfile(f + "." + suf + ".lrat"):
+def coq_lratcheck(f, suf):
+    start = time.time()
+    output = os.popen(coq_lratcheck_command(f, suf)).read().splitlines()
+    ttime = str(int(1000*(time.time() - start)))
+    result = "FAIL"
+    for line in output:
+        if line.find("True") != -1:
+            result = "TRUE"
+        if line.find("False") != -1:
+            result = "FALSE"
+    if result == "FAIL":
+        ttime = "FAIL"
+    return [result, ttime]
+
+def coq_sickcheck(f, suf):
+    start = time.time()
+    output = os.popen(coq_sickcheck_command(f, suf)).read().splitlines()
+    ttime = str(int(1000*(time.time() - start)))
+    result = "FAIL"
+    for line in output:
+        if line.find("True") != -1:
+            result = "TRUE"
+        if line.find("False") != -1:
+            result = "FALSE"
+    if result == "FAIL":
+        ttime = "FAIL"
+    return [result, ttime]
+
+def delete_files(f, suf, flag):
+    if (flag != "-preserve") and os.path.isfile(f + "." + suf + ".lrat"):
         os.remove(f + "." + suf + ".lrat")
 
 def rupeesd_check(f):
@@ -130,6 +160,12 @@ def c_lratcheck_command(f, suf):
 def c_sickcheck_command(f, suf):
     return "./bin/sickcheck " + f + ".cnf " + f + ".drat " + f + "." + suf + ".sick"
 
+def coq_lratcheck_command(f, suf):
+    return "./bin/coq-lrat-check " + f + ".cnf " + f + "." + suf + ".lrat"
+
+def coq_sickcheck_command(f, suf):
+    return "./bin/coq-sick-check " + f + ".cnf " + f + ".drat " + f + "." + suf + ".sick"
+
 def write_line(w, x, l):
     print l + ": " + x
     w.write(x + "\n")
@@ -177,6 +213,8 @@ def write_results(f, size, dt_result, dt_verif, sd_result, sd_verif, fd_result, 
     w.close()
 
 f = sys.argv[1]
+flag = sys.argv[2]
+print "[" + flag + "]"
 size = str(os.path.getsize( f + ".cnf") + os.path.getsize( f + ".drat"))
 print "INSTANCE " + f + "\n"
 print "\texecuting drat-trim"
@@ -184,15 +222,15 @@ dt_result = drattrim_check(f)
 print "\tverifying"
 drattrim_sort(f, dt_result[0])
 dt_verif = verify(f, "DT", dt_result[0])
-delete_files(f, "DT")
+delete_files(f, "DT", flag)
 print "\texecuting rupee-sd"
 sd_result = rupeesd_check(f)
 print "\tverifying"
 sd_verif = verify(f, "SD", sd_result[0])
-delete_files(f, "SD")
+delete_files(f, "SD", flag)
 print "\texecuting rupee-fd"
 fd_result = rupeefd_check(f)
 print "\tverifying"
 fd_verif = verify(f, "FD", fd_result[0])
-delete_files(f, "FD")
+delete_files(f, "FD", flag)
 write_results(f, size, dt_result, dt_verif, sd_result, sd_verif, fd_result, fd_verif)

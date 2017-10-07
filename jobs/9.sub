@@ -1,0 +1,11 @@
+# Unix submit description file
+
+executable              = ../experiment.py
+arguments               = "./data/2016/app/snw_13_8_CCSEncnopre"
+output                  = ./data/2016/app/snw_13_8_CCSEncnopre.condout
+errors                  = ./data/2016/app/snw_13_8_CCSEncnopre.conderr
+transfer_input_files    = ./data/2016/app/snw_13_8_CCSEncnopre.cnf,./data/2016/app/snw_13_8_CCSEncnopre.drat
+transfer_output_files   = ./data/2016/app/snw_13_8_CCSEncnopre.out,./data/2016/app/snw_13_8_CCSEncnopre.DT.sick.SD.sick,./data/2016/app/snw_13_8_CCSEncnopre.FD.sick
+should_transfer_files   = Yes
+when_to_transfer_output = ON_EXIT
+queue

@@ -32,6 +32,7 @@ def clean():
 clean()
 files = open(sys.argv[1]).read().splitlines()
 p = sys.argv[2]
+bp = sys.argv[3]
 k = 0
 for f in files:
     k = k + 1

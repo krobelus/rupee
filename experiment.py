@@ -146,25 +146,25 @@ def rupee_parameter(line, pref, prev):
         return prev
 
 def drattrim_command(f):
-    return "drat-trim " + f + ".cnf " + f + ".drat -L " + f + ".DT.temp"
+    return "/home/arebolap/rupee/bin/drat-trim " + f + ".cnf " + f + ".drat -L " + f + ".DT.temp"
 
 def rupeesd_command(f):
-    return "rupee " + f + ".cnf " + f + ".drat -lrat " + f + ".SD.lrat -skip-deletion -recheck " + f + ".SD.sick"
+    return "/home/arebolap/rupee/bin/rupee " + f + ".cnf " + f + ".drat -lrat " + f + ".SD.lrat -skip-deletion -recheck " + f + ".SD.sick"
 
 def rupeefd_command(f):
-    return "rupee " + f + ".cnf " + f + ".drat -lrat " + f + ".FD.lrat -full-deletion -recheck " + f + ".FD.sick"
+    return "/home/arebolap/rupee/bin/rupee " + f + ".cnf " + f + ".drat -lrat " + f + ".FD.lrat -full-deletion -recheck " + f + ".FD.sick"
 
 def c_lratcheck_command(f, suf):
-    return "lratcheck " + f + ".cnf " + f + "." + suf + ".lrat"
+    return "/home/arebolap/rupee/bin/lratcheck " + f + ".cnf " + f + "." + suf + ".lrat"
 
 def c_sickcheck_command(f, suf):
-    return "sickcheck " + f + ".cnf " + f + ".drat " + f + "." + suf + ".sick"
+    return "/home/arebolap/rupee/bin/sickcheck " + f + ".cnf " + f + ".drat " + f + "." + suf + ".sick"
 
 def coq_lratcheck_command(f, suf):
-    return "coq-lrat-check " + f + ".cnf " + f + "." + suf + ".lrat"
+    return "/home/arebolap/rupee/bin/coq-lrat-check " + f + ".cnf " + f + "." + suf + ".lrat"
 
 def coq_sickcheck_command(f, suf):
-    return "coq-sick-check " + f + ".cnf " + f + ".drat " + f + "." + suf + ".sick"
+    return "/home/arebolap/rupee/bin/coq-sick-check " + f + ".cnf " + f + ".drat " + f + "." + suf + ".sick"
 
 def write_line(w, x, l):
     print l + ": " + x

@@ -18,7 +18,6 @@ executable              = experiment.py
 arguments               = """ + f + """ -delete
 output                  = """ + f + """.condout
 transfer_input_files    = """ + f + ".cnf," + f + """.drat
-transfer_output_files   = """ + f + ".out," + f + ".DT.sick," + ".SD.sick," + f + """.FD.sick
 should_transfer_files   = Yes
 when_to_transfer_output = ON_EXIT
 queue""")
@@ -34,4 +33,5 @@ k = 0
 for f in files:
     k = k + 1
     generate(f[2:], k)
-    os.popen("condor_submit jobs/" + str(k) + ".sub")
+    # os.popen("condor_submit jobs/" + str(k) + ".sub")
+    # transfer_output_files   = """ + f + ".out," + f + ".DT.sick," + ".SD.sick," + f + """.FD.sick

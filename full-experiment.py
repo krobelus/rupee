@@ -6,7 +6,7 @@ import fnmatch
 import time
 import shutil
 
-def generate(f, k):
+def generate(f, p, k):
     wr = open("jobs/" + str(k) + ".sub", "w")
     wr.write("""# Unix submit description file
 
@@ -18,8 +18,8 @@ executable              = experiment.py
 arguments               = """ + f + """ -delete
 output                  = """ + f + """.condout
 error                   = """ + f + """.conderr
-transfer_input_files    = """ + f + ".cnf," + f + """.drat
-transfer_output_files   = """ + f + ".out," + f + ".DT.sick," + f + ".SD.sick," + f + """.FD.sick
+transfer_input_files    = """ + p + f + ".cnf," + f + """.drat
+transfer_output_files   = """ + p + f + ".out," + p + f + ".DT.sick," + p + f + ".SD.sick," + p + f + """.FD.sick
 should_transfer_files   = YES
 when_to_transfer_output = ON_EXIT
 queue""")
@@ -31,8 +31,9 @@ def clean():
 
 clean()
 files = open(sys.argv[1]).read().splitlines()
+p = sys.argv[2]
 k = 0
 for f in files:
     k = k + 1
-    generate(f[2:], k)
+    generate(f[2:], p, k)
     # os.popen("condor_submit jobs/" + str(k) + ".sub")

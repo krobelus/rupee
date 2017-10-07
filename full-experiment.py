@@ -8,19 +8,20 @@ import shutil
 
 def generate(f, k):
     wr = open("jobs/" + str(k) + ".sub", "w")
-    wr.write("""# Unix submit description file\n\n
-    request_cpus            = 1\n
-    request_memory          = 20G\n
-    request_disk            = 10G\n
-    executable              = experiment.py\n
-    arguments               = """ + f + """ -delete \n
-    output                  = """ + f + """.condout\n
-    errors                  = """ + f + """.conderr\n
-    transfer_input_files    = """ + f + ".cnf," + f + """.drat\n
-    transfer_output_files   = """ + f + ".out," + f + ".DT.sick," + ".SD.sick," + f + """.FD.sick\n
-    should_transfer_files   = Yes\n
-    when_to_transfer_output = ON_EXIT\n
-    queue\n""")
+    wr.write("""# Unix submit description file
+
+universe                = vanilla
+request_cpus            = 1
+request_memory          = 20G
+request_disk            = 10G
+executable              = experiment.py
+arguments               = """ + f + """ -delete
+output                  = """ + f + """.condout
+transfer_input_files    = """ + f + ".cnf," + f + """.drat
+transfer_output_files   = """ + f + ".out," + f + ".DT.sick," + ".SD.sick," + f + """.FD.sick
+should_transfer_files   = Yes
+when_to_transfer_output = ON_EXIT
+queue""")
     wr.close()
 
 def clean():
@@ -33,4 +34,4 @@ k = 0
 for f in files:
     k = k + 1
     generate(f[2:], k)
-    os.popen("condor_submit jobs/" + str(k) + ".sub")
+    # os.popen("condor_submit jobs/" + str(k) + ".sub")

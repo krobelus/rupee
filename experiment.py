@@ -37,6 +37,9 @@ def verify(f, suf, res):
             # [verif, ttime] = coq_sickcheck(f, suf)
         else:
             [verif, ttime] = ["NONE", "NONE"]
+    if not os.path.isfile(f + "." + suf + ".sick"):
+        wr = open(f + "." + suf + ".sick", "w")
+        wr.close()
     return [verif, ttime]
 
 def c_lratcheck(f, suf):

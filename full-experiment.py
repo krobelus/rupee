@@ -10,7 +10,7 @@ def generate(f, k):
     wr = open("jobs/" + str(k) + ".sub", "w")
     wr.write("""# Unix submit description file
 
-universe                = standard
+universe                = vanilla
 request_cpus            = 1
 request_memory          = 20G
 request_disk            = 10G

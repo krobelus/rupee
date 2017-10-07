@@ -34,4 +34,4 @@ k = 0
 for f in files:
     k = k + 1
     generate(f[2:], k)
-    # os.popen("condor_submit jobs/" + str(k) + ".sub")
+    os.popen("condor_submit jobs/" + str(k) + ".sub")

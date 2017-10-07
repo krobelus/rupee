@@ -19,7 +19,7 @@ arguments               = """ + f + """ -delete
 output                  = """ + f + """.condout
 error                   = """ + f + """.conderr
 transfer_input_files    = """ + p + f + ".cnf," + p + f + """.drat
-transfer_output_files   = """ f + ".out," + p + f + ".DT.sick," + p + f + ".SD.sick," + p + f + """.FD.sick
+transfer_output_files   = """ + f + ".out," + p + f + ".DT.sick," + p + f + ".SD.sick," + p + f + """.FD.sick
 should_transfer_files   = YES
 when_to_transfer_output = ON_EXIT
 queue""")

@@ -10,7 +10,7 @@ def generate(f, k):
     wr = open("jobs/" + str(k) + ".sub", "w")
     wr.write("""# Unix submit description file
 
-universe                = vanilla
+universe                = standard
 request_cpus            = 1
 request_memory          = 20G
 request_disk            = 10G
@@ -19,7 +19,7 @@ arguments               = """ + f + """ -delete
 output                  = """ + f + """.condout
 error                   = """ + f + """.conderr
 transfer_input_files    = """ + f + ".cnf," + f + """.drat
-transfer_output_files   = """ + f + ".out," + f + ".DT.sick," + ".SD.sick," + f + """.FD.sick
+transfer_output_files   = """ + f + ".out," + f + ".DT.sick," + f + ".SD.sick," + f + """.FD.sick
 should_transfer_files   = YES
 when_to_transfer_output = ON_EXIT
 queue""")

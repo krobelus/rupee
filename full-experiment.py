@@ -35,5 +35,5 @@ p = sys.argv[2]
 k = 0
 for f in files:
     k = k + 1
-    generate(f[2:], p, k)
+    generate(f, p, k)
     # os.popen("condor_submit jobs/" + str(k) + ".sub")

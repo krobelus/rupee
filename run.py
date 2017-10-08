@@ -6,7 +6,7 @@ import fnmatch
 import time
 import shutil
 
-files = open("instances-slice" + sys.argv[1] + ".txt").read().splitlines()
+files = open("instances-" + sys.argv[1] + ".txt").read().splitlines()
 for f in files:
     os.popen("condor_submit jobs/" + f + ".DT.sub")
     os.popen("condor_submit jobs/" + f + ".SD.sub")

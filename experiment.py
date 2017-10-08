@@ -42,8 +42,8 @@ when_to_transfer_output = ON_EXIT
 queue""")
     wr.close()
 
-def SDjob(f):
-    wr = open("jobs/" + f + ".SD.sub", "w")
+def FDjob(f):
+    wr = open("jobs/" + f + ".FD.sub", "w")
     wr.write("""# Unix submit description file
 
 universe                = vanilla

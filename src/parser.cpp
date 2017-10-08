@@ -60,6 +60,10 @@ bool readClauses(parser& p, clause& c, hashtable& h, database& d, proof& r) {
     inclause = false;
     while(true) {
         if(!inclause) {
+            if(Stats::isTimeout()) {
+                Blablabla::comment("Timeout at " + std::to_string(Parameters::timeout) + "s");
+                return false;
+            }
             if((parsed = fscanf(p.inputfile, " d %i ", &number)) == 1) {
                 Clause::setInstructionKind(c, Constants::InstructionDeletion);
             } else if((parsed = fscanf(p.inputfile, " %i ", &number)) == 1) {

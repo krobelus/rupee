@@ -139,4 +139,4 @@ test:
 	cat test-list.txt | while read line ; do ./test.py proofs/$$line -delete ; done
 
 cleandata:
-	rm -fv data/*.out data/*.lrat data/*.sick data/*.condout data/*.conderr jobs/*.sub *.out *.lrat *.sick
+	rm -fv *.lrat *.sick *.condout *.conderr

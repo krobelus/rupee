@@ -52,7 +52,7 @@ bool lratRmark = false;
 bool verbosity = false;
 bool printStats = false;
 bool recheck = false;
-int timeout = 20;
+int timeout = 5000;
 
 void setPremise(std::string path) {
     pathPremise = path;
@@ -350,9 +350,6 @@ namespace Stats {
     bool isTimeout() {
         gettimeofday(&scratchTimeTwo, NULL);
         ++timeoutCalls;
-        if(timeoutCalls % 100000 == 0) {
-            std::cout << msDifference(startTime, scratchTimeTwo) / 1000 << std::endl;
-        }
         return (int) msDifference(startTime, scratchTimeTwo) > 1000 * Parameters::timeout;
     }
 }

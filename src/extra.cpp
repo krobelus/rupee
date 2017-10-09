@@ -349,7 +349,6 @@ namespace Stats {
 
     bool isTimeout() {
         gettimeofday(&scratchTimeTwo, NULL);
-        ++timeoutCalls;
         return (int) msDifference(startTime, scratchTimeTwo) > 1000 * Parameters::timeout;
     }
 }

@@ -29,12 +29,12 @@ def verify(f, suf, res):
     if res == "FAIL":
         [verif, ttime] = ["NONE", "NONE"]
     elif res == "TRUE":
-        [verif, ttime] = c_lratcheck(f, suf)
-        # [verif, ttime] = coq_lratcheck(f, suf)
+        # [verif, ttime] = c_lratcheck(f, suf)
+        [verif, ttime] = coq_lratcheck(f, suf)
     else:
         if os.path.isfile(f + "." + suf + ".sick"):
-            [verif, ttime] = c_sickcheck(f, suf)
-            # [verif, ttime] = coq_sickcheck(f, suf)
+            # [verif, ttime] = c_sickcheck(f, suf)
+            [verif, ttime] = coq_sickcheck(f, suf)
         else:
             [verif, ttime] = ["NONE", "NONE"]
     if not os.path.isfile(f + "." + suf + ".sick"):

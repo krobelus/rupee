@@ -1,0 +1,87 @@
+c Parsing CNF instance tseitingrid4x190_shuffled.cnf
+c Parsing DRAT proof tseitingrid4x190_shuffled.drat
+0
+0
+0
+0
+1
+1
+1
+1
+2
+2
+2
+2
+3
+3
+3
+3
+4
+5
+5
+5
+5
+6
+6
+c Checking DRAT proof
+6
+6
+6
+6
+6
+6
+6
+6
+6
+6
+6
+6
+7
+7
+7
+7
+7
+7
+7
+7
+7
+7
+7
+7
+8
+9
+10
+11
+11
+12
+12
+12
+12
+13
+13
+13
+13
+14
+14
+15
+15
+16
+16
+16
+16
+16
+16
+16
+s VERIFIED
+c LRAT proof written to tseitingrid4x190_shuffled.SD.lrat
+nf 6080
+np 2369234
+nr 0
+dc 1126664
+ds 1126664
+dr 0
+tt 16986
+tp 6626
+tf 1341
+tb 9019
+td 0

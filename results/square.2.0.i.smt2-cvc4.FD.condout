@@ -1,0 +1,22 @@
+c Parsing CNF instance square.2.0.i.smt2-cvc4.cnf
+0
+c Parsing DRAT proof square.2.0.i.smt2-cvc4.drat
+0
+0
+c Checking DRAT proof
+0
+0
+0
+0
+s REJECTED
+nf 183641
+np 179897
+nr 1
+dc 74876
+ds 0
+dr 52
+tt 1085
+tp 422
+tf 40
+tb 622
+td 0

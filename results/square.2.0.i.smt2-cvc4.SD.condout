@@ -1,0 +1,26 @@
+c Parsing CNF instance square.2.0.i.smt2-cvc4.cnf
+0
+c Parsing DRAT proof square.2.0.i.smt2-cvc4.drat
+0
+0
+c Checking DRAT proof
+0
+0
+0
+0
+1
+1
+1
+s VERIFIED
+c LRAT proof written to square.2.0.i.smt2-cvc4.SD.lrat
+nf 183641
+np 179897
+nr 0
+dc 74876
+ds 74692
+dr 0
+tt 1442
+tp 423
+tf 39
+tb 979
+td 0

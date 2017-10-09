@@ -8,6 +8,6 @@ import shutil
 
 files = open("instances-" + sys.argv[1] + ".txt").read().splitlines()
 for f in files:
-    os.popen("condor_submit jobs/" + f + ".vDT.sub")
-    os.popen("condor_submit jobs/" + f + ".vSD.sub")
-    os.popen("condor_submit jobs/" + f + ".vFD.sub")
+    for suf in ["DT", "SD", "FD"]:
+        if os.path.isfile("jobs/" + f + ".v" + suf + ".sub"):
+            os.popen("condor_submit jobs/" + f + ".v" + suf + ".sub)

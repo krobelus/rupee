@@ -6,7 +6,7 @@ import fnmatch
 import time
 import shutil
 
-files = open("instances-" + sys.argv[1] + ".txt").read().splitlines()
+files = open("instance-2016.txt").read().splitlines()
 if not os.path.isdir("results/"):
     os.mkdir("results/")
 for f in files:

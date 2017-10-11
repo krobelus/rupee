@@ -132,11 +132,3 @@ clean :
 directories :
 	@mkdir -p bin
 	@mkdir -p obj
-	@mkdir -p jobs
-
-test:
-	rm -fv proofs/*.out proofs/*.lrat proofs/*.sick
-	cat test-list.txt | while read line ; do ./test.py proofs/$$line -delete ; done
-
-cleandata:
-	rm -fv *.lrat *.sick *.condout *.conderr

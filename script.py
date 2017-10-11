@@ -13,7 +13,7 @@ def commonJob(f, suf):
     request_disk = 10G\n\
     output = logs/" + f + "." + suf + ".condout\n\
     error = logs/" + f + "." + suf + ".conderr\n\
-    logs = logs/" + f + "." + suf + ".condlog\n\
+    log = logs/" + f + "." + suf + ".condlog\n\
     should_transfer_files   = YES\n\
     when_to_transfer_output = ON_EXIT\n\
     queue\n"

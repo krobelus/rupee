@@ -128,11 +128,9 @@ void output() {
 	if(Checker::isVerified(Objects::Checker)) {
 		Blablabla::comment("s VERIFIED");
 		Witness::extractWitness(Objects::Checker.tvr, Objects::Database);
-		Recheck::trivialRecheck();
 	} else {
 		Blablabla::comment("s REJECTED");
 		Recheck::extractRecheck(Objects::Checker.kk, Objects::Database);
-		Witness::trivialWitness();
 	}
 	std::cout << "nf " << Stats::premiseLength << std::endl;
 	std::cout << "np " << Stats::proofLength << std::endl;
@@ -160,21 +158,17 @@ void deallocate() {
 	#endif
 }
 
-void trivialFiles() {
-	Recheck::trivialRecheck();
-	Witness::trivialWitness();
-}
 
 }
 
 int main(int argc, char* argv[]) {
 	gettimeofday (&Stats::startTime, NULL);
 	Stats::resetDeleteTime();
-	if(!Frontend::readArguments(argc, argv)) { Frontend::trivialFiles(); return 1; }
-	if(!Frontend::initialize()) { Frontend::trivialFiles(); return 1; }
-	if(!Frontend::parse()) { Frontend::trivialFiles(); return 1; }
+	if(!Frontend::readArguments(argc, argv)) { return 1; }
+	if(!Frontend::initialize()) { return 1; }
+	if(!Frontend::parse()) {  return 1; }
 	gettimeofday (&Stats::parsingTime, NULL);
-	if(!Frontend::check()) { Frontend::trivialFiles(); return 1; }
+	if(!Frontend::check()) { return 1; }
 	Frontend::output();
 	Frontend::deallocate();
 }

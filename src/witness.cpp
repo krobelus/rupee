@@ -144,11 +144,6 @@ int clspivot;
 bool deletepremises;
 std::ofstream output;
 
-void trivialWitness() {
-    output.open(Parameters::pathWitness, std::ofstream::out | std::ofstream::trunc);
-    output.close();
-}
-
 void extractWitness(witness& wt, database& d) {
     if(Parameters::generateLrat) {
         nopremises = d.idCount;
@@ -168,6 +163,9 @@ void extractWitness(witness& wt, database& d) {
                     deletepremises = false;
                 }
                 wtptr = intptr + 3;
+                if(Parameters::lratRmark) {
+                    output << "r ";
+                }
                 clsptr[Constants::IdCellDatabase] = ++d.idCount;
                 output << d.idCount << " ";
                 extractClause(clsptr, clspivot, output);

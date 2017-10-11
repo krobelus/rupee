@@ -94,7 +94,7 @@ def submitJob(f, suf):
     if os.path.isfile("jobs/" + f + "." + suf + ".sub"):
         os.popen("condor_submit jobs/" + f + "." + suf + ".sub")
     else:
-        print "# SUB job description for file " f + "." +  suf + " missing"
+        print "# SUB job description for file "+  f + "." +  suf + " missing"
 
 def parseResult(f):
     result = "NONE"

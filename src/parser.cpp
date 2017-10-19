@@ -62,6 +62,7 @@ bool readClauses(parser& p, clause& c, hashtable& h, database& d, proof& r) {
         if(!inclause) {
             if(Stats::isTimeout()) {
                 Blablabla::comment("Timeout at " + std::to_string(Parameters::timeout) + "s");
+                Blablabla::comment("s TIMEOUT");
                 return false;
             }
             if((parsed = fscanf(p.inputfile, " d %i ", &number)) == 1) {

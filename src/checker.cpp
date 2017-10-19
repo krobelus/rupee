@@ -68,6 +68,7 @@ bool preprocessProof(checker& c, proof& r, database& d) {
     while(c.stage == Constants::StagePreprocessing) {
         if(Stats::isTimeout()) {
             Blablabla::comment("Timeout at " + std::to_string(Parameters::timeout) + "s");
+            Blablabla::comment("s TIMEOUT");
             return false;
         }
         if(!Proof::nextInstruction(r, c.position, c.offset, c.pivot, c.kind)) {
@@ -115,6 +116,7 @@ bool verifyProof(checker& c, proof& r, database& d) {
     while(c.stage == Constants::StageVerifying) {
         if(Stats::isTimeout()) {
             Blablabla::comment("Timeout at " + std::to_string(Parameters::timeout) + "s");
+            Blablabla::comment("s TIMEOUT");
             return false;
         }
         if(!Proof::prevInstruction(r, c.position, c.offset, c.pivot, c.kind)) {

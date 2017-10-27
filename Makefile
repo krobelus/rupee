@@ -38,15 +38,15 @@ LIBS = -lboost_regex
 # C++ compiler
 CPP = g++
 
+# VERBOSEFLAG = -DVERBOSE
+VERBOSEFLAG =
+
 # compiler flags:
 #  -g			adds debugging information to the executable file
 #  -Wall		turns on most, but not all, compiler warnings
 #  -O2			turns on optimizations
 #  -std=c++11	uses C++11 as a language
 CPPFLAGS  = -g -O2 -Wall -std=c++11 -c $(VERBOSEFLAG)
-
-# VERBOSEFLAG = -DVERBOSE
-VERBOSEFLAG =
 
 #output name
 RUPEEBIN = $(BINPATH)rupee

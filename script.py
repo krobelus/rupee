@@ -297,6 +297,28 @@ def printTsvData(array, path):
 def analyzeData(array):
     print "# nothing to analyze"
 
+def localCheck(file, suf):
+    if suf == "DT":
+        os.popen("./bin/drat-trim data/" + file + ".cnf data/" + file + ".drat -L witness/" + file + ".DT.lrat -t 5000 > logs/" + file + ".DT.condout")
+    elif suf == "SD":
+        os.popen("./bin/rupee data/" + file + ".cnf data/" + file + ".drat -lrat witness/" + file + ".SD.lrat -recheck witness/" + file + ".SD.sick -skip-deletion > logs/" + file + ".SD.condout")
+    elif suf == "FD":
+        os.popen("./bin/rupee data/" + file + ".cnf data/" + file + ".drat -lrat witness/" + file + ".FD.lrat -recheck witness/" + file + ".FD.sick -full-deletion > logs/" + file + ".FD.condout")
+
+def localVerify(file, suf):
+    result = parseResult(file + "." + suf)
+    if result == "TRUE":
+        os.popen("./bin/lrat-check data/" + file + ".cnf witness/" + file + "." + suf + ".lrat > logs/" + file + ".v" + suf + ".condout")
+    elif result == "FALSE" and suf != "DT":
+        os.popen("./bin/sick-check data/" + file + ".cnf data/" + file + ".drat witness/" + file + "." + suf + ".sick > logs/" + file + ".v" + suf + ".condout")
+
+def localCoqVerify(file, suf):
+    result = parseResult(file + "." + suf)
+    if result == "TRUE":
+        os.popen("./bin/coq-lrat-check data/" + file + ".cnf witness/" + file + "." + suf + ".lrat > logs/" + file + ".c" + suf + ".condout")
+    elif result == "FALSE" and suf != "DT":
+        os.popen("./bin/coq-sick-check data/" + file + ".cnf data/" + file + ".drat witness/" + file + "." + suf + ".sick > logs/" + file + ".c" + suf + ".condout")
+
 masterList = sys.argv[1]
 stage = sys.argv[2]
 fileList = getFiles(masterList)
@@ -328,6 +350,18 @@ elif stage == "-coqverify":
     for file in fileList:
         for suf in ["DT", "SD", "FD"]:
             submitJob(file, "c" + suf)
+elif stage == "-localcheck":
+    for file in fileList:
+        for suf in ["DT", "SD", "FD"]:
+            localCheck(file, suf)
+elif stage == "-localverify":
+    for file in fileList:
+        for suf in ["DT", "SD", "FD"]:
+            localVerify(file, suf)
+elif stage == "-localcoqverify":
+    for file in fileList:
+        for suf in ["DT", "SD", "FD"]:
+            localCoqVerify(file, suf)
 elif stage == "-analyze":
     array = []
     for file in fileList:

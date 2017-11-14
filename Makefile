@@ -33,7 +33,8 @@ LD = g++
 LDFLAGS = -o
 
 # Libraries
-LIBS = -lboost_regex
+# LIBS = -lboost_regex
+LIBS = -L$(LIBPATH) -lboost_regex
 
 # C++ compiler
 CPP = g++
@@ -114,14 +115,14 @@ $(call MkO,sickcheck) : $(call MkC,sickcheck)
 	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,sickcheck) -o $(call MkO,sickcheck)
 
 coqlrat:
-	make -C $(COQLRATPATH)
-	cp $(COQLRATPATH)_build/Interface.native bin/
-	mv bin/Interface.native bin/coq-lrat-check
+	# make -C $(COQLRATPATH)
+	# cp $(COQLRATPATH)_build/Interface.native bin/
+	# mv bin/Interface.native bin/coq-lrat-check
 
 coqsick:
-	make -C $(COQSICKPATH)
-	cp $(COQSICKPATH)Interface bin/
-	mv bin/Interface bin/coq-sick-check
+	# make -C $(COQSICKPATH)
+	# cp $(COQSICKPATH)Interface bin/
+	# mv bin/Interface bin/coq-sick-check
 
 clean :
 	rm -fv $(OBJS) $(RUPEEBIN) $(LRATBIN) $(SICKBIN) $(COQLRATPATH)*.vo $(COQLRATPATH)*.o $(COQLRATPATH)*.glob \

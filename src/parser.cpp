@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -118,27 +119,74 @@ bool readClauses(parser& p, clause& c, hashtable& h, database& d, proof& r) {
     }
 }
 
-// bool readClauses(parser& p, clause& c, hashtable& h, database& d, proof& r) {
-//     while(p.input.good()) {
-// 		getline(p.input, line);
-// 		if(!line.empty()) {
-// 			if(Clause::parseInstruction(c, line)) {
-//                 if(!Clause::processInstruction(c, h, d, r, p.file)) { return false; }
-// 			} else {
-//                 #ifdef VERBOSE
-// 				Blablabla::log("Could not parse file.");
-//                 #endif
-// 				Blablabla::comment("Input error.");
-// 				return false;
-// 			}
-//             Clause::resetBuffer(c);
-// 		}
-// 	}
-//     #ifdef VERBOSE
-// 	Blablabla::log("Parsed file.");
-//     #endif
-// 	p.input.close();
-// 	return true;
-// }
+int readchar;
+int shift;
+
+bool readBinaryClauses(parser& p, clause& c, hashtable& h, database& d, proof& r) {
+    inclause = false;
+    while(true) {
+        if(!inclause) {
+            if(Stats::isTimeout()) {
+                Blablabla::comment("Timeout at " + std::to_string(Parameters::timeout) + "s");
+                Blablabla::comment("s TIMEOUT");
+                return false;
+            }
+            if((readchar = getc(p.inputfile)) == Constants::BinaryDeletion) {
+                Clause::setInstructionKind(c, Constants::InstructionDeletion);
+            } else if(readchar == Constants::BinaryIntroduction) {
+                Clause::setInstructionKind(c, Constants::InstructionIntroduction);
+            } else if(readchar == EOF) {
+                #ifdef VERBOSE
+                Blablabla::log("Parsed file");
+                #endif
+                fclose(p.inputfile);
+                return true;
+            } else {
+                #ifdef VERBOSE
+                Blablabla::log("Could not parse file");
+                #endif
+                Blablabla::comment("Input error");
+                return false;
+            }
+            inclause = true;
+        } else {
+            if((readchar = getc(p.inputfile)) == Constants::BinaryEndOfClause) {
+                ++Stats::proofLength;
+                if(!Clause::processLiteral(c, Constants::EndOfList)) { return false; }
+                if(!Clause::processInstruction(c, h, d, r, p.file)) { return false; }
+                inclause = false;
+                Clause::resetBuffer(c);
+            } else if (readchar == EOF) {
+                #ifdef VERBOSE
+                Blablabla::log("Could not parse file");
+                #endif
+                Blablabla::comment("Input error");
+                return false;
+            } else {
+                number = readchar & Constants::BinaryMsbMask;
+                if(readchar > Constants::BinaryMsbMask) {
+                    shift = Constants::BinaryShiftStep;
+                    do {
+                        if((readchar = getc(p.inputfile)) == Constants::BinaryEndOfClause || readchar == EOF) {
+                            #ifdef VERBOSE
+                            Blablabla::log("Could not parse file");
+                            #endif
+                            Blablabla::comment("Input error");
+                            return false;
+                        } else {
+                            number |= (readchar & Constants::BinaryMsbMask) << shift;
+                            shift += Constants::BinaryShiftStep;
+                        }
+                    } while(readchar > Constants::BinaryMsbMask);
+                }
+                if(number % 2 == 0) {
+                    if(!Clause::processLiteral(c, number / 2)) { return false; }
+                } else {
+                    if(!Clause::processLiteral(c, -(number - 1) / 2)) { return false; }
+                }
+            }
+        }
+    }
+}
 
 }

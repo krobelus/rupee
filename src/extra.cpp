@@ -53,6 +53,7 @@ bool verbosity = false;
 bool printStats = false;
 bool recheck = false;
 int timeout = 5000;
+bool binaryDrat = false;
 
 void setPremise(std::string path) {
     pathPremise = path;

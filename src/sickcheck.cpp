@@ -243,9 +243,6 @@ void parseCnf() {
                 line = parsed[2];
                 if(literal == 0) {
                     ++Sickcheck.counter;
-                    if(Sickcheck.counter % 1000000 == 0) {
-                        std::cout << " >>> " << Sickcheck.counter << std::endl;
-                    }
                     if(Sickcheck.counter == Sickcheck.instruction) {
                         Sickcheck.state = -1;
                         input.close();

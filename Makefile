@@ -34,7 +34,7 @@ LDFLAGS = -o
 
 # Libraries
 # LIBS = -lboost_regex
-LIBS = -L$(LIBPATH) -lboost_regex
+LIBS = -lboost_regex
 
 # C++ compiler
 CPP = g++
@@ -56,15 +56,19 @@ LRATBIN = $(BINPATH)lratcheck
 
 SICKBIN = $(BINPATH)sickcheck
 
+BINSICKBIN = $(BINPATH)sickcheckbin
+
 compile: ctools coqlrat coqsick
 
-ctools : directories $(OBJS) $(call MkO,lratcheck) $(call MkO,sickcheck)
+ctools : directories $(OBJS) $(call MkO,lratcheck) $(call MkO,sickcheck) $(call MkO,sickcheckbin)
 	@$(LD) $(OBJS) $(LIBS) $(LDFLAGS) $(RUPEEBIN)
 	@echo "\nBinary created in $(RUPEEBIN)\n"
 	@$(LD) $(call MkO,lratcheck) $(LIBS) $(LDFLAGS) $(LRATBIN)
 	@echo "\nBinary created in $(LRATBIN)\n"
 	@$(LD) $(call MkO,sickcheck) $(LIBS) $(LDFLAGS) $(SICKBIN)
 	@echo "\nBinary created in $(SICKBIN)\n"
+	@$(LD) $(call MkO,sickcheckbin) $(LIBS) $(LDFLAGS) $(BINSICKBIN)
+	@echo "\nBinary created in $(BINSICKBIN)\n"
 
 $(call MkO,checker) : $(call MkC,checker) $(call MkH,structs) $(call MkH,extra)
 	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,checker) -o $(call MkO,checker)
@@ -113,6 +117,9 @@ $(call MkO,lratcheck) : $(call MkC,lratcheck)
 
 $(call MkO,sickcheck) : $(call MkC,sickcheck)
 	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,sickcheck) -o $(call MkO,sickcheck)
+
+$(call MkO,sickcheckbin) : $(call MkC,sickcheckbin)
+	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,sickcheckbin) -o $(call MkO,sickcheckbin)
 
 coqlrat:
 	# make -C $(COQLRATPATH)

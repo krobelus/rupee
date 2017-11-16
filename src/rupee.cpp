@@ -25,6 +25,7 @@ bool readArguments(int argc, char* argv[]) {
 				Blablabla::comment("\t-stats\t\tPrints out stats about the run");
 				Blablabla::comment("\t-recheck [FILE]\t\tProduces a recheck incorrect witness stored in [FILE]");
 				Blablabla::comment("\t-r-mark\t\tAdds the \"r\" marker for RATs in LRAT");
+				Blablabla::comment("\t-binary\t\tSupports binary DRAT files");
 				return false;
 			} else if(stringArgument == "skip-deletion") {
 				Parameters::deletionMode = Constants::DeletionModeSkip;
@@ -41,7 +42,9 @@ bool readArguments(int argc, char* argv[]) {
 				Parameters::printStats = true;
 			} else if(stringArgument == "r-mark") {
 				Parameters::lratRmark = true;
-			} else {
+			} else if(stringArgument == "binary") {
+				Parameters::binaryDrat = true;
+			}  else {
 				Blablabla::comment("Error: invalid input.");
 				Blablabla::comment("\tType rupee -help for more information.");
 				return false;
@@ -91,7 +94,11 @@ bool parse() {
 		if(!Parser::readClauses(Objects::Parser, Objects::Clause, Objects::HashTable, Objects::Database, Objects::Proof)) { return false; }
 	Blablabla::comment("c Parsing DRAT proof " + Parameters::pathProof);
 		if(!Parser::openFile(Objects::Parser, Constants::FileProof)) { return false; }
-		if(!Parser::readClauses(Objects::Parser, Objects::Clause, Objects::HashTable, Objects::Database, Objects::Proof)) { return false; }
+		if(Parameters::binaryDrat){
+			if(!Parser::readBinaryClauses(Objects::Parser, Objects::Clause, Objects::HashTable, Objects::Database, Objects::Proof)) { return false; }
+		} else {
+			if(!Parser::readClauses(Objects::Parser, Objects::Clause, Objects::HashTable, Objects::Database, Objects::Proof)) { return false; }
+		}
 	#ifdef VERBOSE
 	Blablabla::decrease();
 	Blablabla::log("Deallocating parsing data structures");

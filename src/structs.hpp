@@ -22,7 +22,6 @@ struct database {
     int* array;
     int max;
     int used;
-	// int* recheck;
     int idCount;
 };
 
@@ -233,6 +232,7 @@ const boost::regex literalRegex("(-?\\d+)(.*)?");
 bool openFile(parser& p, bool f);
 bool readHeader(parser& p);
 bool readClauses(parser& p, clause& c, hashtable& h, database& d, proof& r);
+bool readBinaryClauses(parser& p, clause& c, hashtable& h, database& d, proof& r);
 
 }
 

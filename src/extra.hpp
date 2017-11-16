@@ -70,6 +70,12 @@ namespace Constants {
 
 	const int DeletionModeSkip         = 1;
 	const int DeletionModeUnrestricted = 3;
+
+	const char BinaryDeletion = 100;
+	const char BinaryIntroduction = 97;
+	const char BinaryMsbMask = 127;
+	const char BinaryEndOfClause = 0;
+	const int BinaryShiftStep = 7;
 }
 
 namespace Parameters {
@@ -88,6 +94,7 @@ namespace Parameters {
 	extern bool recheck;
 	extern bool lratRmark;
 	extern int timeout;
+	extern bool binaryDrat;
 
 	void setPremise(std::string path);
 	void setProof(std::string path);

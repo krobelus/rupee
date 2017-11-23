@@ -229,7 +229,7 @@ bool verifyDeletion(checker& c, database& d) {
         if(Revision::applyRevision(c.cone, c.stack, d)) {
             if(!Revision::resetWatches(c.watch, c.stack, d)) { return false; }
         }
-        if(!WatchList::insertWatches(c.watch, c.stack, c.offset, c.pointer)) { return false; }      //This may lead to problems. Probably everything's fine if you do this first.
+        if(!WatchList::insertWatches(c.watch, c.stack, c.offset, c.pointer)) { return false; }
     }
     return true;
 }

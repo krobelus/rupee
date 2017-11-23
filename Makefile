@@ -58,9 +58,11 @@ SICKBIN = $(BINPATH)sickcheck
 
 BINSICKBIN = $(BINPATH)sickcheckbin
 
+DRATTOBRATBIN = $(BINPATH)drattobrat
+
 compile: ctools coqlrat coqsick
 
-ctools : directories $(OBJS) $(call MkO,lratcheck) $(call MkO,sickcheck) $(call MkO,sickcheckbin)
+ctools : directories $(OBJS) $(call MkO,lratcheck) $(call MkO,sickcheck) $(call MkO,sickcheckbin) $(call MkO,drattobrat)
 	@$(LD) $(OBJS) $(LIBS) $(LDFLAGS) $(RUPEEBIN)
 	@echo "\nBinary created in $(RUPEEBIN)\n"
 	@$(LD) $(call MkO,lratcheck) $(LIBS) $(LDFLAGS) $(LRATBIN)
@@ -69,6 +71,8 @@ ctools : directories $(OBJS) $(call MkO,lratcheck) $(call MkO,sickcheck) $(call 
 	@echo "\nBinary created in $(SICKBIN)\n"
 	@$(LD) $(call MkO,sickcheckbin) $(LIBS) $(LDFLAGS) $(BINSICKBIN)
 	@echo "\nBinary created in $(BINSICKBIN)\n"
+	@$(LD) $(call MkO,drattobrat) $(LIBS) $(LDFLAGS) $(DRATTOBRATBIN)
+	@echo "\nBinary created in $(DRATTOBRATBIN)\n"
 
 $(call MkO,checker) : $(call MkC,checker) $(call MkH,structs) $(call MkH,extra)
 	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,checker) -o $(call MkO,checker)
@@ -120,6 +124,9 @@ $(call MkO,sickcheck) : $(call MkC,sickcheck)
 
 $(call MkO,sickcheckbin) : $(call MkC,sickcheckbin)
 	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,sickcheckbin) -o $(call MkO,sickcheckbin)
+
+$(call MkO,drattobrat) : $(call MkC,drattobrat)
+	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,drattobrat) -o $(call MkO,drattobrat)
 
 coqlrat:
 	# make -C $(COQLRATPATH)

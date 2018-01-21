@@ -228,63 +228,122 @@ bool reviseWatches(watchlist& wl, model& m, long offset, int* pointer, int liter
 }
 
 int otherlit;
+int litone;
+int littwo;
+int replaceone;
+int replacetwo;
 
 bool resetWatches(watchlist& wl, model& m, long offset, int* pointer, int literal, long*& watch) {
-    if(literal == *pointer) {
-        #ifdef VERBOSE
-        Blablabla::log("Resetting clause " + Blablabla::clauseToString(pointer));
-        Blablabla::increase();
-        #endif
+    if(Model::isFalsified(m, pointer[0]) || Model::isFalsified(m, pointer[1])) {
+        if(*pointer != literal) {
+            pointer[1] = *pointer;
+            pointer[0] = literal;
+        }
         otherlit = pointer[1];
+        // At this point, we have ensured that *pointer == literal
         firstptr = pointer;
         bestptr = pointer;
         bestpos = NULL;
         if(!Database::findWatch(firstptr, bestptr, bestpos, m)) {
-            #ifdef VERBOSE
-            Blablabla::log("Clause is falsified, invariant is broken");
-            #endif
-            Blablabla::comment("Error during invariant maintenance");
+            std::cout << "Error: broken invariant." << std::endl;
             return false;
         }
-        firstlit = *firstptr;
         secondptr = firstptr + 1;
         if(!Database::findWatch(secondptr, bestptr, bestpos, m)) {
             if(firstptr > bestptr) {
-                *firstptr = *bestptr;
-                *bestptr = firstlit;
                 secondptr = firstptr;
                 firstptr = bestptr;
             } else {
                 secondptr = bestptr;
             }
         }
-        secondlit = *secondptr;
-        if(firstlit == literal || secondlit == literal) {
+        // At this point, we have ensured that firstptr < secondptr
+        // There are four cases:
+        //   A) firstptr is in 0, secondptr is in 1
+        //   B) firstptr is in 0, secondptr is in >=2
+        //   C) firstptr is in 1, secondptr is in >=2
+        //   D) both firstptr and secondptr are in >=2
+        if(pointer == firstptr) {
             ++watch;
-        } else {
+            if(pointer + 1 == secondptr) { // Case A: nothing to do!
+                return true;
+            } else { // Case B: clause will not be watched on otherlit, but on *secondptr instead.
+                findAndRemoveWatch(wl, otherlit, offset);
+                pointer[1] = *secondptr;
+                *secondptr = otherlit;
+                if(!addWatch(wl, pointer[1], offset)) { return false; }
+            }
+        } else { // Cases C and D: clause will not be watched on literal, but on *secondptr instead.
             removeWatch(wl, literal, watch);
+            *pointer = *secondptr;
+            *secondptr = literal;
+            if(!addWatch(wl, pointer[0], offset)) { return false; } // Case C: additionally, clause will still be watched on otherlit
+            if(pointer + 1 != firstptr) { // Case D: additionally, clause will not be watched on otherlit, but on *firstlit instead.
+                findAndRemoveWatch(wl, otherlit, offset);
+                pointer[1] = *firstptr;
+                *firstptr = otherlit;
+                if(!addWatch(wl, pointer[1], offset)) { return false; }
+            }
         }
-        if(firstlit != otherlit && secondlit != otherlit) {
-            findAndRemoveWatch(wl, otherlit, offset);
-        }
-        if(firstlit != literal && firstlit != otherlit) {
-            if(!addWatch(wl, firstlit, offset)) { return false; }
-        }
-        if(secondlit != literal && secondlit != otherlit) {
-            if(!addWatch(wl, secondlit, offset)) { return false; }
-        }
-        *firstptr = pointer[0];
-        pointer[0] = firstlit;
-        *secondptr = pointer[1];
-        pointer[1] = secondlit;
-        #ifdef VERBOSE
-        Blablabla::log("Setting watches: " + Blablabla::clauseToString(pointer));
-        Blablabla::decrease();
-        #endif
     } else {
         ++watch;
     }
     return true;
+    // if(literal == *pointer) {
+    //     #ifdef VERBOSE
+    //     Blablabla::log("Resetting clause " + Blablabla::clauseToString(pointer));
+    //     Blablabla::increase();
+    //     #endif
+    //     otherlit = pointer[1];
+    //     firstptr = pointer;
+    //     bestptr = pointer;
+    //     bestpos = NULL;
+    //     if(!Database::findWatch(firstptr, bestptr, bestpos, m)) {
+    //         #ifdef VERBOSE
+    //         Blablabla::log("Clause is falsified, invariant is broken");
+    //         #endif
+    //         Blablabla::comment("Error during invariant maintenance");
+    //         return false;
+    //     }
+    //     firstlit = *firstptr;
+    //     secondptr = firstptr + 1;
+    //     if(!Database::findWatch(secondptr, bestptr, bestpos, m)) {
+    //         if(firstptr > bestptr) {
+    //             *firstptr = *bestptr;
+    //             *bestptr = firstlit;
+    //             secondptr = firstptr;
+    //             firstptr = bestptr;
+    //         } else {
+    //             secondptr = bestptr;
+    //         }
+    //     }
+    //     secondlit = *secondptr;
+    //     if(firstlit == literal || secondlit == literal) {
+    //         ++watch;
+    //     } else {
+    //         removeWatch(wl, literal, watch);
+    //     }
+    //     if(firstlit != otherlit && secondlit != otherlit) {
+    //         findAndRemoveWatch(wl, otherlit, offset);
+    //     }
+    //     if(firstlit != literal && firstlit != otherlit) {
+    //         if(!addWatch(wl, firstlit, offset)) { return false; }
+    //     }
+    //     if(secondlit != literal && secondlit != otherlit) {
+    //         if(!addWatch(wl, secondlit, offset)) { return false; }
+    //     }
+    //     *firstptr = pointer[0];
+    //     pointer[0] = firstlit;
+    //     *secondptr = pointer[1];
+    //     pointer[1] = secondlit;
+    //     #ifdef VERBOSE
+    //     Blablabla::log("Setting watches: " + Blablabla::clauseToString(pointer));
+    //     Blablabla::decrease();
+    //     #endif
+    // } else {
+    //     ++watch;
+    // }
+    // return true;
 }
 
 //----------------------

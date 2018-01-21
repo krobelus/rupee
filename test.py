@@ -48,5 +48,23 @@ elif tool ==  "sickcheck-bin":
 		print "sickcheck-bin on " + x + ":"
 		out = os.popen("bin/sickcheck-bin test/cnf/" + x + ".cnf test/drat/" + x + ".drat test/sick/" + x + ".sick")
 		print out.read()
+elif tool == "conversion":
+	instancelist = map(lambda x : x[:-5], os.listdir("test/proof"))
+	for x in instancelist:
+		print "drat-to-brat on " + x + ":"
+		out = os.popen("bin/rupee test/cnf/" + x + ".cnf test/proof/" + x + ".drat -lrat test/lrat/" + x + ".lrat -recheck test/sick/" + x + ".sick -full-deletion")
+		for l in out.read().splitlines():
+			if l[0] == 's':
+				print l
+		os.popen("bin/drattobrat test/proof/" + x + ".drat test/brat/" + x + ".brat")
+		out = os.popen("bin/rupee test/cnf/" + x + ".cnf test/brat/" + x + ".brat -lrat test/lrat/" + x + ".lrat -recheck test/sick/" + x + ".sick -full-deletion -binary")
+		for l in out.read().splitlines():
+			if l[0] == 's':
+				print l
+		os.popen("bin/brattodrat test/brat/" + x + ".brat test/drat/" + x + ".drat")
+		out = os.popen("bin/rupee test/cnf/" + x + ".cnf test/drat/" + x + ".drat -lrat test/lrat/" + x + ".lrat -recheck test/sick/" + x + ".sick -full-deletion")
+		for l in out.read().splitlines():
+			if l[0] == 's':
+				print l
 else:
 	print "input error"

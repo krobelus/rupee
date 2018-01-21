@@ -227,7 +227,7 @@ bool verifyDeletion(checker& c, database& d) {
     } else {
         Database::setClauseActive(c.pointer);
         if(Revision::applyRevision(c.cone, c.stack, d)) {
-            if(!Revision::resetWatches(c.watch, c.stack, d)) { return false; }
+            if(!Revision::resetWatches(c.cone, c.watch, c.stack, d)) { return false; }
         }
         if(!WatchList::insertWatches(c.watch, c.stack, c.offset, c.pointer)) { return false; }
     }

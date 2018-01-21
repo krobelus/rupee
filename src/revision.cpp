@@ -237,7 +237,6 @@ bool applyRevision(revision& v, model& m, database& d) {
             }
             m.position[revlit] = m.array + (rightpos--);
         }
-        resetCone(v);
         #ifdef VERBOSE
         Blablabla::logModel(m);
         Blablabla::decrease();
@@ -246,16 +245,22 @@ bool applyRevision(revision& v, model& m, database& d) {
     }
 }
 
-bool resetWatches(watchlist& wl, model& m, database& d) {
+bool resetWatches(revision& v, watchlist& wl, model& m, database& d) {
     #ifdef VERBOSE
     Blablabla::log("Resetting watchlists");
     Blablabla::increase();
     #endif
-    for(revlit = -Stats::variableBound; revlit <= Stats::variableBound; ++revlit) {
-        if(wl.used[revlit] != 0) {
-            if(!WatchList::resetList(wl, m, d, revlit)) { return false; }
-        }
+    while(v.current > v.cone) {
+        revlit = *(--v.current);
+        v.lits[revlit] = false;
+        if(!WatchList::resetList(wl, m, d, -revlit)) { return false; }
+        if(!WatchList::resetList(wl, m, d, revlit)) { return false; }
     }
+    // for(revlit = -Stats::variableBound; revlit <= Stats::variableBound; ++revlit) {
+    //     if(wl.used[revlit] != 0) {
+    //         if(!WatchList::resetList(wl, m, d, revlit)) { return false; }
+    //     }
+    // }
     Stats::stopDeleteTime();
     #ifdef VERBOSE
     Blablabla::decrease();

@@ -304,7 +304,7 @@ bool checkCone(revision& v, model& m);
 void resetCone(revision& v);
 
 bool applyRevision(revision& v, model& m, database& d);
-bool resetWatches(watchlist& wl, model& m, database& d);
+bool resetWatches(revision& v, watchlist& wl, model& m, database& d);
 
 }
 

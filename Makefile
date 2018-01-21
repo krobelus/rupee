@@ -47,7 +47,7 @@ VERBOSEFLAG =
 #  -Wall		turns on most, but not all, compiler warnings
 #  -O2			turns on optimizations
 #  -std=c++11	uses C++11 as a language
-CPPFLAGS  = -g -O2 -Wall -std=c++11 -c $(VERBOSEFLAG)
+CPPFLAGS  = -g -O2 -Wall -std=c++17 -c $(VERBOSEFLAG)
 
 #output name
 RUPEEBIN = $(BINPATH)rupee
@@ -60,9 +60,11 @@ BINSICKBIN = $(BINPATH)sickcheckbin
 
 DRATTOBRATBIN = $(BINPATH)drattobrat
 
-compile: ctools coqlrat coqsick
+BRATTODRATBIN = $(BINPATH)brattodrat
+# 
+# compile: ctools coqlrat coqsick
 
-ctools : directories $(OBJS) $(call MkO,lratcheck) $(call MkO,sickcheck) $(call MkO,sickcheckbin) $(call MkO,drattobrat)
+ctools : directories $(OBJS) $(call MkO,lratcheck) $(call MkO,sickcheck) $(call MkO,sickcheckbin) $(call MkO,drattobrat) $(call MkO,brattodrat)
 	@$(LD) $(OBJS) $(LIBS) $(LDFLAGS) $(RUPEEBIN)
 	@echo "\nBinary created in $(RUPEEBIN)\n"
 	@$(LD) $(call MkO,lratcheck) $(LIBS) $(LDFLAGS) $(LRATBIN)
@@ -73,6 +75,8 @@ ctools : directories $(OBJS) $(call MkO,lratcheck) $(call MkO,sickcheck) $(call 
 	@echo "\nBinary created in $(BINSICKBIN)\n"
 	@$(LD) $(call MkO,drattobrat) $(LIBS) $(LDFLAGS) $(DRATTOBRATBIN)
 	@echo "\nBinary created in $(DRATTOBRATBIN)\n"
+	@$(LD) $(call MkO,brattodrat) $(LIBS) $(LDFLAGS) $(BRATTODRATBIN)
+	@echo "\nBinary created in $(BRATTODRATBIN)\n"
 
 $(call MkO,checker) : $(call MkC,checker) $(call MkH,structs) $(call MkH,extra)
 	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,checker) -o $(call MkO,checker)
@@ -127,6 +131,9 @@ $(call MkO,sickcheckbin) : $(call MkC,sickcheckbin)
 
 $(call MkO,drattobrat) : $(call MkC,drattobrat)
 	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,drattobrat) -o $(call MkO,drattobrat)
+
+$(call MkO,brattodrat) : $(call MkC,brattodrat)
+	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,brattodrat) -o $(call MkO,brattodrat)
 
 coqlrat:
 	# make -C $(COQLRATPATH)

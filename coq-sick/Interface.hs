@@ -11,17 +11,49 @@ import Control.Exception
 
 deriving instance Show Checker.Literal
 deriving instance Show a => Show (Checker.List a)
---deriving instance (Show a, Show b) => Show (Checker.Prod a b)
+
+-- binary trees
+
+treefy :: Ord a => [a] -> [a]
+treefy []  = []
+treefy [x] = [x]
+treefy l   = treefy l1 ++ treefy l2 ++ [x]
+             where n = (length l + 1) `div` 2 - 1
+                   x = l !! n
+                   l1 = take n l
+                   l2 = drop (n+1) l
+
+data Tree a = Empty | Node a (Tree a) (Tree a) deriving Show
+
+add :: Ord a => a -> Tree a -> Tree a
+add x Empty        = Node x Empty Empty
+add x (Node y l r) | x < y     = Node y (add x l) r
+                   | otherwise = Node y l (add x r)
+
+list_to_tree :: Ord a => [a] -> Tree a
+list_to_tree []     = Empty
+list_to_tree (x:xs) = add x (list_to_tree xs)
+
+make_tree :: Ord a => [a] -> Tree a
+make_tree = list_to_tree . treefy
+
+-- conversions between types
 
 list_to_List :: [a] -> Checker.List a
 list_to_List [] = Checker.Nil
 list_to_List (x : l) = Checker.Cons x (list_to_List l)
+
+list_to_Tree :: [Checker.Literal] -> Checker.BinaryTree Checker.Literal
+list_to_Tree [] = Checker.Nought
+list_to_Tree (x : l) = Checker.bT_add Checker.literal_compare x (list_to_Tree l)
 
 clause_to_Clause :: [Int] -> Checker.Clause
 clause_to_Clause = list_to_List . map literal_to_Literal . sort
 
 literal_to_Literal :: Int -> Checker.Literal
 literal_to_Literal x = if (x > 0) then (Checker.Pos x) else (Checker.Neg (-x))
+
+-- reading data
 
 read_cnf :: String -> IO [Checker.Clause]
 read_cnf name = do
@@ -66,56 +98,52 @@ parse_drat_line line       = ('a',read_clause line)
 read_clause :: String -> Checker.Clause
 read_clause = clause_to_Clause . sort . drop_zero . (map (read :: String -> Int) . words)
 
-read_sick :: String -> IO (Int,Checker.Literal,Checker.Clause,Checker.List Checker.Literal,Checker.Clause,Checker.List Checker.Literal)
+read_sick :: String -> IO (Int,Int,Checker.Clause,Checker.BinaryTree Checker.Literal,Checker.Clause,Checker.BinaryTree Checker.Literal)
 read_sick name = do
   f <- openFile name ReadMode
   s <- hGetContents f
   return (parse_sick s)
 
-parse_sick :: String -> (Int,Checker.Literal,Checker.Clause,Checker.List Checker.Literal,Checker.Clause,Checker.List Checker.Literal)
+parse_sick :: String -> (Int,Int,Checker.Clause,Checker.BinaryTree Checker.Literal,Checker.Clause,Checker.BinaryTree Checker.Literal)
 parse_sick s = (int,pivot,cl1,val1,cl2,val2)
        where (l1:l2:l3:_) = lines s
              (int,pivot)  = read_v_line l1
              (cl1,val1)   = read_nr_line l2
              (cl2,val2)   = read_nr_line l3
 
-read_v_line :: String -> (Int,Checker.Literal)
-read_v_line ('v':line) = (list !! 3,literal_to_Literal (list !! 1))
+read_v_line :: String -> (Int,Int)
+read_v_line ('v':line) = (list !! 3,list !! 1)
        where list = map (read :: String -> Int) (words line)
 
-read_nr_line :: String -> (Checker.Clause,Checker.List Checker.Literal)
-read_nr_line ('n':line) = (clause_to_Clause clause,list_to_List (map literal_to_Literal list))
+read_nr_line :: String -> (Checker.Clause,Checker.BinaryTree Checker.Literal)
+read_nr_line ('n':line) = (clause_to_Clause clause,list_to_Tree (map literal_to_Literal (treefy list)))
        where (clause,list) = split_zero (map (read :: String -> Int) (words line))
-read_nr_line ('r':line) = (clause_to_Clause clause,list_to_List (map literal_to_Literal list))
+read_nr_line ('r':line) = (clause_to_Clause clause,list_to_Tree (map literal_to_Literal (treefy list)))
        where (clause,list) = split_zero (map (read :: String -> Int) (words line))
 
 split_zero :: [Int] -> ([Int],[Int])
 split_zero (0:xs) = ([],drop_zero xs)
 split_zero (x:xs) = (x:ys,zs) where (ys,zs) = split_zero xs
 
+-- drat-trusting formula preprocessing
+
 update :: [Checker.Clause] -> [(Char,Checker.Clause)] -> [Checker.Clause]
 update cnf []                 = cnf
 update cnf (('a',cl):actions) = update (cl:cnf) actions
---update cnf (('d',cl):actions) = update cnf actions
 update cnf (('d',cl):actions) = update (filter (\x -> not (Checker.clause_eq_dec x cl)) cnf) actions
 
+-- special case when pivot is zero
+
+update_pivot :: Int -> [Checker.Clause] -> Checker.Literal
+update_pivot 0 (Checker.Cons lit _ : _) = Checker.negate lit
+update_pivot n _ = literal_to_Literal n
+
 main = do
-  args <- getArgs
-  let cnfFile = args !! 0
-      dratFile = args !! 1
-      sickFile = args !! 2 in do
-        cnf <- read_cnf cnfFile
-        --print (length cnf)
-        dratTrace <- read_drat dratFile
-        (int,pivot,cl1,val1,cl2,val2) <- read_sick sickFile
-        --print pivot
-        --print cl1
-        --print val1
-        --print (int-(length cnf)-1)
-        --print (take (int-(length cnf)-1) dratTrace)
-        let new_cnf = (update cnf (take (int-(length cnf)-1) dratTrace)) in do
-          --print (int,pivot,new_cnf,cl1,val1,cl2,val2)
-          print (Checker.big_test (list_to_List new_cnf) pivot cl1 val1 cl2 val2)
-          --print (Checker.rUP_test val1 (list_to_List new_cnf) cl1)
-          --print (Checker.rAT_test val2 (list_to_List new_cnf) cl1 cl2 pivot)
--- need to test for 0 pivot and change accordingly
+  (cnfFile:dratFile:sickFile:_) <- getArgs
+  cnf <- read_cnf cnfFile
+  dratTrace <- read_drat dratFile
+  (int,pivot,cl1,val1,cl2,val2) <- read_sick sickFile
+  do
+    let lit = update_pivot pivot cnf
+        new_cnf = (update cnf (take (int-(length cnf)-1) dratTrace)) in do
+        print (Checker.big_test (list_to_List new_cnf) lit cl1 val1 cl2 val2)

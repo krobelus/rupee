@@ -3,8 +3,6 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-#include <boost/regex.hpp>
-#include <boost/lexical_cast.hpp>
 
 #include "structs.hpp"
 #include "extra.hpp"
@@ -13,7 +11,6 @@
 namespace Parser {
 
 std::string line;
-boost::smatch result;
 int parsed;
 int number;
 int othernumber;

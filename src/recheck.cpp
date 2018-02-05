@@ -83,7 +83,8 @@ void extractRecheck(recheck& rc, database& d) {
 
     output.open(Parameters::pathRecheck, std::ofstream::out | std::ofstream::trunc);
     literalTranslation(rc.pivot, translation);
-    output << "v " << Stats::variableBound << " " << translation << " " << d.max << " " << rc.instruction + 1 << std::endl;
+    // output << "v " << Stats::variableBound << " " << translation << " " << d.max << " " << rc.instruction + 1 << std::endl;
+    output << "v " << translation << " " << rc.instruction + 1 << std::endl;
     clause = Database::getPointer(d, rc.clause);
     output << "n ";
     while((literal = *clause) != 0) {

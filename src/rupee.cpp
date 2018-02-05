@@ -1,5 +1,4 @@
 #include <iostream>
-#include <boost/lexical_cast.hpp>
 #include <sys/time.h>
 
 #include "structs.hpp"

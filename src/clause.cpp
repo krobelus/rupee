@@ -1,7 +1,5 @@
 #include <stdlib.h>
 #include <string>
-#include <boost/regex.hpp>
-#include <boost/lexical_cast.hpp>
 
 #include "structs.hpp"
 #include "extra.hpp"
@@ -164,7 +162,6 @@ void resetToInner(clause& c) {
 
 bool done;
 int lit;
-boost::smatch result;
 long offset;
 
 void setInstructionKind(clause& c, bool kind) {

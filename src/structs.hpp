@@ -5,8 +5,6 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-#include <boost/regex.hpp>
-#include <boost/lexical_cast.hpp>
 
 struct clause {
 	int* array;
@@ -223,11 +221,6 @@ void removeOffset(hashtable& h, unsigned int hash, int pos);
 
 
 namespace Parser {
-
-const boost::regex deletionRegex("^d (.*)");
-const boost::regex headerRegex("p (.*)");
-const boost::regex numVarsRegex("(\\d+)(.*)");
-const boost::regex literalRegex("(-?\\d+)(.*)?");
 
 bool openFile(parser& p, bool f);
 bool readHeader(parser& p);

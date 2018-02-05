@@ -1,15 +1,12 @@
 BINPATH = bin/
 OBJSPATH = obj/
-LIBPATH = lib/
 SRCPATH = src/
-COQLRATPATH = coq-lrat/
-COQSICKPATH = coq-sick/
 
 MkO = $(OBJSPATH)$(1).o
 MkC = $(SRCPATH)$(1).cpp
 MkH = $(SRCPATH)$(1).hpp
 
-OBJS = $(call MkO,checker) \
+RUPEEOBJS = $(call MkO,checker) \
 		$(call MkO,clause) \
 		$(call MkO,database) \
 		$(call MkO,extra) \
@@ -24,59 +21,40 @@ OBJS = $(call MkO,checker) \
 		$(call MkO,watchlist) \
 		$(call MkO,witness)
 
-###  g++ -std=c++11 assignment.cpp chain.cpp $(call MkC,extra) $(call MkC,hashtable) $(call MkC,parser) $(call MkC,proof) $(call MkC,watchlist) $(call MkC,database) micetrim.cpp -lboost_regex -o micetrim
+CHECKOBJS = $(call MkO,check-core) \
+		$(call MkO,check-lexer) \
+		$(call MkO,check-hashtable) \
+		$(call MkO,check-proof) \
+		$(call MkO,check-database) \
+		$(call MkO,check-parser)
 
-# Linker
 LD = g++
 
-# Linker flags
 LDFLAGS = -o
 
-# Libraries
-# LIBS = -lboost_regex
-LIBS = -lboost_regex
-
-# C++ compiler
 CPP = g++
 
-# VERBOSEFLAG = -DVERBOSE
-VERBOSEFLAG =
+CPPFLAGS  = -g -O2 -Wall -std=c++17 -c
 
-# compiler flags:
-#  -g			adds debugging information to the executable file
-#  -Wall		turns on most, but not all, compiler warnings
-#  -O2			turns on optimizations
-#  -std=c++11	uses C++11 as a language
-CPPFLAGS  = -g -O2 -Wall -std=c++17 -c $(VERBOSEFLAG)
-
-#output name
 RUPEEBIN = $(BINPATH)rupee
 
 LRATBIN = $(BINPATH)lratcheck
 
 SICKBIN = $(BINPATH)sickcheck
 
-BINSICKBIN = $(BINPATH)sickcheckbin
-
-DRATTOBRATBIN = $(BINPATH)drattobrat
-
 BRATTODRATBIN = $(BINPATH)brattodrat
-# 
-# compile: ctools coqlrat coqsick
 
-ctools : directories $(OBJS) $(call MkO,lratcheck) $(call MkO,sickcheck) $(call MkO,sickcheckbin) $(call MkO,drattobrat) $(call MkO,brattodrat)
-	@$(LD) $(OBJS) $(LIBS) $(LDFLAGS) $(RUPEEBIN)
-	@echo "\nBinary created in $(RUPEEBIN)\n"
-	@$(LD) $(call MkO,lratcheck) $(LIBS) $(LDFLAGS) $(LRATBIN)
-	@echo "\nBinary created in $(LRATBIN)\n"
-	@$(LD) $(call MkO,sickcheck) $(LIBS) $(LDFLAGS) $(SICKBIN)
-	@echo "\nBinary created in $(SICKBIN)\n"
-	@$(LD) $(call MkO,sickcheckbin) $(LIBS) $(LDFLAGS) $(BINSICKBIN)
-	@echo "\nBinary created in $(BINSICKBIN)\n"
-	@$(LD) $(call MkO,drattobrat) $(LIBS) $(LDFLAGS) $(DRATTOBRATBIN)
-	@echo "\nBinary created in $(DRATTOBRATBIN)\n"
+all : directories $(RUPEEOBJS) $(call MkO,brattodrat) $(CHECKOBJS) $(call MkO,check-lratchecker) $(call MkO,check-sickchecker)
+	@echo "\n"
+	@$(LD) $(RUPEEOBJS) $(LIBS) $(LDFLAGS) $(RUPEEBIN)
+	@echo "Binary created in $(RUPEEBIN)\n"
 	@$(LD) $(call MkO,brattodrat) $(LIBS) $(LDFLAGS) $(BRATTODRATBIN)
-	@echo "\nBinary created in $(BRATTODRATBIN)\n"
+	@echo "Binary created in $(BRATTODRATBIN)\n"
+	@$(LD) $(CHECKOBJS) $(call MkO,check-lratchecker) $(LIBS) $(LDFLAGS) $(LRATBIN)
+	@echo "Binary created in $(LRATBIN)\n"
+	@$(LD) $(CHECKOBJS) $(call MkO,check-sickchecker) $(LIBS) $(LDFLAGS) $(SICKBIN)
+	@echo "Binary created in $(SICKBIN)\n"
+	@echo "\n"
 
 $(call MkO,checker) : $(call MkC,checker) $(call MkH,structs) $(call MkH,extra)
 	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,checker) -o $(call MkO,checker)
@@ -120,36 +98,50 @@ $(call MkO,witness) : $(call MkC,witness) $(call MkH,structs) $(call MkH,extra)
 $(call MkO,rupee) : $(call MkC,rupee) $(call MkH,structs) $(call MkH,extra)
 	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,rupee) -o $(call MkO,rupee)
 
-$(call MkO,lratcheck) : $(call MkC,lratcheck)
-	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,lratcheck) -o $(call MkO,lratcheck)
-
-$(call MkO,sickcheck) : $(call MkC,sickcheck)
-	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,sickcheck) -o $(call MkO,sickcheck)
-
-$(call MkO,sickcheckbin) : $(call MkC,sickcheckbin)
-	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,sickcheckbin) -o $(call MkO,sickcheckbin)
-
-$(call MkO,drattobrat) : $(call MkC,drattobrat)
-	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,drattobrat) -o $(call MkO,drattobrat)
-
 $(call MkO,brattodrat) : $(call MkC,brattodrat)
 	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,brattodrat) -o $(call MkO,brattodrat)
 
-coqlrat:
-	# make -C $(COQLRATPATH)
-	# cp $(COQLRATPATH)_build/Interface.native bin/
-	# mv bin/Interface.native bin/coq-lrat-check
+$(call MkO,check-core) : $(call MkH,check/core) $(call MkC,check/core)
+	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,check/core) -o $(call MkO,check-core)
 
-coqsick:
-	# make -C $(COQSICKPATH)
-	# cp $(COQSICKPATH)Interface bin/
-	# mv bin/Interface bin/coq-sick-check
+$(call MkO,check-database) : $(call MkH,check/core) $(call MkH,check/database) $(call MkC,check/database)
+	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,check/database) -o $(call MkO,check-database)
+
+$(call MkO,check-lexer) : $(call MkH,check/core) $(call MkH,check/lexer) $(call MkC,check/lexer)
+	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,check/lexer) -o $(call MkO,check-lexer)
+
+$(call MkO,check-proof) : $(call MkH,check/core) $(call MkH,check/proof) $(call MkC,check/proof)
+	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,check/proof) -o $(call MkO,check-proof)
+
+$(call MkO,check-hashtable) : $(call MkH,check/core)  $(call MkH,check/database) $(call MkH,check/hashtable) $(call MkC,check/hashtable)
+	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,check/hashtable) -o $(call MkO,check-hashtable)
+
+$(call MkO,check-parser) : $(call MkH,check/core) $(call MkH,check/database) $(call MkH,check/lexer)  $(call MkH,check/hashtable) $(call MkH,check/proof) $(call MkH,check/parser) $(call MkC,check/parser)
+	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,check/parser) -o $(call MkO,check-parser)
+
+$(call MkO,check-lratchecker) : $(call MkH,check/core) $(call MkH,check/database) $(call MkH,check/lexer) $(call MkH,check/parser) $(call MkH,check/lratchecker) $(call MkC,check/lratchecker)
+	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,check/lratchecker) -o $(call MkO,check-lratchecker)
+
+$(call MkO,check-sickchecker) : $(call MkH,check/core) $(call MkH,check/database) $(call MkH,check/lexer) $(call MkH,check/parser) $(call MkH,check/sickchecker) $(call MkC,check/sickchecker)
+	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,check/sickchecker) -o $(call MkO,check-sickchecker)
+
+# $(call MkO,lratcheck) : $(call MkC,lratcheck)
+# 	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,lratcheck) -o $(call MkO,lratcheck)
+
+# $(call MkO,sickcheck) : $(call MkC,sickcheck)
+# 	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,sickcheck) -o $(call MkO,sickcheck)
+
+# $(call MkO,sickcheckbin) : $(call MkC,sickcheckbin)
+# 	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,sickcheckbin) -o $(call MkO,sickcheckbin)
+
+# $(call MkO,drattobrat) : $(call MkC,drattobrat)
+# 	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,drattobrat) -o $(call MkO,drattobrat)
+
+# $(call MkO,brattodrat) : $(call MkC,brattodrat)
+# 	$(CPP) $(LIBS) $(CPPFLAGS) $(call MkC,brattodrat) -o $(call MkO,brattodrat)
 
 clean :
-	rm -fv $(OBJS) $(RUPEEBIN) $(LRATBIN) $(SICKBIN) $(COQLRATPATH)*.vo $(COQLRATPATH)*.o $(COQLRATPATH)*.glob \
-	$(COQLRATPATH).*.aux $(COQLRATPATH)Interface $(COQLRATPATH)Interface.native $(COQLRATPATH)Checker.mli \
-	$(COQSICKPATH)Interface $(COQSICKPATH)*.hi $(COQSICKPATH)*.o
-	rm -frv $(COQLRATPATH)_build
+	rm -rfv $(RUPEEOBJS) $(CHECKOBJS) $(MkO,drattobrat) $(RUPEEBIN) $(LRATBIN) $(SICKBIN) $(DRATTOBRATBIN)
 
 directories :
 	@mkdir -p bin

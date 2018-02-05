@@ -56,9 +56,9 @@ void Core::print() {
     if(m_state == Invalid) {
         std::cout << "INVALID";
     } else if(m_state == Accept) {
-        std::cout << "ACCEPT";
+        std::cout << "ACCEPTED";
     } else {
-        std::cout << "REJECT";
+        std::cout << "REJECTED";
     }
     std::cout << std::endl;
 }

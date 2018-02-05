@@ -132,7 +132,7 @@ bool check() {
 void output() {
 	gettimeofday(&Stats::endTime, NULL);
 	if(Checker::isVerified(Objects::Checker)) {
-		Blablabla::comment("s VERIFIED");
+		Blablabla::comment("s ACCEPTED");
 		Witness::extractWitness(Objects::Checker.tvr, Objects::Database);
 	} else {
 		Blablabla::comment("s REJECTED");

@@ -33,6 +33,7 @@ void LratChecker::check() {
 		if(inference.isRup()) {
 			checkRupInference(inference.getClause(), inference.getChain());
 		} else if(inference.isRat()) {
+			std::cout << "[RAT check performed]" << std::endl;
 			checkRatInference(inference.getClause(), inference.getChain(), inference.getResolvents());
 		}
 		m_clausedb.setActivity(inference.getClause(), true);

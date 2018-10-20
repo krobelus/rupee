@@ -163,7 +163,7 @@ void extractWitness(witness& wt, database& d) {
                     deletepremises = false;
                 }
                 wtptr = intptr + 3;
-                if(Parameters::lratRmark) {
+                if(Parameters::lratRmark && clspivot != Constants::ReservedLiteral) {
                     output << "r ";
                 }
                 clsptr[Constants::IdCellDatabase] = ++d.idCount;

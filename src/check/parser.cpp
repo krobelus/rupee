@@ -381,6 +381,10 @@ void LratParser::parse() {
 // Internal methods
 
 void LratParser::parseIdentifier() {
+	if(m_reading == RatId) {
+		m_lexer.next();
+		m_reading = m_lexer.read();
+	}
 	m_identifier = parseNumber(m_reading);
 	m_state = Kind;
 }
@@ -484,6 +488,7 @@ Short LratParser::parseLiteral(std::string& str) {
 }
 
 const std::string LratParser::DeletionId = "d";
+const std::string LratParser::RatId = "r";
 
 
 //************************************************************

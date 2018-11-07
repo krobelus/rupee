@@ -228,6 +228,7 @@ public:
 // Constant definitions
 public:
 	static const std::string DeletionId;
+	static const std::string RatId;
 	static constexpr Short ZeroLiteral = Shortie::PositiveZero;
 	static constexpr State Identifier = 0;
 	static constexpr State Kind = 1;

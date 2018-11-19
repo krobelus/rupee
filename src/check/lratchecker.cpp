@@ -70,6 +70,13 @@ void LratChecker::checkRupInference(Long clause, Long chain) {
 	m_array.reverseClause(clit);
 	propagateChain(chit);
 	if(!m_array.tautology()) {
+		std::cout << "error on clause [";
+		ClauseIterator i(m_clausedb.getClause(clause));
+		while(!i.end()) {
+			std::cout << Shortie::toString(i.get()) << " ";
+			i.next();
+		}
+		std::cout << "]";
 		Core::reject("Hints do not lead to contradiction by unit propagation in RUP inference");
 	}
 	m_array.reset();

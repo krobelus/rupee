@@ -202,9 +202,25 @@ bool reviseWatches(watchlist& wl, model& m, long offset, int* pointer, int liter
     if(Model::isFalsified(m, pointer[1])) {
         firstptr = pointer + 2;
         if(Database::nextNonFalsified(firstptr, firstlit, m)) {
-            *firstptr = literal;
-            *pointer = firstlit;
-            removeWatch(wl, literal, watch);
+            // We know that  pointer[0] is the literal that was unassigned in this revision.
+            // Additionally, pointer[1] is falsified.
+            //
+            // Invariant 1 states: a falsified watch implies that the other watch is satisfied.
+            // If we replace pointer[0] with firstlit, then we need to ensure this, so this is
+            // only possible if firstlit is satisfied.
+            //
+            // Otherwise we simply replace the falsified pointer[1] after which both watches are
+            // non-falsified. (This is more expensive because we have to find the watch).
+            if (Model::isSatisfied(m, firstlit)) {
+                *firstptr = literal;
+                *pointer = firstlit;
+                removeWatch(wl, literal, watch);
+            } else {
+                int otherlit = pointer[1];
+                *firstptr = otherlit;
+                pointer[1] = firstlit;
+                findAndRemoveWatch(wl, otherlit, offset);
+            }
             if(!addWatch(wl, firstlit, offset)) { return false; }
             #ifdef VERBOSE
             Blablabla::log("Setting watches: " + Blablabla::clauseToString(pointer));
